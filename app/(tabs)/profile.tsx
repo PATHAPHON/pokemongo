@@ -3,15 +3,15 @@ import { StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-export default function MapScreen() {
+export default function ProfileScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Pokémon World</ThemedText>
+      <ThemedText type="title">Trainer Profile</ThemedText>
       <ThemedText type="subtitle" style={styles.subtitle}>
-        Map & Radar Screen
+        Trainer Card & Stats
       </ThemedText>
       <ThemedText style={styles.description}>
-        Exploration area will render here.
+        Trainer information and progress will appear here.
       </ThemedText>
     </ThemedView>
   );

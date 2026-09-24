@@ -3,15 +3,15 @@ import { StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-export default function MapScreen() {
+export default function BagScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Pokémon World</ThemedText>
+      <ThemedText type="title">Pokémon Bag</ThemedText>
       <ThemedText type="subtitle" style={styles.subtitle}>
-        Map & Radar Screen
+        Caught Pokémon Inventory
       </ThemedText>
       <ThemedText style={styles.description}>
-        Exploration area will render here.
+        Your caught Pokémon collection will appear here.
       </ThemedText>
     </ThemedView>
   );

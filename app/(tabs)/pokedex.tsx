@@ -3,15 +3,15 @@ import { StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-export default function MapScreen() {
+export default function PokedexScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Pokémon World</ThemedText>
+      <ThemedText type="title">Pokédex</ThemedText>
       <ThemedText type="subtitle" style={styles.subtitle}>
-        Map & Radar Screen
+        Kanto 151 Catalog
       </ThemedText>
       <ThemedText style={styles.description}>
-        Exploration area will render here.
+        Pokémon encyclopedia will render here.
       </ThemedText>
     </ThemedView>
   );
