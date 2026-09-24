@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { TrainerProvider } from '@/context/trainer-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -13,18 +14,12 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="catch"
-          options={{ presentation: 'fullScreenModal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="pokemon/[id]"
-          options={{ presentation: 'modal', headerShown: true, title: 'Pokémon Details' }}
-        />
-      </Stack>
-      <StatusBar style="auto" />
+      <TrainerProvider>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="auto" />
+      </TrainerProvider>
     </ThemeProvider>
   );
 }

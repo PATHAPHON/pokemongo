@@ -19,10 +19,11 @@ Always provide fallbacks so the app runs smoothly on iOS Simulator, Android Emul
 ## 2. Project Documentation & Skills (Always Loaded & Referenced)
 
 ### 2.1 Always Loaded Skills & Guidelines
-Always load and follow the instructions from these 3 skills
+Always load and follow the instructions from these skills and design specs:
 - **Caveman Mode:** [.agents/skills/caveman/SKILL.md]
 - **Karpathy Guidelines:** [.agents/skills/karpathy-guidelines/SKILL.md]
 - **Pokémon GO Domain:** [.agents/skills/pokemon-go/SKILL.md]
+- **Design System & Screen Specs:** [design.md] (ต้องโหลดและเรียกใช้อ้างอิงทุกครั้งที่ออกแบบ พัฒนา หรือปรับปรุงหน้าจอ/UI ทั้ง Mobile และ Web)
 
 ### 2.2 Project Documentation References (On-Demand)
 

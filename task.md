@@ -12,12 +12,12 @@
 | Milestone | สถาปัตยกรรม (Layer) | สัปดาห์ | จำนวน Tasks | ความคืบหน้า |
 |---|---|:---:|:---:|:---:|
 | **M1** | Project Setup, Types & Design Tokens | W1, W3 | 4 Tasks | 4/4 (100%) |
-| **M2** | Data Layer, Services & State Management | W5, 6, 7, 8 | 5 Tasks | 1/5 (20%) |
-| **M3** | Core UI Design System & Atomic Components | W2, 3, 5 | 7 Tasks | 0/7 |
+| **M2** | Data Layer, Services & State Management | W5, 6, 7, 8 | 5 Tasks | 5/5 (100%) |
+| **M3** | Core UI Design System & Atomic Components | W2, 3, 5 | 7 Tasks | 7/7 (100%) |
 | **M4** | Navigation Architecture & Tab Shell | W4 | 6 Tasks | 0/6 |
 | **M5** | Gameplay Mechanics, Spawning & Maps | W8, W10 | 5 Tasks | 0/5 |
 | **M6** | Hardware Integration, AR Catch & Notifications | W9, W11 | 6 Tasks | 0/6 |
-| **รวม** | **ทั้งหมด** | **Weeks 1 - 11** | **33 Tasks** | **5/33 (15%)** |
+| **รวม** | **ทั้งหมด** | **Weeks 1 - 11** | **33 Tasks** | **16/33 (48%)** |
 
 ---
 
@@ -30,20 +30,20 @@
 - [x] [`TASK-04`](tasks/task-04.md) [Week 3] Color System (18 ธาตุ) และ Theme Constants
 
 ### Milestone 2: Data Layer, Services & State Management (Weeks 5, 6, 7, 8)
-- [ ] [`TASK-05`](tasks/task-05.md) [Week 6] PokéAPI Service (Kanto 151 + Official Artwork)
-- [ ] [`TASK-06`](tasks/task-06.md) [Week 6] Custom Hooks สำหรับดึงข้อมูล Pokémon (`usePokemons`, `usePokemonDetail`)
+- [x] [`TASK-05`](tasks/task-05.md) [Week 6] PokéAPI Service (Kanto 151 + Official Artwork)
+- [x] [`TASK-06`](tasks/task-06.md) [Week 6] Custom Hooks สำหรับดึงข้อมูล Pokémon (`usePokemons`, `usePokemonDetail`)
 - [x] [`TASK-07`](tasks/task-07.md) [Week 7] SQLite Database Persistence Service (`expo-sqlite`: caught_pokemon, inventory, trainer)
-- [ ] [`TASK-08`](tasks/task-08.md) [Week 8] SecureStore Auth & Session Service
-- [ ] [`TASK-09`](tasks/task-09.md) [Week 5, 7, 8] Global TrainerContext & State Management
+- [x] [`TASK-08`](tasks/task-08.md) [Week 8] SecureStore Auth & Session Service
+- [x] [`TASK-09`](tasks/task-09.md) [Week 5, 7, 8] Global TrainerContext & State Management
 
 ### Milestone 3: Core UI Design System & Atomic Components (Weeks 2, 3, 5)
-- [ ] [`TASK-10`](tasks/task-10.md) [Week 2, 3] `TypeBadge` Component
-- [ ] [`TASK-11`](tasks/task-11.md) [Week 2] `StatBar` Component
-- [ ] [`TASK-12`](tasks/task-12.md) [Week 2] `PokeballButton` Component
-- [ ] [`TASK-13`](tasks/task-13.md) [Week 2, 3] `PokemonCard` Component
-- [ ] [`TASK-14`](tasks/task-14.md) [Week 3, 6] `PokemonGrid` และ `SkeletonLoader` Component
-- [ ] [`TASK-15`](tasks/task-15.md) [Week 5] `SearchFilterBar` Component
-- [ ] [`TASK-16`](tasks/task-16.md) [Week 5] `NicknameModal` Component พร้อม Validation
+- [x] [`TASK-10`](tasks/task-10.md) [Week 2, 3] `TypeBadge` Component
+- [x] [`TASK-11`](tasks/task-11.md) [Week 2] `StatBar` Component
+- [x] [`TASK-12`](tasks/task-12.md) [Week 2] `PokeballButton` Component
+- [x] [`TASK-13`](tasks/task-13.md) [Week 2, 3] `PokemonCard` Component
+- [x] [`TASK-14`](tasks/task-14.md) [Week 3, 6] `PokemonGrid` และ `SkeletonLoader` Component
+- [x] [`TASK-15`](tasks/task-15.md) [Week 5] `SearchFilterBar` Component
+- [x] [`TASK-16`](tasks/task-16.md) [Week 5] `NicknameModal` Component พร้อม Validation
 
 ### Milestone 4: Navigation Architecture & Tab Shell (Week 4)
 - [ ] [`TASK-17`](tasks/task-17.md) [Week 4] Root Layout และ Stack Navigation (`app/_layout.tsx`)
