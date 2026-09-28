@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Pokémon GO ต้องการเข้าถึงตำแหน่งเพื่อค้นหาโปเกมอนป่ารอบตัวคุณ"
+        "NSLocationWhenInUseUsageDescription": "Pokémon GO ต้องการเข้าถึงตำแหน่งเพื่อค้นหาโปเกมอนป่ารอบตัวคุณ",
+        "NSCameraUsageDescription": "Pokémon GO ต้องการเข้าถึงกล้องเพื่อเปิดโหมด AR ในการจับโปเกมอน"
       }
     },
     "android": {
@@ -23,7 +24,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "CAMERA"
       ]
     },
     "web": {
@@ -55,7 +57,14 @@
         {
           "locationWhenInUsePermission": "Pokémon GO ต้องการเข้าถึงตำแหน่งเพื่อค้นหาโปเกมอนป่ารอบตัวคุณ"
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Pokémon GO ต้องการเข้าถึงกล้องเพื่อเปิดโหมด AR ในการจับโปเกมอน"
+        }
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

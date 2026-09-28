@@ -12,7 +12,6 @@ import {
   generateInitialSpawnSpots,
   createPendingSpot,
   getDistanceInMeters,
-  INTERACTION_RADIUS_METERS,
 } from '@/services/spawn-engine';
 import { getKantoArtworkUrl, capitalizePokemonName } from '@/constants/kanto-pokemon';
 import { PokemonTypeColors } from '@/constants/pokemon-theme';
@@ -143,8 +142,10 @@ export default function WebMapScreen() {
   const pokemonMarkersRef = useRef<Map<string, any>>(new Map());
 
   const [wildList, setWildList] = useState<WildPokemon[]>([]);
-  const [distanceAlert, setDistanceAlert] = useState<string | null>(null);
-  const [leafletLoaded, setLeafletLoaded] = useState<boolean>(false);
+  const [distanceAlert] = useState<string | null>(null);
+  const [leafletLoaded, setLeafletLoaded] = useState<boolean>(
+    () => typeof window !== 'undefined' && !!(window as any).L
+  );
   const lastSpawnLocationRef = useRef<Coordinates | null>(null);
 
   // 1. Initialize 15 spots staggered when GPS first locks or moves > 100m
@@ -231,8 +232,7 @@ export default function WebMapScreen() {
       document.head.appendChild(styleEl);
     }
 
-    if (window.L) {
-      setLeafletLoaded(true);
+    if ((window as any).L) {
       return;
     }
 
@@ -354,7 +354,9 @@ export default function WebMapScreen() {
   );
 
   const wildListRef = useRef<WildPokemon[]>(wildList);
-  wildListRef.current = wildList;
+  useEffect(() => {
+    wildListRef.current = wildList;
+  }, [wildList]);
 
   // Global handler accessible from both DOM onclick and Leaflet
   useEffect(() => {

@@ -152,7 +152,7 @@ pokemongo/
 │   ├── trainer.ts              # Profile, Teams, Inventory Items
 │   ├── gameplay.ts             # Wild Spawns, Catch Result, Map
 │   └── index.ts                # Centralized Type Exports
-└── task.md                     # 11-Week Progress Tracker (33 Micro-Tasks)
+└── task.md                     # 11-Week Progress Tracker (30 Micro-Tasks)
 ```
 
 ---
@@ -162,11 +162,12 @@ pokemongo/
 | Milestone | สถาปัตยกรรม (Layer) | สัปดาห์ | จำนวน Tasks | สถานะ |
 |:---:|---|:---:|:---:|:---:|
 | **M1** | Project Setup, Types & Design Tokens | W1, W3 | 4 Tasks | **100% (4/4)** ✅ |
-| **M2** | Data Layer, Services & State Management | W5, 6, 7, 8 | 5 Tasks | **20% (1/5)** 🚀 |
-| **M3** | Core UI Design System & Atomic Components | W2, 3, 5 | 7 Tasks | กำลังเริ่ม ⏳ |
-| **M4** | Navigation Architecture & Tab Shell | W4 | 6 Tasks | กำลังเริ่ม ⏳ |
-| **M5** | Gameplay Mechanics, Spawning & Maps | W8, W10 | 5 Tasks | กำลังเริ่ม ⏳ |
-| **M6** | Hardware Integration, AR Catch & Notifications | W9, W11 | 6 Tasks | กำลังเริ่ม ⏳ |
+| **M2** | Data Layer, Services & State Management | W5, 6, 7, 8 | 5 Tasks | **100% (5/5)** ✅ |
+| **M3** | Core UI Design System & Atomic Components | W2, 3, 5 | 7 Tasks | **100% (7/7)** ✅ |
+| **M4** | Navigation Architecture & Tab Shell | W4 | 6 Tasks | **100% (6/6)** ✅ |
+| **M5** | Gameplay Mechanics, Spawning & Maps | W10 | 3 Tasks | **100% (3/3)** ✅ |
+| **M6** | Hardware Integration, AR Catch & Notifications | W9, W11 | 5 Tasks | **100% (5/5)** ✅ |
+| **รวม** | **ทั้งหมด (Full Core Loop)** | **Weeks 1 - 11** | **30 Tasks** | **100% (30/30)** 🎉 |
 
 > 📊 รายละเอียด micro-tasks แต่ละรายการ ติดตามได้ที่ [`task.md`](task.md)
 

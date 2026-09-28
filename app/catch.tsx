@@ -8,11 +8,14 @@ import {
   PanResponder,
   Easing,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 
 import {
   getKantoArtworkUrl,
@@ -21,6 +24,7 @@ import {
 import { ThrowRatingColors } from '@/constants/pokemon-theme';
 import { useTrainer } from '@/context/trainer-context';
 import { NicknameModal } from '@/components/pokemon/nickname-modal';
+import { sendCatchNotification } from '@/services/notifications';
 import { CaughtPokemon, PokemonTypeName } from '@/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -55,6 +59,25 @@ export default function CatchScreen() {
   const [gameState, setGameState] = useState<CatchState>('AIMING');
   const [ratingMessage, setRatingMessage] = useState<string | null>(null);
   const [showNicknameModal, setShowNicknameModal] = useState<boolean>(false);
+
+  // Camera & AR mode state
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [arEnabled, setArEnabled] = useState<boolean>(false);
+
+  const toggleAr = useCallback(async () => {
+    if (!arEnabled) {
+      if (!cameraPermission?.granted) {
+        const res = await requestCameraPermission();
+        if (res.granted) {
+          setArEnabled(true);
+        }
+      } else {
+        setArEnabled(true);
+      }
+    } else {
+      setArEnabled(false);
+    }
+  }, [arEnabled, cameraPermission, requestCameraPermission]);
 
   // Animation values using state to comply with React 19 rules
   const [floatAnim] = useState(() => new Animated.Value(0));
@@ -137,6 +160,7 @@ export default function CatchScreen() {
 
     // Wobble sequence (3 shakes)
     const runShake = (count: number): Promise<boolean> => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       return new Promise((resolve) => {
         Animated.sequence([
           Animated.timing(ballRotate, {
@@ -173,6 +197,8 @@ export default function CatchScreen() {
     if (isSuccess) {
       await runShake(3);
       setGameState('CAUGHT');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      sendCatchNotification(capitalizePokemonName(pokemonName), pokemonCp);
 
       // Create caught pokemon record
       const instanceId = `poke-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -211,6 +237,7 @@ export default function CatchScreen() {
     } else {
       // Breakout!
       setGameState('BREAKOUT');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
       pokemonOpacity.setValue(1);
       setTimeout(() => {
         resetBall();
@@ -253,6 +280,7 @@ export default function CatchScreen() {
             }
 
             setGameState('THROWN');
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
             // Evaluate accuracy based on ring size
             const currentRingValue = (ringScaleAnim as any)._value || 0.6;
@@ -320,12 +348,18 @@ export default function CatchScreen() {
         }}
       />
 
-      {/* Classic Meadow Field Background */}
-      <View style={styles.skyBackground}>
-        <View style={[styles.cloud, { top: 60, left: 30 }]} />
-        <View style={[styles.cloud, { top: 120, right: 40, width: 90, height: 32 }]} />
-      </View>
-      <View style={styles.greenMeadow} />
+      {/* Background: Camera AR or Classic Meadow Field */}
+      {arEnabled && cameraPermission?.granted && Platform.OS !== 'web' ? (
+        <CameraView style={StyleSheet.absoluteFill} facing="back" />
+      ) : (
+        <>
+          <View style={styles.skyBackground}>
+            <View style={[styles.cloud, { top: 60, left: 30 }]} />
+            <View style={[styles.cloud, { top: 120, right: 40, width: 90, height: 32 }]} />
+          </View>
+          <View style={styles.greenMeadow} />
+        </>
+      )}
 
       {/* Top Header Bar */}
       <View style={styles.topBar}>
@@ -347,9 +381,26 @@ export default function CatchScreen() {
           </View>
         </View>
 
-        <View style={styles.ballCountPill}>
-          <Ionicons name="disc" size={16} color="#FF3B30" />
-          <Text style={styles.ballCountText}>{inventory.pokeballs}</Text>
+        <View style={styles.topRightControls}>
+          <TouchableOpacity
+            style={[styles.arToggleButton, arEnabled && styles.arToggleButtonActive]}
+            activeOpacity={0.8}
+            onPress={toggleAr}
+          >
+            <Ionicons
+              name={arEnabled ? 'camera' : 'camera-outline'}
+              size={16}
+              color={arEnabled ? '#FFFFFF' : '#11181C'}
+            />
+            <Text style={[styles.arToggleText, arEnabled && styles.arToggleTextActive]}>
+              {arEnabled ? 'AR' : 'OFF'}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.ballCountPill}>
+            <Ionicons name="disc" size={16} color="#FF3B30" />
+            <Text style={styles.ballCountText}>{inventory.pokeballs}</Text>
+          </View>
         </View>
       </View>
 
@@ -582,6 +633,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '800',
+  },
+  topRightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  arToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 18,
+    gap: 4,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
+    elevation: 3,
+  },
+  arToggleButtonActive: {
+    backgroundColor: '#34C759',
+  },
+  arToggleText: {
+    color: '#11181C',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  arToggleTextActive: {
+    color: '#FFFFFF',
   },
   ballCountPill: {
     flexDirection: 'row',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -28,13 +28,15 @@ export function NicknameModal({
   onSave,
   onCancel,
 }: NicknameModalProps) {
-  const [text, setText] = useState<string>('');
+  const [prevVisible, setPrevVisible] = useState(visible);
+  const [text, setText] = useState<string>(() => currentNickname || capitalizePokemonName(pokemonName));
 
-  useEffect(() => {
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible) {
       setText(currentNickname || capitalizePokemonName(pokemonName));
     }
-  }, [visible, currentNickname, pokemonName]);
+  }
 
   const handleSave = () => {
     const trimmed = text.trim();
