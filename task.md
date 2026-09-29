@@ -62,8 +62,15 @@
 - [x] `TASK-28` [Week 9] AR Camera Preview (`expo-camera`) พร้อมปุ่ม Toggle สลับ AR ON/OFF และ Classic Meadow Field Fallback
 - [x] `TASK-29` [Week 11] Haptics Sensory Feedback & Local Notifications Service (`expo-haptics` + `expo-notifications` พร้อม Expo Go Android SDK 53+ Graceful Fallback)
 - [x] `TASK-30` [Weeks 1-11] End-to-End Build & Simulator Verification Checklist
+- [x] `TASK-31` [Week 11] Android Notification Channel & Permission Lifecycle Manager
+- [x] `TASK-32` [Week 11] Rare & Uncaught Spawn Alert Trigger Engine
+- [x] `TASK-33` [Week 11] Deep Link & Notification Response Observer (Root Layout to /catch)
+- [x] `TASK-34` [Week 11] Map Notification Toggle UI & Test Simulator
+- [x] `TASK-35` [Week 11] Platform Compatibility & Verification Checklist
+
 
 ---
 
 ## บันทึกการปรับปรุงล่าสุด (Maintenance & Bug Fixes)
+- **Week 11 Notifications & Mobile Platform APIs:** เชื่อมต่อ Android Notification Channel (`pokemon-spawns`, `pokemon-catch`), ระบบแจ้งเตือนเมื่อโปเกมอนหายากหรือโปเกมอนใหม่เกิดใกล้ตัวผู้เล่น, ปุ่ม Bell Toggle บนหน้าแผนที่, Deep Link เปิดหน้า `/catch` ทั้ง Cold Start และ Foreground/Background รวมถึงตรวจจับสถานะ `AppState` กลับสู่หน้าจอ
 - **Fix Expo Go Android SDK 53+ Uncaught Error:** ปรับปรุง `services/notifications.ts` ให้ใช้ Dynamic require และตรวจสอบ `isRunningInExpoGo()` เพื่อป้องกัน Fatal Exception จากโมดูล `expo-notifications` บน Android Expo Go พร้อม fallback รองรับ iOS และ Development Builds
