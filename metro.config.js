@@ -9,5 +9,15 @@ if (!config.resolver.assetExts.includes('wasm')) {
   config.resolver.assetExts.push('wasm');
 }
 
-module.exports = withNativeWind(config, { input: './global.css' });
+const path = require('path');
+
+const finalConfig = withNativeWind(config, { input: './global.css' });
+if (finalConfig.transformer) {
+  finalConfig.transformer.cssInterop_outputDirectory = path.resolve(
+    __dirname,
+    'node_modules/react-native-css-interop/.cache'
+  );
+}
+
+module.exports = finalConfig;
 

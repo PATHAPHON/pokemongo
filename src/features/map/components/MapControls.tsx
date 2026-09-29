@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useColorScheme } from '@/shared/hooks/use-color-scheme';
+
 interface Props {
   nearbyCount: number;
   permissionGranted: boolean;
@@ -22,6 +24,11 @@ export function MapControls({
   onToggleNotifications,
   className = '',
 }: Props) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const chipBg = isDark ? 'rgba(24, 24, 27, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+  const textColor = isDark ? '#ECEDEE' : '#1A1A1A';
+
   return (
     <SafeAreaView
       style={StyleSheet.absoluteFillObject}
@@ -31,21 +38,73 @@ export function MapControls({
       pointerEvents="box-none"
     >
       {/* Top Header Bar */}
-      <View className="flex-row justify-between items-center" pointerEvents="box-none">
-        <View className="flex-row items-center bg-white/95 dark:bg-gray-900/95 px-3 py-1.5 rounded-full gap-1.5 shadow-sm">
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingTop: 8,
+        }}
+        className="flex-row justify-between items-center"
+        pointerEvents="box-none"
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: chipBg,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 20,
+            gap: 6,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.15,
+            shadowRadius: 2,
+          }}
+          className="flex-row items-center bg-white/95 dark:bg-gray-900/95 px-3 py-1.5 rounded-full gap-1.5 shadow-sm"
+        >
           <Ionicons
             name={permissionGranted ? 'location' : 'location-outline'}
             size={16}
             color={permissionGranted ? '#34C759' : '#FF9500'}
           />
-          <Text className="text-[#1A1A1A] dark:text-[#ECEDEE] text-xs font-bold">
+          <Text
+            style={{ color: textColor, fontSize: 12, fontWeight: '700' }}
+            className="text-[#1A1A1A] dark:text-[#ECEDEE] text-xs font-bold"
+          >
             {permissionGranted ? 'GPS Active' : 'Fallback GPS'}
           </Text>
         </View>
 
-        <View className="flex-row items-center gap-2">
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+          className="flex-row items-center gap-2"
+        >
           {onToggleNotifications && (
             <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: notificationsEnabled
+                  ? isDark
+                    ? 'rgba(120, 53, 15, 0.4)'
+                    : '#FFFBEB'
+                  : chipBg,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 20,
+                gap: 6,
+                borderWidth: notificationsEnabled ? 1 : 0,
+                borderColor: notificationsEnabled ? '#F59E0B' : 'transparent',
+                elevation: 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 2,
+              }}
               className={`flex-row items-center px-3 py-1.5 rounded-full gap-1.5 shadow-sm ${
                 notificationsEnabled
                   ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-500'
@@ -60,6 +119,11 @@ export function MapControls({
                 color={notificationsEnabled ? '#FF9500' : '#8E8E93'}
               />
               <Text
+                style={{
+                  color: notificationsEnabled ? (isDark ? '#FBBF24' : '#D97706') : textColor,
+                  fontSize: 12,
+                  fontWeight: '700',
+                }}
                 className={`text-xs font-bold ${
                   notificationsEnabled
                     ? 'text-amber-600 dark:text-amber-400'
@@ -71,9 +135,28 @@ export function MapControls({
             </TouchableOpacity>
           )}
 
-          <View className="flex-row items-center bg-white/95 dark:bg-gray-900/95 px-3 py-1.5 rounded-full gap-1.5 shadow-sm">
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: chipBg,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 20,
+              gap: 6,
+              elevation: 2,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.15,
+              shadowRadius: 2,
+            }}
+            className="flex-row items-center bg-white/95 dark:bg-gray-900/95 px-3 py-1.5 rounded-full gap-1.5 shadow-sm"
+          >
             <Ionicons name="scan-outline" size={16} color="#007AFF" />
-            <Text className="text-[#1A1A1A] dark:text-[#ECEDEE] text-xs font-bold">
+            <Text
+              style={{ color: textColor, fontSize: 12, fontWeight: '700' }}
+              className="text-[#1A1A1A] dark:text-[#ECEDEE] text-xs font-bold"
+            >
               Nearby: {nearbyCount}
             </Text>
           </View>

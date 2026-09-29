@@ -4,6 +4,12 @@ import { AppState, AppStateStatus } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { Image } from 'expo-image';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { cssInterop } from 'nativewind';
+
+cssInterop(Image, { className: 'style' });
+cssInterop(SafeAreaView, { className: 'style' });
 
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { TrainerProvider } from '@/shared/context/trainer-context';
