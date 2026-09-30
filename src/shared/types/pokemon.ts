@@ -19,12 +19,7 @@ export type PokemonTypeName =
   | 'dark';
 
 export type PokemonStatName =
-  | 'hp'
-  | 'attack'
-  | 'defense'
-  | 'special-attack'
-  | 'special-defense'
-  | 'speed';
+  'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed';
 
 export interface PokemonStat {
   name: PokemonStatName;
@@ -50,11 +45,7 @@ export interface PokemonListItem {
   artwork: string;
 }
 
-export interface IndividualValues {
-  attack: number; // 0 - 15
-  defense: number; // 0 - 15
-  stamina: number; // 0 - 15
-}
+export type PokemonRarity = 'common' | 'rare' | 'ultra_rare';
 
 export interface CaughtPokemon {
   instanceId: string; // Unique UUID
@@ -63,12 +54,9 @@ export interface CaughtPokemon {
   name: string;
   artwork: string;
   types: PokemonTypeName[];
-  cp: number;
-  level: number;
-  iv: IndividualValues;
-  stats: PokemonStat[];
-  height: number;
-  weight: number;
+  rarity: PokemonRarity;
+  height?: number;
+  weight?: number;
   caughtAt: string; // ISO date string
   location?: {
     latitude: number;

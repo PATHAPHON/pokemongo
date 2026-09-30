@@ -1,121 +1,157 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
+import { Platform } from 'react-native';
 import * as Location from 'expo-location';
-import { Coordinates, DEFAULT_COORDINATES } from '@/features/map/services/spawn-engine';
+import {
+  Coordinates,
+  LocationPreset,
+  DEFAULT_PRESET,
+} from '@/features/map/services/spawn-engine';
 
 export interface UserLocationState {
   location: Coordinates;
-  heading: number | null;
-  speed: number | null;
+  selectedPreset: LocationPreset | null;
+  locationName: string;
+  isRealGps: boolean;
   isLoading: boolean;
-  permissionGranted: boolean;
   errorMsg: string | null;
+  selectPreset: (preset: LocationPreset) => void;
+  switchToRealGps: () => Promise<boolean>;
 }
 
+// Global cached state so selected location is preserved across tab switches and route pops
+let cachedLocation: Coordinates = DEFAULT_PRESET.coords;
+let cachedPreset: LocationPreset | null = DEFAULT_PRESET;
+let cachedLocationName: string = DEFAULT_PRESET.name;
+let cachedIsRealGps: boolean = false;
+
 export function useUserLocation(): UserLocationState {
-  const [location, setLocation] = useState<Coordinates>(DEFAULT_COORDINATES);
-  const [heading, setHeading] = useState<number | null>(0);
-  const [speed, setSpeed] = useState<number | null>(null);
-  const [isLoading] = useState<boolean>(false);
-  const [permissionGranted, setPermissionGranted] = useState<boolean>(true);
+  const [location, setLocation] = useState<Coordinates>(cachedLocation);
+  const [selectedPreset, setSelectedPreset] = useState<LocationPreset | null>(
+    cachedPreset
+  );
+  const [locationName, setLocationName] = useState<string>(cachedLocationName);
+  const [isRealGps, setIsRealGps] = useState<boolean>(cachedIsRealGps);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const locationSubRef = useRef<Location.LocationSubscription | null>(null);
-  const headingSubRef = useRef<Location.LocationSubscription | null>(null);
+  /**
+   * Switch active coordinates to a predefined preset location
+   */
+  const selectPreset = useCallback((preset: LocationPreset) => {
+    cachedLocation = preset.coords;
+    cachedPreset = preset;
+    cachedLocationName = preset.name;
+    cachedIsRealGps = false;
 
-  useEffect(() => {
-    let isMounted = true;
+    setLocation(preset.coords);
+    setSelectedPreset(preset);
+    setLocationName(preset.name);
+    setIsRealGps(false);
+    setErrorMsg(null);
+  }, []);
 
-    async function initNativeSensors() {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
+  /**
+   * Request device GPS coordinates on demand using Balanced accuracy (Week 10)
+   * Cross-platform: uses navigator.geolocation on Web, expo-location on iOS/Android
+   */
+  const switchToRealGps = useCallback(async (): Promise<boolean> => {
+    setIsLoading(true);
+    setErrorMsg(null);
 
-        if (status !== 'granted') {
-          if (isMounted) {
-            setPermissionGranted(false);
-            setErrorMsg('Location permission was denied. Using fallback area.');
-          }
-          return;
-        }
+    // 1. Web Browser Geolocation
+    if (Platform.OS === 'web') {
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        return new Promise<boolean>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const coords: Coordinates = {
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+              };
+              cachedLocation = coords;
+              cachedPreset = null;
+              cachedLocationName = 'Real GPS';
+              cachedIsRealGps = true;
 
-        if (isMounted) {
-          setPermissionGranted(true);
-        }
-
-        // 1. Initial quick position
-        try {
-          const initialPos = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-
-          if (isMounted) {
-            setLocation({
-              latitude: initialPos.coords.latitude,
-              longitude: initialPos.coords.longitude,
-            });
-            setSpeed(initialPos.coords.speed);
-          }
-        } catch {
-          // Keep default coordinates
-        }
-
-        // 2. High-frequency Compass Heading Tracking (Magnetometer)
-        try {
-          headingSubRef.current = await Location.watchHeadingAsync((headingData) => {
-            if (!isMounted) return;
-            const deg =
-              headingData.trueHeading >= 0 ? headingData.trueHeading : headingData.magHeading;
-            if (deg >= 0) {
-              setHeading(Math.round(deg));
-            }
-          });
-        } catch {
-          // Ignore compass if sensor unavailable on some simulators
-        }
-
-        // 3. High-Frequency Real-Time Navigation GPS
-        locationSubRef.current = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.BestForNavigation,
-            timeInterval: 400,
-            distanceInterval: 0.5,
-          },
-          (newPos) => {
-            if (!isMounted) return;
-            setLocation({
-              latitude: newPos.coords.latitude,
-              longitude: newPos.coords.longitude,
-            });
-            setSpeed(newPos.coords.speed);
-          }
-        );
-      } catch (error) {
-        if (isMounted) {
-          setErrorMsg(error instanceof Error ? error.message : 'Failed to fetch sensors');
-        }
+              setLocation(coords);
+              setSelectedPreset(null);
+              setLocationName('Real GPS');
+              setIsRealGps(true);
+              setIsLoading(false);
+              resolve(true);
+            },
+            (err) => {
+              setIsLoading(false);
+              setErrorMsg(
+                err.code === 1
+                  ? 'Location permission denied by browser.'
+                  : 'Unable to acquire browser GPS position.'
+              );
+              resolve(false);
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+          );
+        });
+      } else {
+        setIsLoading(false);
+        setErrorMsg('Geolocation is not supported by this browser.');
+        return false;
       }
     }
 
-    initNativeSensors();
+    // 2. Mobile (iOS / Android) Foreground Location
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      const granted = status === 'granted';
 
-    return () => {
-      isMounted = false;
-      if (locationSubRef.current) {
-        locationSubRef.current.remove();
-        locationSubRef.current = null;
+      if (!granted) {
+        setIsLoading(false);
+        setErrorMsg('Location permission was denied.');
+        return false;
       }
-      if (headingSubRef.current) {
-        headingSubRef.current.remove();
-        headingSubRef.current = null;
+
+      // Read position with Balanced accuracy (Week 10 standard)
+      const currentPos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      if (currentPos?.coords) {
+        const coords: Coordinates = {
+          latitude: currentPos.coords.latitude,
+          longitude: currentPos.coords.longitude,
+        };
+        cachedLocation = coords;
+        cachedPreset = null;
+        cachedLocationName = 'Real GPS';
+        cachedIsRealGps = true;
+
+        setLocation(coords);
+        setSelectedPreset(null);
+        setLocationName('Real GPS');
+        setIsRealGps(true);
+        setIsLoading(false);
+        return true;
       }
-    };
+
+      setIsLoading(false);
+      return false;
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMsg(
+        err instanceof Error ? err.message : 'Failed to fetch GPS location'
+      );
+      return false;
+    }
   }, []);
 
   return {
     location,
-    heading,
-    speed,
+    selectedPreset,
+    locationName,
+    isRealGps,
     isLoading,
-    permissionGranted,
     errorMsg,
+    selectPreset,
+    switchToRealGps,
   };
 }

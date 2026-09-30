@@ -10,41 +10,40 @@ import {
   CaughtPokemon,
   TrainerInventory,
   TrainerProfile,
-  TrainerTeam,
 } from '@/shared/types';
 import {
   getDatabase,
   getAllCaughtPokemon,
   insertCaughtPokemon,
-  updatePokemonNickname,
-  togglePokemonFavorite,
   deleteCaughtPokemon,
   getTrainerInventory,
-  updateInventoryCount,
   getStoredTrainerProfile,
-  saveStoredTrainerProfile,
-} from '@/shared/services/database';
-import { saveActiveTrainerId, clearAuthSession } from '@/shared/services/auth';
-import { getKantoArtworkUrl } from '@/shared/constants/kanto-pokemon';
+} from '@/shared/services/database/index';
+import { initPokemonRegistry } from '@/shared/services/pokemon-registry';
+import {
+  restoreSessionState,
+  loginWithCredentials,
+  registerAccount,
+  clearAuthSession,
+} from '@/shared/services/auth';
 
-export interface TrainerContextValue {
+interface TrainerContextValue {
   trainer: TrainerProfile | null;
   inventory: TrainerInventory;
   caughtPokemon: CaughtPokemon[];
   isLoading: boolean;
-  updateTrainer: (updates: Partial<TrainerProfile>) => Promise<void>;
-  setTeam: (team: TrainerTeam) => Promise<void>;
-  addExperience: (amount: number) => Promise<void>;
-  addStardust: (amount: number) => Promise<void>;
-  addPokeCoins: (amount: number) => Promise<void>;
-  useItem: (itemKey: keyof TrainerInventory, amount?: number) => Promise<boolean>;
-  addItem: (itemKey: keyof TrainerInventory, amount?: number) => Promise<void>;
+  isAuthenticated: boolean;
   catchPokemon: (pokemon: CaughtPokemon) => Promise<void>;
   releasePokemon: (instanceId: string) => Promise<void>;
-  renamePokemon: (instanceId: string, nickname: string) => Promise<void>;
-  toggleFavorite: (instanceId: string) => Promise<void>;
-  refreshTrainerData: () => Promise<void>;
-  resetTrainerData: () => Promise<void>;
+  login: (
+    username: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    username: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
 
 const DEFAULT_INVENTORY_FALLBACK: TrainerInventory = {
@@ -58,90 +57,51 @@ const DEFAULT_INVENTORY_FALLBACK: TrainerInventory = {
   revives: 10,
 };
 
-const TrainerContext = createContext<TrainerContextValue | undefined>(undefined);
-
-function calculateNextLevelExp(level: number): number {
-  return Math.round(1000 * Math.pow(1.25, level - 1));
-}
+const TrainerContext = createContext<TrainerContextValue | undefined>(
+  undefined
+);
 
 export function TrainerProvider({ children }: { children: ReactNode }) {
   const [trainer, setTrainer] = useState<TrainerProfile | null>(null);
-  const [inventory, setInventory] = useState<TrainerInventory>(DEFAULT_INVENTORY_FALLBACK);
+  const [inventory, setInventory] = useState<TrainerInventory>(
+    DEFAULT_INVENTORY_FALLBACK
+  );
   const [caughtPokemon, setCaughtPokemon] = useState<CaughtPokemon[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   /**
-   * Initialize or Seed starter data if first launch
+   * Initialize and restore session from SecureStore
    */
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       await getDatabase();
+      await initPokemonRegistry();
 
-      let currentProfile = await getStoredTrainerProfile();
-      let pokemonList = await getAllCaughtPokemon();
+      const session = await restoreSessionState();
 
-      // If no trainer profile exists, seed default starter profile & starter Pikachu
-      if (!currentProfile) {
-        currentProfile = {
-          id: 'trainer-red-001',
-          name: 'Trainer Red',
-          team: 'valor',
-          level: 1,
-          experience: 0,
-          nextLevelExperience: 1000,
-          stardust: 1000,
-          pokeCoins: 100,
-          starterPokemonId: 25,
-          createdAt: new Date().toISOString(),
-        };
+      if (session.status === 'authenticated') {
+        let currentProfile = await getStoredTrainerProfile();
+        let pokemonList = await getAllCaughtPokemon();
+        const inv = await getTrainerInventory();
 
-        const starterPikachu: CaughtPokemon = {
-          instanceId: `starter-pikachu-${Date.now()}`,
-          pokemonId: 25,
-          nickname: 'Pikachu',
-          name: 'pikachu',
-          artwork: getKantoArtworkUrl(25),
-          types: ['electric'],
-          cp: 450,
-          level: 5,
-          iv: {
-            attack: 15,
-            defense: 12,
-            stamina: 13,
-          },
-          stats: [
-            { name: 'hp', baseStat: 35 },
-            { name: 'attack', baseStat: 55 },
-            { name: 'defense', baseStat: 40 },
-            { name: 'special-attack', baseStat: 50 },
-            { name: 'special-defense', baseStat: 50 },
-            { name: 'speed', baseStat: 90 },
-          ],
-          height: 4,
-          weight: 60,
-          caughtAt: new Date().toISOString(),
-          location: {
-            latitude: 13.7563,
-            longitude: 100.5018,
-            name: 'Pallet Town',
-          },
-          favorite: true,
-        };
-
-        await saveStoredTrainerProfile(currentProfile);
-        await saveActiveTrainerId(currentProfile.id);
-        await insertCaughtPokemon(starterPikachu);
-        pokemonList = [starterPikachu];
+        if (currentProfile) {
+          setTrainer(currentProfile);
+          setInventory(inv);
+          setCaughtPokemon(pokemonList);
+          setIsAuthenticated(true);
+        } else {
+          // If token exists but no profile, clear stale session
+          await clearAuthSession();
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
       }
-
-      const inv = await getTrainerInventory();
-
-      setTrainer(currentProfile);
-      setInventory(inv);
-      setCaughtPokemon(pokemonList);
     } catch (error) {
       console.error('[TrainerContext] Failed to initialize state:', error);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
@@ -152,103 +112,44 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
   }, [loadData]);
 
   /**
-   * Update Trainer Profile fields
+   * Login handler
    */
-  const updateTrainer = useCallback(
-    async (updates: Partial<TrainerProfile>) => {
-      if (!trainer) return;
-      const updated: TrainerProfile = { ...trainer, ...updates };
-      setTrainer(updated);
-      await saveStoredTrainerProfile(updated);
-    },
-    [trainer]
-  );
-
-  /**
-   * Set Trainer Team
-   */
-  const setTeam = useCallback(
-    async (team: TrainerTeam) => {
-      await updateTrainer({ team });
-    },
-    [updateTrainer]
-  );
-
-  /**
-   * Add Experience & calculate level up
-   */
-  const addExperience = useCallback(
-    async (amount: number) => {
-      if (!trainer) return;
-      let newExp = trainer.experience + amount;
-      let newLevel = trainer.level;
-      let nextExp = trainer.nextLevelExperience;
-
-      while (newExp >= nextExp) {
-        newExp -= nextExp;
-        newLevel += 1;
-        nextExp = calculateNextLevelExp(newLevel);
+  const login = useCallback(
+    async (username: string, password: string) => {
+      const res = await loginWithCredentials(username, password);
+      if (res.success && res.user) {
+        await loadData();
+        return { success: true };
       }
-
-      await updateTrainer({
-        experience: newExp,
-        level: newLevel,
-        nextLevelExperience: nextExp,
-      });
+      return { success: false, error: res.error || 'เข้าสู่ระบบไม่สำเร็จ' };
     },
-    [trainer, updateTrainer]
+    [loadData]
   );
 
   /**
-   * Add Stardust
+   * Register handler
    */
-  const addStardust = useCallback(
-    async (amount: number) => {
-      if (!trainer) return;
-      await updateTrainer({ stardust: Math.max(0, trainer.stardust + amount) });
+  const register = useCallback(
+    async (username: string, password: string) => {
+      const res = await registerAccount(username, password);
+      if (res.success && res.user) {
+        await loadData();
+        return { success: true };
+      }
+      return { success: false, error: res.error || 'ลงทะเบียนไม่สำเร็จ' };
     },
-    [trainer, updateTrainer]
+    [loadData]
   );
 
   /**
-   * Add PokéCoins
+   * Logout handler
    */
-  const addPokeCoins = useCallback(
-    async (amount: number) => {
-      if (!trainer) return;
-      await updateTrainer({ pokeCoins: Math.max(0, trainer.pokeCoins + amount) });
-    },
-    [trainer, updateTrainer]
-  );
-
-  /**
-   * Use an item from inventory (returns false if insufficient)
-   */
-  const useItem = useCallback(
-    async (itemKey: keyof TrainerInventory, amount = 1): Promise<boolean> => {
-      const current = inventory[itemKey] ?? 0;
-      if (current < amount) return false;
-
-      const newCount = current - amount;
-      setInventory((prev) => ({ ...prev, [itemKey]: newCount }));
-      await updateInventoryCount(itemKey, newCount);
-      return true;
-    },
-    [inventory]
-  );
-
-  /**
-   * Add items to inventory
-   */
-  const addItem = useCallback(
-    async (itemKey: keyof TrainerInventory, amount = 1): Promise<void> => {
-      const current = inventory[itemKey] ?? 0;
-      const newCount = current + amount;
-      setInventory((prev) => ({ ...prev, [itemKey]: newCount }));
-      await updateInventoryCount(itemKey, newCount);
-    },
-    [inventory]
-  );
+  const logout = useCallback(async () => {
+    await clearAuthSession();
+    setTrainer(null);
+    setCaughtPokemon([]);
+    setIsAuthenticated(false);
+  }, []);
 
   /**
    * Catch a new Pokémon
@@ -267,80 +168,29 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
   const releasePokemon = useCallback(
     async (instanceId: string): Promise<void> => {
       await deleteCaughtPokemon(instanceId);
-      setCaughtPokemon((prev) => prev.filter((p) => p.instanceId !== instanceId));
-    },
-    []
-  );
-
-  /**
-   * Rename a caught Pokémon
-   */
-  const renamePokemon = useCallback(
-    async (instanceId: string, nickname: string): Promise<void> => {
-      await updatePokemonNickname(instanceId, nickname);
       setCaughtPokemon((prev) =>
-        prev.map((p) => (p.instanceId === instanceId ? { ...p, nickname } : p))
+        prev.filter((p) => p.instanceId !== instanceId)
       );
     },
     []
   );
-
-  /**
-   * Toggle favorite status
-   */
-  const toggleFavorite = useCallback(
-    async (instanceId: string): Promise<void> => {
-      const target = caughtPokemon.find((p) => p.instanceId === instanceId);
-      if (!target) return;
-
-      const nextFav = !target.favorite;
-      await togglePokemonFavorite(instanceId, nextFav);
-      setCaughtPokemon((prev) =>
-        prev.map((p) => (p.instanceId === instanceId ? { ...p, favorite: nextFav } : p))
-      );
-    },
-    [caughtPokemon]
-  );
-
-  /**
-   * Reset all trainer data (for testing / development)
-   */
-  const resetTrainerData = useCallback(async () => {
-    try {
-      const db = await getDatabase();
-      await db.execAsync(`
-        DELETE FROM caught_pokemon;
-        DELETE FROM inventory;
-        DELETE FROM trainer_profile;
-      `);
-      await clearAuthSession();
-      await loadData();
-    } catch (error) {
-      console.error('[TrainerContext] Failed to reset data:', error);
-    }
-  }, [loadData]);
 
   const value: TrainerContextValue = {
     trainer,
     inventory,
     caughtPokemon,
     isLoading,
-    updateTrainer,
-    setTeam,
-    addExperience,
-    addStardust,
-    addPokeCoins,
-    useItem,
-    addItem,
+    isAuthenticated,
     catchPokemon,
     releasePokemon,
-    renamePokemon,
-    toggleFavorite,
-    refreshTrainerData: loadData,
-    resetTrainerData,
+    login,
+    register,
+    logout,
   };
 
-  return <TrainerContext.Provider value={value}>{children}</TrainerContext.Provider>;
+  return (
+    <TrainerContext.Provider value={value}>{children}</TrainerContext.Provider>
+  );
 }
 
 export function useTrainer(): TrainerContextValue {

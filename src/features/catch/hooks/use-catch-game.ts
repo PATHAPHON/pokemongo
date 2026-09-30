@@ -4,58 +4,46 @@ import * as Haptics from 'expo-haptics';
 
 import {
   capitalizePokemonName,
-  getKantoArtworkUrl,
+  getArtworkUrl,
+  getPokemonRarity,
 } from '@/shared/constants/kanto-pokemon';
-import { ThrowRatingColors } from '@/shared/constants/pokemon-theme';
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 import { useTrainer } from '@/shared/context/trainer-context';
-import { sendCatchNotification } from '@/shared/services/notifications';
-import { CaughtPokemon, PokemonTypeName } from '@/shared/types';
+import { CaughtPokemon, PokemonRarity, PokemonTypeName } from '@/shared/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export type CatchState = 'AIMING' | 'THROWN' | 'WOBBLING' | 'CAUGHT' | 'BREAKOUT';
+type CatchState = 'AIMING' | 'THROWN' | 'WOBBLING' | 'CAUGHT';
 
-export interface UseCatchGameParams {
+interface UseCatchGameParams {
   pokemonId: number;
   pokemonName: string;
-  pokemonCp: number;
+  pokemonRarity?: PokemonRarity;
   pokemonTypes: PokemonTypeName[];
 }
 
 export function useCatchGame({
   pokemonId,
   pokemonName,
-  pokemonCp,
+  pokemonRarity,
   pokemonTypes,
 }: UseCatchGameParams) {
-  const {
-    inventory,
-    useItem: consumeInventoryItem,
-    catchPokemon,
-    addExperience,
-    addStardust,
-  } = useTrainer();
+  const { catchPokemon } = useTrainer();
 
   const [gameState, setGameState] = useState<CatchState>('AIMING');
-  const [ratingMessage, setRatingMessage] = useState<string | null>(null);
 
   // Animation values using state for React 19 compliance
   const [floatAnim] = useState(() => new Animated.Value(0));
-  const [ringScaleAnim] = useState(() => new Animated.Value(1));
   const [ballX] = useState(() => new Animated.Value(0));
   const [ballY] = useState(() => new Animated.Value(0));
   const [ballScale] = useState(() => new Animated.Value(1));
   const [ballRotate] = useState(() => new Animated.Value(0));
   const [pokemonOpacity] = useState(() => new Animated.Value(1));
 
-  // Difficulty calculation
-  const catchDifficulty = Math.min(0.85, Math.max(0.2, pokemonCp / 600));
-  const ringColor =
-    catchDifficulty < 0.4
-      ? ThrowRatingColors.excellent
-      : catchDifficulty < 0.65
-      ? ThrowRatingColors.nice
-      : ThrowRatingColors.miss;
+  const rarity: PokemonRarity =
+    pokemonRarity ||
+    getPokemonMetaById(pokemonId)?.rarity ||
+    getPokemonRarity(pokemonId);
 
   // Floating bobbing animation
   useEffect(() => {
@@ -79,46 +67,12 @@ export function useCatchGame({
     return () => floatLoop.stop();
   }, [floatAnim]);
 
-  // Target ring shrinking loop
-  useEffect(() => {
-    if (gameState === 'AIMING') {
-      const ringLoop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(ringScaleAnim, {
-            toValue: 0.35,
-            duration: 1200,
-            easing: Easing.linear,
-            useNativeDriver: true,
-          }),
-          Animated.timing(ringScaleAnim, {
-            toValue: 1,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      ringLoop.start();
-      return () => ringLoop.stop();
-    }
-  }, [gameState, ringScaleAnim]);
-
-  // Reset ball to bottom center
-  const resetBall = useCallback(() => {
-    ballX.setValue(0);
-    ballY.setValue(0);
-    ballScale.setValue(1);
-    ballRotate.setValue(0);
-    pokemonOpacity.setValue(1);
-    setRatingMessage(null);
-    setGameState('AIMING');
-  }, [ballX, ballY, ballScale, ballRotate, pokemonOpacity]);
-
-  // Execute catch wobble sequence
+  // Execute catch wobble sequence - 100% Guaranteed Catch
   const startCatchWobble = useCallback(async () => {
     setGameState('WOBBLING');
     pokemonOpacity.setValue(0); // Pokemon absorbed into ball
 
-    const runShake = (count: number): Promise<boolean> => {
+    const runShake = (): Promise<boolean> => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       return new Promise((resolve) => {
         Animated.sequence([
@@ -143,81 +97,49 @@ export function useCatchGame({
       });
     };
 
-    const successThreshold = 1 - catchDifficulty + 0.35;
-    const isSuccess = Math.random() < successThreshold;
+    await new Promise((r) => setTimeout(r, 350));
+    await runShake();
+    await new Promise((r) => setTimeout(r, 250));
+    await runShake();
+    await new Promise((r) => setTimeout(r, 250));
+    await runShake();
 
-    await new Promise((r) => setTimeout(r, 400));
-    await runShake(1);
-    await new Promise((r) => setTimeout(r, 300));
-    await runShake(2);
-    await new Promise((r) => setTimeout(r, 300));
+    // 100% Catch Success
+    setGameState('CAUGHT');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+      () => {}
+    );
 
-    if (isSuccess) {
-      await runShake(3);
-      setGameState('CAUGHT');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      sendCatchNotification(capitalizePokemonName(pokemonName), pokemonCp);
+    const instanceId = `poke-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
-      const instanceId = `poke-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const newCaught: CaughtPokemon = {
+      instanceId,
+      pokemonId,
+      name: pokemonName,
+      nickname: capitalizePokemonName(pokemonName),
+      artwork: getArtworkUrl(pokemonId),
+      types: pokemonTypes,
+      rarity,
+      caughtAt: new Date().toISOString(),
+      favorite: false,
+    };
 
-      const newCaught: CaughtPokemon = {
-        instanceId,
-        pokemonId,
-        name: pokemonName,
-        nickname: capitalizePokemonName(pokemonName),
-        artwork: getKantoArtworkUrl(pokemonId),
-        types: pokemonTypes,
-        cp: pokemonCp,
-        level: Math.max(1, Math.round(pokemonCp / 40)),
-        iv: {
-          attack: Math.floor(Math.random() * 16),
-          defense: Math.floor(Math.random() * 16),
-          stamina: Math.floor(Math.random() * 16),
-        },
-        stats: [
-          { name: 'hp', baseStat: Math.max(20, Math.round(pokemonCp / 6)) },
-          { name: 'attack', baseStat: Math.max(20, Math.round(pokemonCp / 6)) },
-          { name: 'defense', baseStat: Math.max(20, Math.round(pokemonCp / 6)) },
-          { name: 'special-attack', baseStat: Math.max(20, Math.round(pokemonCp / 6)) },
-          { name: 'special-defense', baseStat: Math.max(20, Math.round(pokemonCp / 6)) },
-          { name: 'speed', baseStat: Math.max(20, Math.round(pokemonCp / 6)) },
-        ],
-        height: 10,
-        weight: 100,
-        caughtAt: new Date().toISOString(),
-        favorite: false,
-      };
-
-      await catchPokemon(newCaught);
-      await addExperience(120);
-      await addStardust(100);
-    } else {
-      setGameState('BREAKOUT');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-      pokemonOpacity.setValue(1);
-      setTimeout(() => {
-        resetBall();
-      }, 1500);
-    }
+    await catchPokemon(newCaught);
   }, [
     ballRotate,
-    catchDifficulty,
     catchPokemon,
-    addExperience,
-    addStardust,
     pokemonId,
     pokemonName,
-    pokemonCp,
     pokemonTypes,
     pokemonOpacity,
-    resetBall,
+    rarity,
   ]);
 
-  // PanResponder for swiping Pokéball
+  // PanResponder for swiping Pokéball (Infinite Pokéballs)
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => gameState === 'AIMING' && inventory.pokeballs > 0,
+        onStartShouldSetPanResponder: () => gameState === 'AIMING',
         onPanResponderMove: (_, gestureState) => {
           if (gameState !== 'AIMING') return;
           ballX.setValue(gestureState.dx * 0.4);
@@ -227,23 +149,10 @@ export function useCatchGame({
           if (gameState !== 'AIMING') return;
 
           if (gestureState.dy < -60) {
-            const hasBall = await consumeInventoryItem('pokeballs', 1);
-            if (!hasBall) {
-              resetBall();
-              return;
-            }
-
             setGameState('THROWN');
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-
-            const currentRingValue = (ringScaleAnim as any)._value || 0.6;
-            if (currentRingValue < 0.45) {
-              setRatingMessage('EXCELLENT!');
-            } else if (currentRingValue < 0.7) {
-              setRatingMessage('GREAT!');
-            } else {
-              setRatingMessage('NICE!');
-            }
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+              () => {}
+            );
 
             const targetY = -SCREEN_HEIGHT * 0.38;
             Animated.parallel([
@@ -267,22 +176,18 @@ export function useCatchGame({
               startCatchWobble();
             });
           } else {
-            Animated.spring(ballX, { toValue: 0, useNativeDriver: true }).start();
-            Animated.spring(ballY, { toValue: 0, useNativeDriver: true }).start();
+            Animated.spring(ballX, {
+              toValue: 0,
+              useNativeDriver: true,
+            }).start();
+            Animated.spring(ballY, {
+              toValue: 0,
+              useNativeDriver: true,
+            }).start();
           }
         },
       }),
-    [
-      gameState,
-      inventory.pokeballs,
-      ballX,
-      ballY,
-      ballScale,
-      consumeInventoryItem,
-      resetBall,
-      ringScaleAnim,
-      startCatchWobble,
-    ]
+    [gameState, ballX, ballY, ballScale, startCatchWobble]
   );
 
   const ballRotation = ballRotate.interpolate({
@@ -292,17 +197,13 @@ export function useCatchGame({
 
   return {
     gameState,
-    ratingMessage,
-    ringColor,
+    rarity,
     floatAnim,
-    ringScaleAnim,
     ballX,
     ballY,
     ballScale,
     ballRotation,
     pokemonOpacity,
-    inventory,
     panResponder,
-    resetBall,
   };
 }

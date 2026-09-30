@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokémon GO Mobile App — Course Curriculum Mapping (สัปดาห์ 2 ถึง 11)</title>
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #131b2e;
+      --bg-card-subtle: #0f1626;
+      --bg-box-1: #1e1b4b; /* Indigo for syllabus */
+      --bg-box-2: #064e3b; /* Emerald for Pokemon GO */
+      --bg-box-3: #1e293b; /* Slate for Code */
+      --border-color: #243049;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #38bdf8;
+      --accent-indigo: #818cf8;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #fb7185;
+      --code-bg: #050811;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* Presentation Deck Container */
+    .deck-container {
+      position: relative;
+      width: 100vw;
+      height: calc(100vh - 64px);
+      overflow: hidden;
+    }
+
+    /* Individual Slide */
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 24px 36px 16px 36px;
+      display: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      opacity: 1;
+      transform: translateY(0);
+      z-index: 10;
+    }
+
+    /* Header Bar within Slide */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .slide-title-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .week-badge {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #041226;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .slide-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .category-badge {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    /* 3-Column Comparison Layout */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr 1.15fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+      margin-bottom: 12px;
+    }
+
+    .col-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      overflow-y: auto;
+    }
+
+    .col-box.box-syllabus {
+      border-top: 3px solid var(--accent-indigo);
+      background: linear-gradient(180deg, rgba(30, 27, 75, 0.3) 0%, var(--bg-card) 100%);
+    }
+
+    .col-box.box-pokemon {
+      border-top: 3px solid var(--accent-emerald);
+      background: linear-gradient(180deg, rgba(6, 78, 59, 0.3) 0%, var(--bg-card) 100%);
+    }
+
+    .col-box.box-code {
+      border-top: 3px solid var(--primary);
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, var(--bg-card) 100%);
+    }
+
+    .col-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .col-header.indigo { color: var(--accent-indigo); }
+    .col-header.emerald { color: var(--accent-emerald); }
+    .col-header.cyan { color: var(--primary); }
+
+    /* Lists */
+    .item-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .item-list li {
+      position: relative;
+      padding-left: 16px;
+      color: var(--text-main);
+    }
+
+    .item-list li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .item-list.indigo li::before { color: var(--accent-indigo); }
+    .item-list.emerald li::before { color: var(--accent-emerald); }
+
+    /* File Path Tag */
+    .file-tag {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #7dd3fc;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 3px 7px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    /* Code Blocks */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      line-height: 1.4;
+      color: #e2e8f0;
+      overflow-x: auto;
+      white-space: pre;
+      flex: 1;
+    }
+
+    .code-keyword { color: #f472b6; }
+    .code-fn { color: #60a5fa; }
+    .code-type { color: #4ade80; }
+    .code-string { color: #fcd34d; }
+    .code-comment { color: #64748b; font-style: italic; }
+
+    /* Footer Checklist Bar */
+    .slide-footer-bar {
+      background: rgba(19, 27, 46, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+    }
+
+    .footer-label {
+      font-weight: 700;
+      color: var(--accent-amber);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .footer-checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      color: var(--text-muted);
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .check-icon {
+      color: var(--accent-emerald);
+      font-weight: bold;
+    }
+
+    /* Bottom Navigation Bar */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      height: 64px;
+      background: rgba(9, 13, 22, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 28px;
+      z-index: 100;
+    }
+
+    .nav-controls-left, .nav-controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 14px;
+      border-radius: 7px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .slide-counter {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      min-width: 110px;
+      text-align: center;
+    }
+
+    .slide-select {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 10px;
+      border-radius: 7px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .slide-select:focus {
+      border-color: var(--primary);
+    }
+
+    .kbd {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    /* Cover Slide Specific */
+    .cover-slide {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+      padding: 30px;
+    }
+
+    .cover-title {
+      font-size: 2.6rem;
+      font-weight: 800;
+      line-height: 1.2;
+      background: linear-gradient(135deg, #38bdf8 0%, #a78bfa 50%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      max-width: 840px;
+    }
+
+    .cover-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    .cover-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      max-width: 900px;
+      margin-top: 10px;
+    }
+
+    .cover-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-main);
+      transition: transform 0.15s ease;
+    }
+
+    .cover-item:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+
+    /* Print to PDF Overrides */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+
+      .nav-bar {
+        display: none !important;
+      }
+
+      .deck-container {
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      .slide {
+        display: flex !important;
+        opacity: 1 !important;
+        transform: none !important;
+        position: static !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        padding: 20px 24px !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+      }
+
+      .slide-header {
+        border-color: #cbd5e1 !important;
+      }
+
+      .slide-title {
+        color: #0f172a !important;
+      }
+
+      .col-box {
+        background: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+        color: #1e293b !important;
+        box-shadow: none !important;
+      }
+
+      .col-box.box-syllabus { border-top-color: #4f46e5 !important; }
+      .col-box.box-pokemon { border-top-color: #059669 !important; }
+      .col-box.box-code { border-top-color: #0284c7 !important; }
+
+      .code-block {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
+      }
+
+      .item-list li {
+        color: #334155 !important;
+      }
+
+      .slide-footer-bar {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Presentation Deck Container -->
+  <div class="deck-container">
+
+    <!-- SLIDE 0: COVER -->
+    <section class="slide active cover-slide" data-index="0">
+      <div class="week-badge">Curriculum Mapping &amp; Architecture Deck</div>
+      <h1 class="cover-title">Pokémon GO Mobile App</h1>
+      <p class="cover-subtitle">
+        การนำโจทย์หลักสูตร React Native + Expo (สัปดาห์ที่ 2 ถึง 11)<br>
+        มาประยุกต์สร้างเป็นแอปพลิเคชันเกมเสมือนจริงฉบับเต็ม พร้อมแผนที่และระบบจับโปเกมอน AR
+      </p>
+
+      <div class="cover-grid">
+        <div class="cover-item">W2: Cards &amp; Atomic UI</div>
+        <div class="cover-item">W3: 18 Types &amp; Grid</div>
+        <div class="cover-item">W4: Navigation Shell</div>
+        <div class="cover-item">W5: Trainer Context</div>
+        <div class="cover-item">W6: PokeAPI Client</div>
+        <div class="cover-item">W7: SQLite Persistence</div>
+        <div class="cover-item">W8: Secure Auth &amp; EAS</div>
+        <div class="cover-item">W9: AR Camera Catch</div>
+        <div class="cover-item">W10: GPS Spawns Map</div>
+        <div class="cover-item">W11: Alerts &amp; Deep Link</div>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 16px;">
+        กด <span class="kbd">→</span> หรือ <span class="kbd">Space</span> เพื่อเริ่มการนำเสนอ | กด <span class="kbd">F</span> เต็มจอ | กด <span class="kbd">Cmd + P</span> พิมพ์เป็น PDF
+      </div>
+    </section>
+
+    <!-- SLIDE 1: WEEK 2 -->
+    <section class="slide" data-index="1">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 2</span>
+          <h2 class="slide-title">Components, Props, State และ Events</h2>
+        </div>
+        <span class="category-badge">Core UI &amp; Atomic Components</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> สร้าง <code>EventCard</code> แสดงภาพ, ชื่อกิจกรรม และสถานที่</li>
+            <li><b>Data Type:</b> นิยาม <code>type CampusEvent</code> และ mock data</li>
+            <li><b>Interaction:</b> ปุ่ม Favorite บันทึก ID ลง <code>favoriteIds</code> state ผ่าน updater function</li>
+            <li><b>ความท้าทาย:</b> ห้าม mutate state เดิมตรงๆ และแยก UI ออกจาก data</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>แปลง EventCard สู่:</b>
+              <br>• <code>PokedexCard</code>: แสดงโปเกมอนในสารานุกรม (จับแล้ว vs ???)
+              <br>• <code>CaughtPokemonCard</code>: การ์ดโปเกมอนในกระเป๋า
+            </li>
+            <li><b>แปลง Favorite สู่:</b> ปุ่ม <code>onRelease</code> ปล่อยโปเกมอนคืนสู่ป่า และปุ่มแตะดู Stat เชิงลึก</li>
+            <li><b>Atomic UI เพิ่มเติม:</b> <code>TypeBadge</code> (ป้ายธาตุ 18 ชนิด) และ <code>RarityBadge</code> (Common/Rare/Ultra)</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/features/pokemon/components/caught-pokemon-card.tsx</span>
+          <div class="code-block"><span class="code-keyword">export function</span> <span class="code-fn">CaughtPokemonCard</span>({
+  pokemon,
+  onPress,
+  onRelease,
+  numColumns = 2,
+  isDark = <span class="code-keyword">false</span>,
+}: <span class="code-type">CaughtPokemonCardProps</span>) {
+  <span class="code-keyword">const</span> primaryType = pokemon.types[0] || <span class="code-string">'normal'</span>;
+  <span class="code-keyword">const</span> typeColor = PokemonTypeColors[primaryType];
+
+  <span class="code-keyword">return</span> (
+    <span class="code-keyword">&lt;</span><span class="code-type">TouchableOpacity</span> onPress={onPress}<span class="code-keyword">&gt;</span>
+      <span class="code-keyword">&lt;</span><span class="code-type">RarityBadge</span> rarity={pokemon.rarity} <span class="code-keyword">/&gt;</span>
+      <span class="code-keyword">&lt;</span><span class="code-type">Image</span> source={{ uri: pokemon.artworkUrl }} <span class="code-keyword">/&gt;</span>
+      <span class="code-keyword">&lt;</span><span class="code-type">Text</span><span class="code-keyword">&gt;</span>{pokemon.nickname || pokemon.name}<span class="code-keyword">&lt;/</span><span class="code-type">Text</span><span class="code-keyword">&gt;</span>
+      <span class="code-keyword">&lt;</span><span class="code-type">TypeBadge</span> type={primaryType} <span class="code-keyword">/&gt;</span>
+    <span class="code-keyword">&lt;/</span><span class="code-type">TouchableOpacity</span><span class="code-keyword">&gt;</span>
+  );
+}</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> ไร้ <code>any</code> ใน Type definitions</span>
+          <span class="check-item"><span class="check-icon">✓</span> ใช้ <code>instanceId</code> เป็น Key ไม่ใช้ Array Index</span>
+          <span class="check-item"><span class="check-icon">✓</span> State อัปเดตแบบ Immutable ด้วย <code>prev.filter()</code></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: WEEK 3 -->
+    <section class="slide" data-index="2">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 3</span>
+          <h2 class="slide-title">Styling และ Responsive Mobile UI</h2>
+        </div>
+        <span class="category-badge">Tokens &amp; Dynamic Layout</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> ทำ Responsive Grid สลับ 1 หรือ 2 คอลัมน์ด้วย <code>useWindowDimensions()</code></li>
+            <li><b>4 สถานะของรายการ:</b> Loading, Empty, Error, และ Ready</li>
+            <li><b>Safe Area:</b> เนื้อหาไม่ทับ Notch และ Home Bar ด้วย <code>react-native-safe-area-context</code></li>
+            <li><b>Accessibility:</b> ปุ่มมี Touch Target อย่างน้อย 44×44 pt</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>Responsive Multi-Grid:</b>
+              <br>• มือถือ: 2 คอลัมน์ (แสดงรูปตัวโต ชัดเจน)
+              <br>• แท็บเล็ต/เว็บ: 4 คอลัมน์ (คำนวณผ่าน <code>width &gt;= 720 ? 4 : 2</code>)
+            </li>
+            <li><b>Pokémon Design Tokens:</b> โทเค็นสี 18 ธาตุ (Fire, Water, Grass...) พร้อมโหมด Light/Dark</li>
+            <li><b>Web Mobile Container:</b> คุมหน้าจอบน Browser ไม่ให้บวม ล็อค Max-width 430px กึ่งกลางจอ</li>
+            <li><b>Empty State:</b> <code>PokemonEmptyState</code> แสดงปุ่มล้างตัวกรองและปุ่มพาไปจับ</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/app/(tabs)/pokemon.tsx</span>
+          <div class="code-block"><span class="code-keyword">const</span> { width } = <span class="code-fn">useWindowDimensions</span>();
+<span class="code-keyword">const</span> numColumns = width &gt;= 720 ? 4 : 2;
+
+<span class="code-keyword">&lt;</span><span class="code-type">FlatList</span>
+  key={<span class="code-string">`caught-grid-${numColumns}`</span>} <span class="code-comment">// Re-key เมื่อเปลี่ยนจำนวนคอลัมน์</span>
+  data={filteredPokemon}
+  keyExtractor={(item) =&gt; item.instanceId}
+  numColumns={numColumns}
+  renderItem={({ item }) =&gt; (
+    <span class="code-keyword">&lt;</span><span class="code-type">CaughtPokemonCard</span> pokemon={item} numColumns={numColumns} <span class="code-keyword">/&gt;</span>
+  )}
+  ListEmptyComponent={<span class="code-keyword">&lt;</span><span class="code-type">PokemonEmptyState</span> onReset={resetFilter} <span class="code-keyword">/&gt;</span>}
+<span class="code-keyword">/&gt;</span></div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> รายการใช้ FlatList พร้อม Re-keying เมื่อคอลัมน์เปลี่ยน</span>
+          <span class="check-item"><span class="check-icon">✓</span> ครอบ SafeAreaView ป้องกันชน status bar</span>
+          <span class="check-item"><span class="check-icon">✓</span> Contrast สีของ 18 ธาตุผ่านเกณฑ์อ่านง่าย</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: WEEK 4 -->
+    <section class="slide" data-index="3">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 4</span>
+          <h2 class="slide-title">Expo Router และ Navigation Architecture</h2>
+        </div>
+        <span class="category-badge">File-Based Routing &amp; Shell</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> Root Stack ครอบ Bottom Tabs <code>(tabs)</code></li>
+            <li><b>หน้ารายละเอียด:</b> แยก <code>events/[id].tsx</code> ออกนอก Tabs เพื่อให้เปิดทับ Tab bar</li>
+            <li><b>Parameter Passing:</b> ส่งเฉพาะ ID ผ่าน route ไม่ส่งก้อน Object ใหญ่</li>
+            <li><b>Deep Link:</b> รองรับ scheme <code>campusevents://events/:id</code></li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>Root Stack Shell:</b>
+              <br>• จัดการ Auth Guard (แยก Login ออกจากหน้าเกม)
+              <br>• เปิดหน้าจับโปเกมอน <code>catch.tsx</code> เป็น <b>Fullscreen Modal</b>
+              <br>• เปิดดูข้อมูล <code>pokemon/[id].tsx</code> เป็น Presentation Modal
+            </li>
+            <li><b>4 Bottom Tabs:</b>
+              <br>1. <code>index.tsx</code> (Map เรดาร์) | 2. <code>pokedex.tsx</code> (สารานุกรม)
+              <br>3. <code>pokemon.tsx</code> (กระเป๋า Bag) | 4. <code>profile.tsx</code> (โปรไฟล์เทรนเนอร์)
+            </li>
+            <li><b>Deep Link:</b> <code>pokemongo://catch</code> นำผู้เล่นเข้าสนามจับทันที</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/app/_layout.tsx</span>
+          <div class="code-block"><span class="code-keyword">&lt;</span><span class="code-type">Stack</span> screenOptions={{ headerShown: <span class="code-keyword">false</span> }}<span class="code-keyword">&gt;</span>
+  <span class="code-keyword">&lt;</span><span class="code-type">Stack.Protected</span> guard={!isAuthenticated}<span class="code-keyword">&gt;</span>
+    <span class="code-keyword">&lt;</span><span class="code-type">Stack.Screen</span> name=<span class="code-string">"login"</span> <span class="code-keyword">/&gt;</span>
+  <span class="code-keyword">&lt;/</span><span class="code-type">Stack.Protected</span><span class="code-keyword">&gt;</span>
+
+  <span class="code-keyword">&lt;</span><span class="code-type">Stack.Protected</span> guard={isAuthenticated}<span class="code-keyword">&gt;</span>
+    <span class="code-keyword">&lt;</span><span class="code-type">Stack.Screen</span> name=<span class="code-string">"(tabs)"</span> <span class="code-keyword">/&gt;</span>
+    <span class="code-keyword">&lt;</span><span class="code-type">Stack.Screen</span> name=<span class="code-string">"catch"</span> options={{ presentation: <span class="code-string">'fullScreenModal'</span> }} <span class="code-keyword">/&gt;</span>
+    <span class="code-keyword">&lt;</span><span class="code-type">Stack.Screen</span> name=<span class="code-string">"pokemon/[id]"</span> options={{ presentation: <span class="code-string">'modal'</span> }} <span class="code-keyword">/&gt;</span>
+  <span class="code-keyword">&lt;/</span><span class="code-type">Stack.Protected</span><span class="code-keyword">&gt;</span>
+<span class="code-keyword">&lt;/</span><span class="code-type">Stack</span><span class="code-keyword">&gt;</span></div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> ไม่มี NavigationContainer ซ้อนกับ Expo Router</span>
+          <span class="check-item"><span class="check-icon">✓</span> Dynamic Route รับเฉพาะ ID และ Fetch ข้อมูลสดจาก Hook</span>
+          <span class="check-item"><span class="check-icon">✓</span> Back button นำทางย้อนกลับได้ถูกต้องทุกหน้า</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: WEEK 5 -->
+    <section class="slide" data-index="4">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 5</span>
+          <h2 class="slide-title">Forms และ State Management</h2>
+        </div>
+        <span class="category-badge">Global Context &amp; Validation</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> ช่องค้นหากิจกรรม, ฟอร์มลงทะเบียนพร้อม Validation</li>
+            <li><b>State Placement:</b> จัดระดับ Local (useState), Complex (useReducer), Shared (Context)</li>
+            <li><b>Derived State:</b> ห้ามเก็บผลการกรองซ้ำซ้อนใน state</li>
+            <li><b>Form Resilience:</b> จัดการคีย์บอร์ดด้วย <code>KeyboardAvoidingView</code> และล็อก Submit</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>Global TrainerContext:</b> ดูแล State กลางของทั้งเกม (ระดับเลเวล, EXP, คลังบอล/เบอร์รี่, โปเกมอนที่จับได้) ผ่าน <code>useTrainer()</code></li>
+            <li><b>Derived Counts:</b> ใช้ <code>useMemo</code> สรุปจำนวนโปเกมอนตามระดับความหายาก (Common, Rare, Ultra) โดยไม่เก็บ state ซ้ำ</li>
+            <li><b>Pokedex Filter Bar:</b> Controlled Search Input พร้อมชิปกรอง Gen 1-3 และสถานะ จับแล้ว/ยังไม่จับ</li>
+            <li><b>Controlled Login Form:</b> ฟอร์มใน <code>login.tsx</code> ดักจับคีย์บอร์ดและล็อกปุ่มระหว่างส่งข้อมูล</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/shared/context/trainer-context.tsx</span>
+          <div class="code-block"><span class="code-keyword">export function</span> <span class="code-fn">useTrainer</span>(): <span class="code-type">TrainerContextValue</span> {
+  <span class="code-keyword">const</span> context = <span class="code-fn">useContext</span>(TrainerContext);
+  <span class="code-keyword">if</span> (!context) {
+    <span class="code-keyword">throw new</span> <span class="code-type">Error</span>(<span class="code-string">'useTrainer must be used within TrainerProvider'</span>);
+  }
+  <span class="code-keyword">return</span> context;
+}
+
+<span class="code-comment">// คำนวณ Derived State ในกระเป๋าโปเกมอน</span>
+<span class="code-keyword">const</span> filteredPokemon = <span class="code-fn">useMemo</span>(() =&gt; {
+  <span class="code-keyword">if</span> (selectedRarity === <span class="code-string">'all'</span>) <span class="code-keyword">return</span> caughtPokemon;
+  <span class="code-keyword">return</span> caughtPokemon.<span class="code-fn">filter</span>((p) =&gt; p.rarity === selectedRarity);
+}, [caughtPokemon, selectedRarity]);</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> ปราศจาก Derived state ที่จัดเก็บซ้ำซ้อนใน useState</span>
+          <span class="check-item"><span class="check-icon">✓</span> แสดง Error แจ้งเตือนใกล้ฟิลด์และล็อก Submit ป้องกันการกดเบิ้ล</span>
+          <span class="check-item"><span class="check-icon">✓</span> Context มี Guard แจ้งเตือนทันทีหากลืมครอบ Provider</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: WEEK 6 -->
+    <section class="slide" data-index="5">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 6</span>
+          <h2 class="slide-title">REST API และ Networking</h2>
+        </div>
+        <span class="category-badge">External API &amp; Resilient Client</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> เรียก REST API <code>/events</code> และ <code>/events/:id</code></li>
+            <li><b>Abstraction:</b> ตรวจสอบ <code>response.ok</code> และ validate JSON runtime ด้วย Type Guards</li>
+            <li><b>Cancellation:</b> ยกเลิกคำขอผ่าน <code>AbortController</code> เมื่อ Unmount หรือออกจากหน้า</li>
+            <li><b>UX:</b> ทำ Pull-to-refresh โดยไม่ให้รายการเดิมกระพริบหาย</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>PokeApiClient Singleton:</b> เชื่อมต่อ PokéAPI ดึงข้อมูลโปเกมอน Kanto 151 ตัว, Official Artwork HD, ค่า Base Stats, และชนิดธาตุ</li>
+            <li><b>Custom Data Hooks:</b> <code>usePokemonDetail(id)</code> และ <code>usePokedex()</code> ทำหน้าที่แยก Network Logic ออกจากหน้า Screen Shell</li>
+            <li><b>Offline Fallback Resilience:</b> หาก PokeAPI ตอบสนองช้า หรือผู้เล่นไม่มีเน็ต ระบบจะ Fallback ดึงข้อมูล Metadata จาก <code>pokemon-registry-data.ts</code> ทันที</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/shared/services/pokeapi/client.ts</span>
+          <div class="code-block"><span class="code-keyword">export class</span> <span class="code-type">PokeApiClient</span> {
+  <span class="code-keyword">async</span> <span class="code-fn">getPokemonDetail</span>(id: <span class="code-type">number</span>, signal?: <span class="code-type">AbortSignal</span>) {
+    <span class="code-keyword">try</span> {
+      <span class="code-keyword">const</span> res = <span class="code-keyword">await</span> <span class="code-fn">fetch</span>(<span class="code-string">`https://pokeapi.co/api/v2/pokemon/${id}`</span>, { signal });
+      <span class="code-keyword">if</span> (!res.ok) <span class="code-keyword">throw new</span> <span class="code-type">Error</span>(<span class="code-string">'Fetch failed'</span>);
+      <span class="code-keyword">return await</span> res.<span class="code-fn">json</span>();
+    } <span class="code-keyword">catch</span> (err) {
+      <span class="code-comment">// Fallback สู่ Registry ข้อมูลในเครื่องทันที</span>
+      <span class="code-keyword">return</span> <span class="code-fn">getLocalPokemonFallback</span>(id);
+    }
+  }
+}</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> Screen ไม่เรียก fetch ตรง (ทำงานผ่าน Service &amp; Hook 100%)</span>
+          <span class="check-item"><span class="check-icon">✓</span> มี Fallback ข้อมูลสำรอง แอปพลิเคชันไม่ Crash เมื่อออฟไลน์</span>
+          <span class="check-item"><span class="check-icon">✓</span> AbortController ยกเลิก Request เมื่อผู้เล่นกดปิดหน้าจอ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: WEEK 7 -->
+    <section class="slide" data-index="6">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 7</span>
+          <h2 class="slide-title">Local Storage และ Offline Applications</h2>
+        </div>
+        <span class="category-badge">Offline Persistence &amp; SQLite</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> เก็บ Favorites ลง AsyncStorage และทำ Event Cache ออฟไลน์</li>
+            <li><b>Storage Matrix:</b>
+              <br>• AsyncStorage: Key/Value ทั่วไป
+              <br>• SecureStore: Token และรหัสลับ
+              <br>• SQLite: ข้อมูลโครงสร้างตารางสัมพันธ์
+            </li>
+            <li><b>ความท้าทาย:</b> ปิดเน็ตแล้วเปิดแอปใหม่ ข้อมูลต้องยังอยู่และไม่ Crash</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>SQLite Production Database:</b> ใช้ <code>expo-sqlite</code> ผ่าน <code>DatabaseManager</code> สร้างฐานข้อมูลแบบออฟไลน์เต็มรูปแบบ</li>
+            <li><b>Relational Schema:</b>
+              <br>• <code>caught_pokemon</code>: ประวัติโปเกมอนที่จับได้ (ID, ค่า CP, เลเวล, วันที่จับ)
+              <br>• <code>trainer_inventory</code>: บันทึกสต็อกบอล (Pokeball, Great, Ultra) และผลเบอร์รี่
+              <br>• <code>trainer_profile</code>: สถิติการจับและค่า EXP
+            </li>
+            <li><b>100% Offline Gameplay:</b> ปิดเน็ตแล้วยังเปิดดูกระเป๋าและปล่อยโปเกมอนได้</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/shared/services/database/database-manager.ts</span>
+          <div class="code-block"><span class="code-keyword">await</span> db.<span class="code-fn">execAsync</span>(<span class="code-string">`
+  CREATE TABLE IF NOT EXISTS caught_pokemon (
+    instanceId TEXT PRIMARY KEY NOT NULL,
+    pokemonId INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    nickname TEXT,
+    cp INTEGER NOT NULL,
+    caughtAt TEXT NOT NULL,
+    rarity TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS trainer_inventory (
+    item_type TEXT PRIMARY KEY,
+    quantity INTEGER NOT NULL
+  );
+`</span>);</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> รีสตาร์ตแอปแล้วโปเกมอนและไอเทมในกระเป๋าไม่สูญหาย</span>
+          <span class="check-item"><span class="check-icon">✓</span> แยก Storage ชัดเจน (ไม่แอบเก็บ Auth Token ใน SQLite/AsyncStorage)</span>
+          <span class="check-item"><span class="check-icon">✓</span> รองรับ Schema Migration อัตโนมัติ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: WEEK 8 -->
+    <section class="slide" data-index="7">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 8</span>
+          <h2 class="slide-title">Authentication และ Mobile Security</h2>
+        </div>
+        <span class="category-badge">Secure Sessions &amp; Route Guards</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> บันทึก Token ใน SecureStore และฟื้นฟู Session ตอนเปิดแอป</li>
+            <li><b>Route Guards:</b> กั้นหน้าด้วย <code>Stack.Protected</code> ใน Expo Router</li>
+            <li><b>Dev Build:</b> ติดตั้ง <code>expo-dev-client</code> และสร้าง <code>eas.json</code></li>
+            <li><b>ความท้าทาย:</b> หน้าจอต้องไม่กะพริบก่อนตรวจสิทธิ์เสร็จ และ Logout ต้องล้างสะอาด</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>SecureStore Auth Service:</b> จัดเก็บ Session Token ของเทรนเนอร์ด้วย <code>expo-secure-store</code> ในระดับ Hardware Keychain</li>
+            <li><b>Protected Game Stack:</b> <code>_layout.tsx</code> ป้องกันไม่ให้บุคคลภายนอกเข้าหน้าแผนที่, กระเป๋า, และสนามจับ หากยังไม่ได้ยืนยันตัวตน</li>
+            <li><b>Seamless Restoration:</b> ตอนเปิดแอปจะเช็ค Token เงียบๆ หากถูกต้องจะเข้าสู่โลกโปเกมอนทันทีโดยไม่ต้องกรอกรหัสใหม่</li>
+            <li><b>EAS Development Build:</b> มีไฟล์ <code>eas.json</code> รองรับการสร้าง Native Build</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/shared/services/auth.ts</span>
+          <div class="code-block"><span class="code-keyword">import</span> * <span class="code-keyword">as</span> SecureStore <span class="code-keyword">from</span> <span class="code-string">'expo-secure-store'</span>;
+
+<span class="code-keyword">export async function</span> <span class="code-fn">restoreSessionState</span>() {
+  <span class="code-keyword">const</span> token = <span class="code-keyword">await</span> SecureStore.<span class="code-fn">getItemAsync</span>(<span class="code-string">'trainer_session_token'</span>);
+  <span class="code-keyword">if</span> (!token) <span class="code-keyword">return</span> { isAuthenticated: <span class="code-keyword">false</span> };
+
+  <span class="code-keyword">const</span> profile = <span class="code-keyword">await</span> <span class="code-fn">validateTokenWithApi</span>(token);
+  <span class="code-keyword">return</span> { isAuthenticated: <span class="code-keyword">true</span>, trainer: profile };
+}
+
+<span class="code-keyword">export async function</span> <span class="code-fn">clearAuthSession</span>() {
+  <span class="code-keyword">await</span> SecureStore.<span class="code-fn">deleteItemAsync</span>(<span class="code-string">'trainer_session_token'</span>);
+}</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> ไม่มี Token หรือ Password ปรากฏใน Source Code หรือ Console Log</span>
+          <span class="check-item"><span class="check-icon">✓</span> มี Loading Indicator กั้นหน้า ไม่กะพริบหน้าแอปก่อนเช็ค Token เสร็จ</span>
+          <span class="check-item"><span class="check-icon">✓</span> Logout ลบทั้ง Token ในเครื่องและล้าง Memory Context</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: WEEK 9 -->
+    <section class="slide" data-index="8">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 9</span>
+          <h2 class="slide-title">Camera, Image Picker และ Permissions</h2>
+        </div>
+        <span class="category-badge">Hardware AR &amp; Resilient Fallbacks</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> ถ่ายภาพหรือเลือกรูปกิจกรรมด้วย <code>expo-camera</code> และ <code>expo-image-picker</code></li>
+            <li><b>Permission UX:</b> ขอสิทธิ์เฉพาะเมื่อแตะใช้งาน (Just-in-Time) ห้ามขอตอนเปิดแอป</li>
+            <li><b>Lifecycle States:</b> แยก <code>granted</code>, <code>denied</code>, <code>canAskAgain</code>, และปุ่มเปิด Settings</li>
+            <li><b>ความท้าทาย:</b> แอปต้องไม่ Crash เมื่อผู้ใช้ปฏิเสธสิทธิ์</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>AR Catch Camera Arena:</b> ใช้ <code>CameraView</code> จาก <code>expo-camera</code> ฉายภาพโลกจริงเบื้องหลัง โดยมีโมเดลโปเกมอนลอยอยู่ตรงกลาง</li>
+            <li><b>Hardware Resilient Dual-Mode:</b>
+              <br>• มีปุ่มสวิตช์ Toggle AR ON / AR OFF
+              <br>• หากผู้เล่นปฏิเสธกล้อง หรือรันบน Simulator / Web ระบบจะสลับเป็นโหมด <b>Classic Meadow Field</b> (ทุ่งหญ้าอนิเมะ) อัตโนมัติ
+            </li>
+            <li><b>CameraPermissionGate:</b> ควบคุมคำขอสิทธิ์กล้องเฉพาะตอนเริ่มเปิดบอลจับ</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/features/catch/components/CameraPermissionGate.tsx</span>
+          <div class="code-block"><span class="code-keyword">export function</span> <span class="code-fn">CameraPermissionGate</span>({ isArActive, children }) {
+  <span class="code-keyword">const</span> [permission, requestPermission] = <span class="code-fn">useCameraPermissions</span>();
+
+  <span class="code-keyword">if</span> (!isArActive || !permission?.granted) {
+    <span class="code-comment">// Fallback สู่ทุ่งหญ้า Classic Meadow เมื่อไม่เปิด AR</span>
+    <span class="code-keyword">return</span> <span class="code-keyword">&lt;</span><span class="code-type">ClassicMeadowBackground</span> <span class="code-keyword">/&gt;</span>;
+  }
+
+  <span class="code-keyword">return</span> (
+    <span class="code-keyword">&lt;</span><span class="code-type">CameraView</span> style={StyleSheet.absoluteFill} facing=<span class="code-string">"back"</span><span class="code-keyword">&gt;</span>
+      {children}
+    <span class="code-keyword">&lt;/</span><span class="code-type">CameraView</span><span class="code-keyword">&gt;</span>
+  );
+}</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> แอปพลิเคชันไม่ Crash เมื่อผู้ใช้ปฏิเสธการเข้าถึงกล้อง</span>
+          <span class="check-item"><span class="check-icon">✓</span> ไม่ขอ Permission ตอนเปิดแอป (ขอเฉพาะตอนแตะเข้าสู่หน้าจับ)</span>
+          <span class="check-item"><span class="check-icon">✓</span> โหมด Classic Meadow ทำงานสมบูรณ์บน Web และจำลอง</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: WEEK 10 -->
+    <section class="slide" data-index="9">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 10</span>
+          <h2 class="slide-title">Location และ Native Maps</h2>
+        </div>
+        <span class="category-badge">Geolocation &amp; Procedural Spawning</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> ขอสิทธิ์ Foreground Location ด้วย <code>expo-location</code></li>
+            <li><b>แสดงผลแผนที่:</b> แสดง <code>MapView</code> และปักหมุด <code>Marker</code> สถานที่จัดงาน</li>
+            <li><b>การแยกแยะข้อมูล:</b> แยก Current User Location ออกจาก Venue Location (ปิด GPS ก็ต้องดูแผนที่งานได้)</li>
+            <li><b>ความท้าทาย:</b> จัดการค่าพิกัดเริ่มต้น และคุมการซูมแผนที่ไม่ให้กระตุก</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>GPS Spawning Radar Engine:</b> ระบบ <code>PokemonSpawnEngine</code> สุ่มเกิดโปเกมอนป่า 15 จุดรอบพิกัดจริงของผู้เล่นตามสมการ Haversine</li>
+            <li><b>Leaflet 2D Map (No Key Cost):</b> แสดงแผนที่ OSM ลื่นไหล พร้อมหัวลูกศรนำทางเทรนเนอร์ หมุนตามเข็มทิศจริง</li>
+            <li><b>Wild Marker Mechanics:</b>
+              <br>• แถบนับเวลาถอยหลัง (Active 60s) ก่อนโปเกมอนหนี
+              <br>• ออร่าแสงสีทองส่องประกายเมื่อเป็นตัวหายาก (Ultra Rare)
+            </li>
+            <li><b>Default Fallback:</b> หากไม่ให้สิทธิ์ GPS จะจำลองพิกัดใจกลางกรุงเทพฯ</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/features/map/services/spawn-engine.ts</span>
+          <div class="code-block"><span class="code-keyword">export class</span> <span class="code-type">PokemonSpawnEngine</span> {
+  <span class="code-fn">generateSpawns</span>(centerLat: <span class="code-type">number</span>, centerLng: <span class="code-type">number</span>): <span class="code-type">WildPokemonSpawn</span>[] {
+    <span class="code-keyword">const</span> spawns: <span class="code-type">WildPokemonSpawn</span>[] = [];
+    <span class="code-keyword">for</span> (<span class="code-keyword">let</span> i = 0; i &lt; 15; i++) {
+      <span class="code-keyword">const</span> { lat, lng } = <span class="code-fn">calculateOffset</span>(centerLat, centerLng, 250); <span class="code-comment">// รัศมี 250m</span>
+      spawns.<span class="code-fn">push</span>({
+        spawnId: <span class="code-string">`spawn-${Date.now()}-${i}`</span>,
+        pokemonId: <span class="code-fn">selectRandomPokemon</span>(),
+        latitude: lat,
+        longitude: lng,
+        expiresAt: Date.<span class="code-fn">now</span>() + 60000, <span class="code-comment">// อยู่ได้ 60 วินาที</span>
+      });
+    }
+    <span class="code-keyword">return</span> spawns;
+  }
+}</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> แผนที่แสดงผลได้แม้ไม่เปิด GPS (มี Fallback Coordinate ปลอดภัย)</span>
+          <span class="check-item"><span class="check-icon">✓</span> แตะที่หมุดโปเกมอนแล้วเปิดเข้าสู่หน้าจับกุมพร้อมส่ง ID ได้ทันที</span>
+          <span class="check-item"><span class="check-icon">✓</span> ไม่แอบขอ Background Location โดยไม่จำเป็น</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: WEEK 11 -->
+    <section class="slide" data-index="10">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สัปดาห์ที่ 11</span>
+          <h2 class="slide-title">Notifications และ Platform APIs</h2>
+        </div>
+        <span class="category-badge">Sensory Feedback &amp; Deep Link</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Syllabus -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">📋 โจทย์หลักสูตร (Campus Events)</div>
+          <ul class="item-list indigo">
+            <li><b>โจทย์ตั้งต้น:</b> ตั้งเวลา Local Notification เตือนก่อนกิจกรรมเริ่ม 30 นาที</li>
+            <li><b>Android Notification Channel:</b> กำหนดความสำคัญระดับ HIGH</li>
+            <li><b>Deep Link Integration:</b> เมื่อแตะการแจ้งเตือน ให้เปิดเข้าสู่หน้า <code>events/[id]</code></li>
+            <li><b>App Lifecycle:</b> รองรับทั้งขณะแอปปิดอยู่ (Cold Start) และขณะเปิดค้างอยู่</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: Pokemon GO -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">⚡ การประยุกต์ใช้ใน Pokémon GO</div>
+          <ul class="item-list emerald">
+            <li><b>Rare Spawn Radar Alerts:</b> เมื่อเรดาร์ตรวจพบโปเกมอนระดับ Ultra Rare หรือโปเกมอนที่ยังไม่เคยจับเกิดใกล้ตัว จะยิงแจ้งเตือนทันที</li>
+            <li><b>Android Channel <code>pokemon-spawns</code>:</b> พร้อมระบบเสียงสั่นกระตุ้นความตื่นเต้น</li>
+            <li><b>Deep Link Observer สู่ <code>/catch</code>:</b> แตะที่แถบ Notification แล้วแอปจะพุ่งตรงเข้าสู่สนามจับโปเกมอนตัวนั้นทันที</li>
+            <li><b>Haptics Sensory:</b> เชื่อมต่อ <code>expo-haptics</code> ให้เครื่องสั่นสมจริงตอนปาบอลและตอนลูกบอลสั่น Gotcha!</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Actual Code -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">💻 ตำแหน่งไฟล์ &amp; โค้ดจริง</div>
+          <span class="file-tag">src/app/_layout.tsx</span>
+          <div class="code-block"><span class="code-fn">useEffect</span>(() =&gt; {
+  <span class="code-comment">// Observer ดักจับการแตะ Notification เพื่อเปิดหน้าจับ</span>
+  <span class="code-keyword">const</span> sub = Notifications.<span class="code-fn">addNotificationResponseReceivedListener</span>(
+    (response) =&gt; {
+      <span class="code-keyword">const</span> pokemonId = response.notification.request.content.data.pokemonId;
+      <span class="code-keyword">if</span> (pokemonId) {
+        router.<span class="code-fn">replace</span>({
+          pathname: <span class="code-string">'/catch'</span>,
+          params: { id: <span class="code-type">String</span>(pokemonId) },
+        });
+      }
+    }
+  );
+  <span class="code-keyword">return</span> () =&gt; sub.<span class="code-fn">remove</span>();
+}, []);</div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🎯 DoD Verification:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> แตะแจ้งเตือนตอนปิดแอป (Cold Start) นำทางเข้าหน้าจับได้ถูกต้อง</span>
+          <span class="check-item"><span class="check-icon">✓</span> ป้องกันบั๊ก Fatal Error บน Expo Go Android SDK 53+ ด้วย Dynamic Require</span>
+          <span class="check-item"><span class="check-icon">✓</span> Payload มีเฉพาะ ID ปราศจากข้อมูลความลับ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: SUMMARY ARCHITECTURE -->
+    <section class="slide" data-index="11">
+      <header class="slide-header">
+        <div class="slide-title-group">
+          <span class="week-badge">สรุปภาพรวม</span>
+          <h2 class="slide-title">11-Week Architecture Synergy: Pokémon GO Mobile</h2>
+        </div>
+        <span class="category-badge">Complete Lego Block System</span>
+      </header>
+
+      <div class="comparison-grid">
+        <!-- Box 1: Architecture Layers -->
+        <div class="col-box box-syllabus">
+          <div class="col-header indigo">🏛️ เลเยอร์สถาปัตยกรรม (Architecture)</div>
+          <ul class="item-list indigo">
+            <li><b>Presentation (W2, W3):</b> Atomic Components (<code>TypeBadge</code>, <code>RarityBadge</code>) + 18 ธาตุ Design Tokens</li>
+            <li><b>Navigation (W4):</b> Stack Navigation ครอบ 4 Tabs Shell พร้อม Deep Linking</li>
+            <li><b>State &amp; Auth (W5, W8):</b> <code>TrainerContext</code> ดูแลกระเป๋าไอเทม และเข้ารหัส Token ใน SecureStore</li>
+            <li><b>Storage &amp; API (W6, W7):</b> <code>PokeApiClient</code> ดึงข้อมูล + <code>SQLite</code> เก็บคลังแบบออฟไลน์ถาวร</li>
+            <li><b>Native Hardware (W9, W10, W11):</b> กล้อง AR + แผนที่ GPS Radar + Notification ช่องทางด่วน</li>
+          </ul>
+        </div>
+
+        <!-- Box 2: OOP & Clean Code Patterns -->
+        <div class="col-box box-pokemon">
+          <div class="col-header emerald">🧩 รูปแบบโค้ด (Clean Design Patterns)</div>
+          <ul class="item-list emerald">
+            <li><b>Repository Pattern:</b> <code>PokemonRepository</code> และ <code>InventoryRepository</code> หุ้มคำสั่ง SQL ให้เรียกใช้สะดวก</li>
+            <li><b>Domain Game Engines:</b>
+              <br>• <code>PokemonSpawnEngine</code>: กฎฟิสิกส์การเกิดและการหมดเวลา
+              <br>• <code>CatchEngine</code>: อัตราคำนวณการจับ (Capture Rate, การปาบอล Curveball)
+            </li>
+            <li><b>Singleton Services:</b> <code>DatabaseManager</code> และ <code>NotificationManager</code> ดูแล Resource จุดเดียว</li>
+            <li><b>Lego Blocks UI:</b> แยกชิ้นส่วนอิสระ Screen Shell ใน <code>app/</code> จึงสั้นกระชับและอ่านง่ายที่สุด</li>
+          </ul>
+        </div>
+
+        <!-- Box 3: Production Readiness -->
+        <div class="col-box box-code">
+          <div class="col-header cyan">🚀 ผลลัพธ์ความพร้อมใช้งาน (Production)</div>
+          <span class="file-tag">task.md (30/30 Tasks Completed 100%)</span>
+          <div class="code-block"><span class="code-comment">// สรุปความคืบหน้าโครงการทั้ง 6 Milestones</span>
+[✓] M1: Types &amp; 18 Design Tokens (W1, W3)
+[✓] M2: PokeAPI, SQLite &amp; Trainer State (W5-W8)
+[✓] M3: Atomic UI Cards &amp; Modals (W2, W3, W5)
+[✓] M4: Stack &amp; Bottom Tab Shell (W4)
+[✓] M5: Procedural Map Spawning Engine (W10)
+[✓] M6: AR Catch, Haptics &amp; Notifications (W9, W11)
+
+<span class="code-comment">🎉 ผ่านการทดสอบครบทุกแพลตฟอร์ม: iOS, Android, Web</span></div>
+        </div>
+      </div>
+
+      <div class="slide-footer-bar">
+        <span class="footer-label">🖨️ การพิมพ์เป็นเอกสาร:</span>
+        <div class="footer-checks">
+          <span class="check-item"><span class="check-icon">✓</span> กด <b>Cmd + P</b> (Mac) หรือ <b>Ctrl + P</b> เพื่อบันทึกเป็น PDF สไลด์ละ 1 แผ่น A4 แนวนอน</span>
+          <span class="check-item"><span class="check-icon">✓</span> รองรับการกด <b>F</b> ขยายเต็มจอเพื่อนำเสนอต่อที่ประชุมหรือผู้ตรวจงาน</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <footer class="nav-bar">
+    <div class="nav-controls-left">
+      <button class="nav-btn" id="prevBtn" title="สไลด์ก่อนหน้า (Arrow Left)">
+        <span>←</span> ก่อนหน้า
+      </button>
+      <button class="nav-btn" id="nextBtn" title="สไลด์ถัดไป (Arrow Right / Space)">
+        ถัดไป <span>→</span>
+      </button>
+      <span class="slide-counter" id="slideCounter">สไลด์ 1 / 12</span>
+    </div>
+
+    <div class="nav-controls-right">
+      <select class="slide-select" id="slideSelect">
+        <option value="0">หน้าปก: Pokémon GO Showcase</option>
+        <option value="1">W2: Components &amp; Atomic UI</option>
+        <option value="2">W3: 18 Types &amp; Responsive Grid</option>
+        <option value="3">W4: Expo Router &amp; Tab Shell</option>
+        <option value="4">W5: Trainer Context &amp; Forms</option>
+        <option value="5">W6: PokeAPI &amp; Resilient Client</option>
+        <option value="6">W7: SQLite Database Persistence</option>
+        <option value="7">W8: SecureStore Auth &amp; EAS</option>
+        <option value="8">W9: AR Camera &amp; Meadow Fallback</option>
+        <option value="9">W10: GPS Spawns &amp; Leaflet Map</option>
+        <option value="10">W11: Alerts, Haptics &amp; Deep Link</option>
+        <option value="11">สรุปภาพรวม: Architecture Synergy</option>
+      </select>
+
+      <button class="nav-btn" id="fullscreenBtn" title="สลับเต็มจอ (F)">
+        ⛶ เต็มจอ
+      </button>
+      <button class="nav-btn" id="printBtn" title="พิมพ์เป็น PDF (Cmd+P)">
+        🖨️ PDF
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const slides = document.querySelectorAll('.slide');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const slideCounter = document.getElementById('slideCounter');
+      const slideSelect = document.getElementById('slideSelect');
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      const printBtn = document.getElementById('printBtn');
+
+      let currentIndex = 0;
+      const totalSlides = slides.length;
+
+      function updateSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= totalSlides) index = totalSlides - 1;
+
+        currentIndex = index;
+
+        slides.forEach((slide, i) => {
+          if (i === currentIndex) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        });
+
+        // Update Counter & Controls
+        slideCounter.textContent = `สไลด์ ${currentIndex + 1} / ${totalSlides}`;
+        slideSelect.value = currentIndex;
+        prevBtn.disabled = currentIndex === 0;
+        nextBtn.disabled = currentIndex === totalSlides - 1;
+
+        // Reset scroll position on active slide
+        slides[currentIndex].scrollTop = 0;
+      }
+
+      // Button events
+      prevBtn.addEventListener('click', () => updateSlide(currentIndex - 1));
+      nextBtn.addEventListener('click', () => updateSlide(currentIndex + 1));
+      slideSelect.addEventListener('change', (e) => updateSlide(parseInt(e.target.value, 10)));
+
+      // Fullscreen
+      fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      // Print
+      printBtn.addEventListener('click', () => {
+        window.print();
+      });
+
+      // Keyboard navigation
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+          case 'PageDown':
+          case ' ':
+            e.preventDefault();
+            updateSlide(currentIndex + 1);
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+          case 'PageUp':
+            e.preventDefault();
+            updateSlide(currentIndex - 1);
+            break;
+          case 'Home':
+            e.preventDefault();
+            updateSlide(0);
+            break;
+          case 'End':
+            e.preventDefault();
+            updateSlide(totalSlides - 1);
+            break;
+          case 'f':
+          case 'F':
+            e.preventDefault();
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+              document.exitFullscreen().catch(() => {});
+            }
+            break;
+        }
+      });
+
+      // Initialize
+      updateSlide(0);
+    })();
+  </script>
+</body>
+</html>

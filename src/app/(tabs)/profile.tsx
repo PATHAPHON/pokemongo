@@ -14,7 +14,6 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView
-      className="flex-1 bg-[#F4F6F8] dark:bg-[#121212]"
       style={{ flex: 1, backgroundColor: screenBg }}
       edges={['top']}
     >
@@ -28,12 +27,8 @@ export default function ProfileScreen() {
           paddingTop: 8,
           paddingBottom: 12,
         }}
-        className="px-4 pt-2 pb-3 bg-white dark:bg-[#1E1E1E] border-b border-[#E1E4E8] dark:border-neutral-800"
       >
-        <Text
-          style={{ fontSize: 24, fontWeight: '800', color: textColor }}
-          className="text-2xl font-extrabold text-[#11181C] dark:text-[#ECEDEE]"
-        >
+        <Text style={{ fontSize: 24, fontWeight: '800', color: textColor }}>
           Profile
         </Text>
       </View>

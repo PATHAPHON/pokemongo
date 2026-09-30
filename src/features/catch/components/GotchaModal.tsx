@@ -1,72 +1,137 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { capitalizePokemonName, getKantoArtworkUrl } from '@/shared/constants/kanto-pokemon';
+import {
+  capitalizePokemonName,
+  getArtworkUrl,
+  getPokemonRarity,
+} from '@/shared/constants/kanto-pokemon';
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
+import { PokemonRarity } from '@/shared/types';
+import { RarityBadge } from '@/shared/components/rarity-badge';
+import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 
-export interface GotchaModalProps {
+interface GotchaModalProps {
   pokemonId: number;
   pokemonName: string;
-  onSetNickname: () => void;
+  rarity?: PokemonRarity;
   onDone: () => void;
 }
 
 export function GotchaModal({
   pokemonId,
   pokemonName,
-  onSetNickname,
+  rarity,
   onDone,
 }: GotchaModalProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
+  const textColor = isDark ? '#ECEDEE' : '#11181C';
+  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const doneBtnBg = isDark ? '#2A2A2E' : '#F4F6F8';
+  const doneTextColor = isDark ? '#ECEDEE' : '#11181C';
+
+  const pokemonRarity: PokemonRarity =
+    rarity ||
+    getPokemonMetaById(pokemonId)?.rarity ||
+    getPokemonRarity(pokemonId);
+
   return (
-    <View className="absolute inset-0 bg-black/65 items-center justify-center z-50 p-6">
-      <View className="w-full max-w-[320px] bg-white dark:bg-[#1E1E1E] rounded-3xl p-6 items-center shadow-2xl">
-        <Ionicons name="sparkles" size={44} color="#F7D02C" />
-        <Text className="text-2xl font-black text-[#11181C] dark:text-[#ECEDEE] mt-2">
-          Gotcha!
-        </Text>
-        <Text className="text-sm text-[#687076] dark:text-[#9BA1A6] font-semibold text-center mt-1">
-          {capitalizePokemonName(pokemonName)} was caught!
-        </Text>
+    <Modal visible transparent animationType="fade" statusBarTranslucent>
+      <View style={styles.overlay}>
+        <View style={[styles.card, { backgroundColor: cardBg }]}>
+          <Ionicons name="sparkles" size={44} color="#F7D02C" />
+          <Text style={[styles.title, { color: textColor }]}>Gotcha!</Text>
+          <Text style={[styles.subtitle, { color: subTextColor }]}>
+            {capitalizePokemonName(pokemonName)} was caught!
+          </Text>
 
-        <Image
-          source={{ uri: getKantoArtworkUrl(pokemonId) }}
-          className="w-[100px] h-[100px] my-3"
-          contentFit="contain"
-        />
+          <Image
+            source={{ uri: getArtworkUrl(pokemonId) }}
+            style={styles.pokemonImage}
+            contentFit="contain"
+            transition={200}
+          />
 
-        <View className="flex-row gap-3 mb-5">
-          <View className="flex-row items-center bg-[#F4F6F8] dark:bg-neutral-800 px-3 py-1.5 rounded-xl gap-1.5">
-            <Ionicons name="ribbon" size={16} color="#007AFF" />
-            <Text className="text-[13px] font-bold text-[#11181C] dark:text-[#ECEDEE]">
-              +120 XP
-            </Text>
+          <View style={styles.badgeContainer}>
+            <RarityBadge rarity={pokemonRarity} />
           </View>
-          <View className="flex-row items-center bg-[#F4F6F8] dark:bg-neutral-800 px-3 py-1.5 rounded-xl gap-1.5">
-            <Ionicons name="star" size={16} color="#F7D02C" />
-            <Text className="text-[13px] font-bold text-[#11181C] dark:text-[#ECEDEE]">
-              +100 Stardust
-            </Text>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.secondaryButton, { backgroundColor: doneBtnBg }]}
+              activeOpacity={0.8}
+              onPress={onDone}
+            >
+              <Text
+                style={[styles.secondaryButtonText, { color: doneTextColor }]}
+              >
+                Returning to Map...
+              </Text>
+            </TouchableOpacity>
           </View>
-        </View>
-
-        <View className="w-full gap-2.5">
-          <TouchableOpacity
-            className="w-full h-11 rounded-xl bg-[#0A7EA4] items-center justify-center"
-            activeOpacity={0.8}
-            onPress={onSetNickname}
-          >
-            <Text className="text-white font-extrabold text-sm">Set Nickname</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="w-full h-11 rounded-xl bg-[#F4F6F8] dark:bg-neutral-800 items-center justify-center"
-            activeOpacity={0.8}
-            onPress={onDone}
-          >
-            <Text className="text-[#11181C] dark:text-[#ECEDEE] font-bold text-sm">Done</Text>
-          </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '900',
+    marginTop: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  pokemonImage: {
+    width: 140,
+    height: 140,
+    marginVertical: 12,
+  },
+  badgeContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  buttonContainer: {
+    width: '100%',
+    gap: 10,
+  },
+  secondaryButton: {
+    width: '100%',
+    height: 46,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    fontWeight: '700',
+    fontSize: 15,
+  },
+});

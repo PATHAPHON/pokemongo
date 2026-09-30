@@ -1,9 +1,23 @@
-import React, { useRef, useImperativeHandle, forwardRef, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, {
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { Coordinates, WildPokemon, INTERACTION_RADIUS_METERS } from '@/features/map/services/spawn-engine';
-import { getKantoArtworkUrl, capitalizePokemonName } from '@/shared/constants/kanto-pokemon';
+import {
+  Coordinates,
+  WildPokemon,
+} from '@/features/map/services/spawn-engine';
+import {
+  getArtworkUrl,
+  capitalizePokemonName,
+} from '@/shared/constants/kanto-pokemon';
 import { PokemonTypeColors } from '@/shared/constants/pokemon-theme';
 import { PokemonTypeName } from '@/shared/types';
 
@@ -13,15 +27,12 @@ export interface LeafletMapViewRef {
 
 interface Props {
   location: Coordinates;
-  heading: number | null;
   wildList: WildPokemon[];
   onCatch: (pokemon: WildPokemon) => void;
-  onSpawned?: (instanceId: string) => void;
   onExpired?: (instanceId: string) => void;
-  onTooFar?: (pokemon: WildPokemon, distance: number) => void;
 }
 
-const STATIC_MAP_HTML = `
+const createMapHtml = (initialLat: number, initialLng: number) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -36,7 +47,7 @@ const STATIC_MAP_HTML = `
     .spawn-spot { display: flex; flex-direction: column; align-items: center; user-select: none; }
     
     /* PENDING SPOT */
-    .pending-spot { cursor: default; }
+    .pending-spot { cursor: pointer; }
     .pending-circle {
       width: 44px;
       height: 44px;
@@ -139,12 +150,51 @@ const STATIC_MAP_HTML = `
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Smooth movement transitions */
+    /* Player Trainer Pin & Radar Pulse (Gyro-Free) */
     .player-marker-wrap {
-      transition: transform 0.35s linear;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    #player-rotator {
-      transition: transform 0.1s ease-out;
+    .player-pin-container {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .player-radar-wave {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(0, 122, 255, 0.18);
+      border: 1.5px solid rgba(0, 122, 255, 0.45);
+      animation: pulseRadar 2s infinite ease-out;
+    }
+    @keyframes pulseRadar {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    .player-avatar-circle {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #007AFF;
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      z-index: 3;
+    }
+    .player-avatar-center {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #FFFFFF;
     }
   </style>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -152,43 +202,50 @@ const STATIC_MAP_HTML = `
 <body>
   <div id="map"></div>
   <script>
-    var playerLat = 13.7466;
-    var playerLng = 100.5349;
-    var interactionRadius = ${INTERACTION_RADIUS_METERS};
+    var playerLat = ${initialLat};
+    var playerLng = ${initialLng};
     var mapReady = false;
 
-    // 100% Fixed 2D Map on player (no manual drag or zoom)
+    // Cross-platform postMessage helper (supports both Native WebView and Web Browser Iframe)
+    function postToParent(payload) {
+      var msg = JSON.stringify(payload);
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(msg);
+      } else if (window.parent && window.parent.postMessage) {
+        window.parent.postMessage(msg, '*');
+      }
+    }
+
+    // 2D Map fixed on player
     var map = L.map('map', {
       center: [playerLat, playerLng],
       zoom: 18.5,
       zoomSnap: 0.25,
       zoomControl: false,
       attributionControl: false,
-      dragging: false,
-      touchZoom: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
+      dragging: true,
+      touchZoom: true,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
       boxZoom: false,
       keyboard: false
     });
     window.map = map;
 
-    // 2D OpenStreetMap tiles (100% free, no API key required)
+    // OpenStreetMap tiles
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
     }).addTo(map);
 
-    // Google Maps Style Navigation Arrow with Forward Direction Beam
+    // Clean Trainer Pin Marker (No Gyroscope/Compass)
     var playerIcon = L.divIcon({
       className: 'player-marker-wrap',
-      html: '<div id="player-rotator" style="position:relative; width:64px; height:64px; display:flex; align-items:center; justify-content:center; transform:rotate(0deg); transform-origin:center center;">' +
-            '<div style="position:absolute; top:-12px; width:0; height:0; border-left:22px solid transparent; border-right:22px solid transparent; border-top:46px solid rgba(0, 122, 255, 0.28); border-radius:50% 50% 0 0; filter:blur(1px);"></div>' +
-            '<div style="position:absolute; width:44px; height:44px; border-radius:50%; background:rgba(0,122,255,0.18); border:1.5px solid rgba(0,122,255,0.5);"></div>' +
-            '<svg width="26" height="26" viewBox="0 0 24 24" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35)); z-index:3;">' +
-            '<path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="#007AFF" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round" />' +
-            '</svg></div>',
-      iconSize: [64, 64],
-      iconAnchor: [32, 32]
+      html: '<div class="player-pin-container">' +
+            '<div class="player-radar-wave"></div>' +
+            '<div class="player-avatar-circle"><div class="player-avatar-center"></div></div>' +
+            '</div>',
+      iconSize: [60, 60],
+      iconAnchor: [30, 30]
     });
 
     var playerMarker = L.marker([playerLat, playerLng], {
@@ -196,21 +253,11 @@ const STATIC_MAP_HTML = `
       zIndexOffset: 1000
     }).addTo(map);
 
-    // Smooth movement and continuous camera follow without snapping
-    window.updatePlayerLocation = function(lat, lng, heading) {
+    window.updatePlayerLocation = function(lat, lng) {
       playerLat = lat;
       playerLng = lng;
       if (playerMarker) playerMarker.setLatLng([lat, lng]);
-      
-      // Smooth animated pan matching Navigation GPS frequency
-      map.panTo([lat, lng], { animate: true, duration: 0.38, easeLinearity: 0.25 });
-      
-      if (heading !== null && heading !== undefined) {
-        var el = document.getElementById('player-rotator');
-        if (el) {
-          el.style.transform = 'rotate(' + heading + 'deg)';
-        }
-      }
+      map.panTo([lat, lng], { animate: true, duration: 0.4 });
     };
 
     var pokemonMarkers = {};
@@ -230,7 +277,7 @@ const STATIC_MAP_HTML = `
         var remainingSec = Math.max(0, Math.ceil((p.expiresAt - now) / 1000));
         var pct = Math.max(0, Math.min(100, (remainingSec / 60) * 100));
         var barColor = remainingSec <= 10 ? '#FF3B30' : (remainingSec <= 25 ? '#FF9500' : '#34C759');
-        return '<div class="spawn-spot active-spot" onclick="window.handlePokemonClick && window.handlePokemonClick(\\'' + p.instanceId + '\\')">' +
+        return '<div class="spawn-spot active-spot">' +
           '<div class="active-art-wrap">' +
           '<div class="glow-ring" style="background:' + p.typeColor + '"></div>' +
           '<img class="pokemon-img" src="' + p.artwork + '" />' +
@@ -246,12 +293,15 @@ const STATIC_MAP_HTML = `
       }
     }
 
-    window.handlePokemonClick = function(instanceId) {
-      var curr = currentSpawnsMap[instanceId];
-      if (curr && curr.status === 'ACTIVE' && window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CATCH', pokemon: curr }));
+    var lastCatchTime = 0;
+    function triggerCatch(pokemon) {
+      var now = Date.now();
+      if (now - lastCatchTime < 1000) return;
+      lastCatchTime = now;
+      if (pokemon && pokemon.status === 'ACTIVE') {
+        postToParent({ type: 'CATCH', pokemon: pokemon });
       }
-    };
+    }
 
     window.updateSpawns = function(spawns) {
       var activeIds = {};
@@ -284,9 +334,7 @@ const STATIC_MAP_HTML = `
           var m = L.marker([p.latitude, p.longitude], { icon: icon }).addTo(map);
           m.on('click', function() {
             var curr = currentSpawnsMap[p.instanceId];
-            if (curr && curr.status === 'ACTIVE' && window.ReactNativeWebView) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CATCH', pokemon: curr }));
-            }
+            triggerCatch(curr);
           });
           pokemonMarkers[p.instanceId] = m;
         }
@@ -303,13 +351,9 @@ const STATIC_MAP_HTML = `
         if (p.status === 'PENDING') {
           var remainingSec = Math.max(0, Math.ceil((p.spawnedAt - now) / 1000));
           var labelEl = document.getElementById('pending-time-' + id);
-          if (labelEl) {
-            labelEl.innerText = 'เกิดใน ' + remainingSec + 's';
-          }
+          if (labelEl) labelEl.innerText = 'เกิดใน ' + remainingSec + 's';
           if (remainingSec <= 0) {
-            if (window.ReactNativeWebView) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SPAWNED', instanceId: id }));
-            }
+            postToParent({ type: 'SPAWNED', instanceId: id });
           }
         } else if (p.status === 'ACTIVE') {
           var remainingSec = Math.max(0, Math.ceil((p.expiresAt - now) / 1000));
@@ -318,130 +362,202 @@ const STATIC_MAP_HTML = `
           var timeEl = document.getElementById('active-time-' + id);
           if (barEl) {
             barEl.style.width = pct + '%';
-            if (remainingSec <= 10) {
-              barEl.style.backgroundColor = '#FF3B30';
-            } else if (remainingSec <= 25) {
-              barEl.style.backgroundColor = '#FF9500';
-            } else {
-              barEl.style.backgroundColor = '#34C759';
-            }
+            barEl.style.backgroundColor = remainingSec <= 10 ? '#FF3B30' : (remainingSec <= 25 ? '#FF9500' : '#34C759');
           }
-          if (timeEl) {
-            timeEl.innerText = remainingSec + 's';
-          }
+          if (timeEl) timeEl.innerText = remainingSec + 's';
           if (remainingSec <= 0) {
-            if (window.ReactNativeWebView) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'EXPIRED', instanceId: id }));
-            }
+            postToParent({ type: 'EXPIRED', instanceId: id });
           }
         }
       }
     }, 1000);
 
+    // Cross-platform Message Listener for Web Iframe
+    window.addEventListener('message', function(event) {
+      try {
+        var data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && data.type === 'UPDATE_LOCATION') {
+          window.updatePlayerLocation(data.lat, data.lng);
+        } else if (data && data.type === 'UPDATE_SPAWNS') {
+          window.updateSpawns(data.spawns);
+        } else if (data && data.type === 'RECENTER') {
+          if (window.map) window.map.panTo([data.lat, data.lng], { animate: true, duration: 0.4 });
+        }
+      } catch (e) {}
+    });
+
     mapReady = true;
-    if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'READY' }));
-    }
+    postToParent({ type: 'READY' });
   </script>
 </body>
 </html>
 `;
 
-export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(function LeafletMapView(
-  { location, heading, wildList, onCatch, onSpawned, onExpired, onTooFar },
-  ref
-) {
-  const webViewRef = useRef<WebView | null>(null);
-  const [isReady, setIsReady] = useState(false);
-  const lastHeadingRef = useRef<number | null>(null);
-  const headingThrottleRef = useRef<number>(0);
+export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
+  function LeafletMapView({ location, wildList, onCatch, onExpired }, ref) {
+    const webViewRef = useRef<WebView | null>(null);
+    const iframeRef = useRef<any>(null);
+    const [isReady, setIsReady] = useState(false);
+    const lastCatchMsgTimeRef = useRef<number>(0);
 
-  // Memoize constant source so WebView NEVER reloads on state changes!
-  const htmlSource = useMemo(() => ({ html: STATIC_MAP_HTML }), []);
+    // Capture initial coordinates
+    const initialLocationRef = useRef<Coordinates>(location);
+    const htmlSource = useMemo(
+      () => ({
+        html: createMapHtml(
+          initialLocationRef.current.latitude,
+          initialLocationRef.current.longitude
+        ),
+      }),
+      []
+    );
 
-  useImperativeHandle(ref, () => ({
-    recenter: (coords: Coordinates) => {
-      const js = `if (window.map) { window.map.panTo([${coords.latitude}, ${coords.longitude}], { animate: true, duration: 0.4 }); } true;`;
-      webViewRef.current?.injectJavaScript(js);
-    },
-  }));
+    // Cross-platform script execution helper
+    const executeJs = useCallback((js: string, postObj?: any) => {
+      if (Platform.OS === 'web') {
+        try {
+          if (postObj && iframeRef.current?.contentWindow) {
+            iframeRef.current.contentWindow.postMessage(postObj, '*');
+          }
+          const win = iframeRef.current?.contentWindow;
+          if (win && win.eval) {
+            win.eval(js);
+          }
+        } catch {
+          // Ignore eval errors
+        }
+      } else {
+        webViewRef.current?.injectJavaScript(js);
+      }
+    }, []);
 
-  // Update Player location & heading via JS injection (throttled to 60fps)
-  useEffect(() => {
-    if (!isReady) return;
+    useImperativeHandle(ref, () => ({
+      recenter: (coords: Coordinates) => {
+        const js = `if (window.map) { window.map.panTo([${coords.latitude}, ${coords.longitude}], { animate: true, duration: 0.4 }); } true;`;
+        executeJs(js, {
+          type: 'RECENTER',
+          lat: coords.latitude,
+          lng: coords.longitude,
+        });
+      },
+    }));
 
-    const now = Date.now();
-    // Allow immediate location updates, throttle pure heading updates to max 25ms
-    if (now - headingThrottleRef.current < 25 && lastHeadingRef.current === heading) {
-      return;
-    }
-    headingThrottleRef.current = now;
-    lastHeadingRef.current = heading;
+    // Update Player location via JS injection and postMessage
+    useEffect(() => {
+      if (!isReady) return;
+      const js = `if (window.updatePlayerLocation) { window.updatePlayerLocation(${location.latitude}, ${location.longitude}); } true;`;
+      executeJs(js, {
+        type: 'UPDATE_LOCATION',
+        lat: location.latitude,
+        lng: location.longitude,
+      });
+    }, [location, isReady, executeJs]);
 
-    const js = `if (window.updatePlayerLocation) { window.updatePlayerLocation(${location.latitude}, ${location.longitude}, ${
-      heading !== null ? heading : 'null'
-    }); } true;`;
-    webViewRef.current?.injectJavaScript(js);
-  }, [location, heading, isReady]);
+    // Update Wild Pokémon markers
+    useEffect(() => {
+      if (!isReady) return;
 
-  // Update Wild Pokémon markers in WebView via JS injection
-  useEffect(() => {
-    if (!isReady) return;
-
-    const serializedSpawns = JSON.stringify(
-      wildList.map((p) => {
+      const formattedSpawns = wildList.map((p) => {
         const primaryType = (p.types[0] || 'normal') as PokemonTypeName;
         const color = PokemonTypeColors[primaryType]?.primary || '#A8A878';
         return {
           ...p,
-          artwork: getKantoArtworkUrl(p.id),
+          artwork: getArtworkUrl(p.id),
           displayName: capitalizePokemonName(p.name),
           typeColor: color,
         };
-      })
-    );
+      });
 
-    const js = `if (window.updateSpawns) { window.updateSpawns(${serializedSpawns}); } true;`;
-    webViewRef.current?.injectJavaScript(js);
-  }, [wildList, isReady]);
+      const serializedSpawns = JSON.stringify(formattedSpawns);
+      const js = `if (window.updateSpawns) { window.updateSpawns(${serializedSpawns}); } true;`;
+      executeJs(js, { type: 'UPDATE_SPAWNS', spawns: formattedSpawns });
+    }, [wildList, isReady, executeJs]);
 
-  return (
-    <View style={styles.container}>
-      <WebView
-        ref={webViewRef}
-        originWhitelist={['*']}
-        source={htmlSource}
-        style={styles.webview}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        scrollEnabled={false}
-        bounces={false}
-        overScrollMode="never"
-        onLoadEnd={() => {
-          setIsReady(true);
-        }}
-        onMessage={(event) => {
-          try {
-            const data = JSON.parse(event.nativeEvent.data);
-            if (data.type === 'READY') {
-              setIsReady(true);
-            } else if (data.type === 'CATCH') {
+    // Message handler for Web Iframe
+    useEffect(() => {
+      if (Platform.OS !== 'web') return;
+
+      const handleWebMessage = (event: MessageEvent) => {
+        try {
+          const data =
+            typeof event.data === 'string'
+              ? JSON.parse(event.data)
+              : event.data;
+          if (!data || typeof data !== 'object') return;
+
+          if (data.type === 'READY') {
+            setIsReady(true);
+          } else if (data.type === 'CATCH' && data.pokemon) {
+            const now = Date.now();
+            if (now - lastCatchMsgTimeRef.current > 1000) {
+              lastCatchMsgTimeRef.current = now;
               onCatch(data.pokemon);
-            } else if (data.type === 'SPAWNED') {
-              onSpawned?.(data.instanceId);
-            } else if (data.type === 'EXPIRED') {
-              onExpired?.(data.instanceId);
-            } else if (data.type === 'TOO_FAR') {
-              onTooFar?.(data.pokemon, data.distance);
             }
-          } catch {
-            // Ignore parse errors
+          } else if (data.type === 'EXPIRED') {
+            onExpired?.(data.instanceId);
           }
-        }}
-      />
-    </View>
-  );
-});
+        } catch {
+          // Ignore parsing errors
+        }
+      };
+
+      window.addEventListener('message', handleWebMessage);
+      return () => {
+        window.removeEventListener('message', handleWebMessage);
+      };
+    }, [onCatch, onExpired]);
+
+    // Render Web Iframe
+    if (Platform.OS === 'web') {
+      return (
+        <View style={styles.container}>
+          <iframe
+            ref={iframeRef}
+            srcDoc={htmlSource.html}
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            onLoad={() => setIsReady(true)}
+          />
+        </View>
+      );
+    }
+
+    // Render Native WebView (iOS / Android)
+    return (
+      <View style={styles.container}>
+        <WebView
+          ref={webViewRef}
+          originWhitelist={['*']}
+          source={htmlSource}
+          style={styles.webview}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          scrollEnabled={false}
+          bounces={false}
+          overScrollMode="never"
+          onLoadEnd={() => setIsReady(true)}
+          onMessage={(event) => {
+            try {
+              const data = JSON.parse(event.nativeEvent.data);
+              if (data.type === 'READY') {
+                setIsReady(true);
+              } else if (data.type === 'CATCH') {
+                const now = Date.now();
+                if (now - lastCatchMsgTimeRef.current > 1000) {
+                  lastCatchMsgTimeRef.current = now;
+                  onCatch(data.pokemon);
+                }
+              } else if (data.type === 'EXPIRED') {
+                onExpired?.(data.instanceId);
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }}
+        />
+      </View>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   container: {

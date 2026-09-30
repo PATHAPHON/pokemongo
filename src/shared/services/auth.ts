@@ -1,4 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
+import {
+  mockLoginApi,
+  mockRegisterApi,
+  AuthResponse,
+} from './auth-api';
 
 const SESSION_TOKEN_KEY = 'pokemon_go_session_token';
 const TRAINER_ID_KEY = 'pokemon_go_trainer_id';
@@ -10,7 +15,10 @@ async function setSecureItem(key: string, value: string): Promise<void> {
   try {
     await SecureStore.setItemAsync(key, value);
   } catch (error) {
-    console.warn(`[Auth] SecureStore setItem failed for key "${key}", falling back to memory:`, error);
+    console.warn(
+      `[Auth] SecureStore setItem failed for key "${key}", falling back to memory:`,
+      error
+    );
     memoryStorage.set(key, value);
   }
 }
@@ -21,7 +29,10 @@ async function getSecureItem(key: string): Promise<string | null> {
     if (value !== null) return value;
     return memoryStorage.get(key) ?? null;
   } catch (error) {
-    console.warn(`[Auth] SecureStore getItem failed for key "${key}", checking memory:`, error);
+    console.warn(
+      `[Auth] SecureStore getItem failed for key "${key}", checking memory:`,
+      error
+    );
     return memoryStorage.get(key) ?? null;
   }
 }
@@ -30,7 +41,10 @@ async function deleteSecureItem(key: string): Promise<void> {
   try {
     await SecureStore.deleteItemAsync(key);
   } catch (error) {
-    console.warn(`[Auth] SecureStore deleteItem failed for key "${key}":`, error);
+    console.warn(
+      `[Auth] SecureStore deleteItem failed for key "${key}":`,
+      error
+    );
   }
   memoryStorage.delete(key);
 }
@@ -62,4 +76,52 @@ export async function getActiveTrainerId(): Promise<string | null> {
 export async function clearAuthSession(): Promise<void> {
   await deleteSessionToken();
   await deleteSecureItem(TRAINER_ID_KEY);
+}
+
+// -------------------------------------------------------------
+// High-Level Authentication & Session Operations
+// -------------------------------------------------------------
+
+export type SessionState =
+  | { status: 'loading' }
+  | { status: 'anonymous' }
+  | { status: 'authenticated'; token: string; trainerId: string };
+
+export async function restoreSessionState(): Promise<SessionState> {
+  const token = await getSessionToken();
+  const trainerId = await getActiveTrainerId();
+
+  if (!token || !trainerId) {
+    return { status: 'anonymous' };
+  }
+
+  return {
+    status: 'authenticated',
+    token,
+    trainerId,
+  };
+}
+
+export async function loginWithCredentials(
+  username: string,
+  password: string
+): Promise<AuthResponse> {
+  const result = await mockLoginApi(username, password);
+  if (result.success && result.token && result.user) {
+    await saveSessionToken(result.token);
+    await saveActiveTrainerId(result.user.id);
+  }
+  return result;
+}
+
+export async function registerAccount(
+  username: string,
+  password: string
+): Promise<AuthResponse> {
+  const result = await mockRegisterApi(username, password);
+  if (result.success && result.token && result.user) {
+    await saveSessionToken(result.token);
+    await saveActiveTrainerId(result.user.id);
+  }
+  return result;
 }

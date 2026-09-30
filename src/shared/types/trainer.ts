@@ -14,17 +14,6 @@ export interface TrainerProfile {
   createdAt: string;
 }
 
-export type ItemCategory = 'ball' | 'berry' | 'potion' | 'revive' | 'special';
-
-export interface InventoryItem {
-  id: string;
-  name: string;
-  category: ItemCategory;
-  count: number;
-  description: string;
-  icon?: string;
-}
-
 export interface TrainerInventory {
   pokeballs: number;
   greatballs: number;

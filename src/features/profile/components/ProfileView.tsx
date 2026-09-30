@@ -1,47 +1,124 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTrainer } from '@/shared/context/trainer-context';
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
+import { useAppPermissions } from '../hooks/use-app-permissions';
+import { TrainerHeaderCard } from './TrainerHeaderCard';
+import { PermissionSettingsSection } from './PermissionSettingsSection';
 
 export function ProfileView() {
-  const { trainer } = useTrainer();
+  const { trainer, logout } = useTrainer();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+
+  const {
+    location,
+    notifications,
+    camera,
+    isLoading,
+    requestLocation,
+    requestNotifications,
+    requestCamera,
+    testNotification,
+    testDelayNotification,
+    openAppSettings,
+    resetAndRecheckPermissions,
+  } = useAppPermissions();
+
+  const handleLogout = () => {
+    Alert.alert('ออกจากระบบ', 'คุณต้องการออกจากระบบเทรนเนอร์ใช่หรือไม่?', [
+      { text: 'ยกเลิก', style: 'cancel' },
+      {
+        text: 'ออกจากระบบ',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+        },
+      },
+    ]);
+  };
 
   return (
-    <View
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}
-      className="flex-1 items-center justify-center p-6"
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
     >
-      <View
-        style={{
-          width: 96,
-          height: 96,
-          borderRadius: 48,
-          backgroundColor: isDark ? 'rgba(10, 126, 164, 0.2)' : 'rgba(10, 126, 164, 0.1)',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 16,
-        }}
-        className="w-24 h-24 rounded-full bg-[#0A7EA4]/10 items-center justify-center mb-4"
-      >
-        <Ionicons name="person" size={48} color="#0A7EA4" />
+      {/* 1. Trainer Profile Card */}
+      <TrainerHeaderCard trainer={trainer} isDark={isDark} />
+
+      {/* 2. App Permissions Configuration */}
+      <PermissionSettingsSection
+        location={location}
+        notifications={notifications}
+        camera={camera}
+        isLoading={isLoading}
+        isDark={isDark}
+        onRequestLocation={requestLocation}
+        onRequestNotifications={requestNotifications}
+        onRequestCamera={requestCamera}
+        onTestNotification={testNotification}
+        onTestDelayNotification={testDelayNotification}
+        onResetAndRecheck={resetAndRecheckPermissions}
+        onOpenAppSettings={openAppSettings}
+      />
+
+      {/* 3. Account & Security Logout */}
+      <View style={styles.logoutWrapper}>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="log-out-outline"
+            size={20}
+            color="#FFFFFF"
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.logoutButtonText}>ออกจากระบบ (Logout)</Text>
+        </TouchableOpacity>
       </View>
-      <Text
-        style={{ fontSize: 24, fontWeight: '900', color: textColor }}
-        className="text-2xl font-black text-[#11181C] dark:text-[#ECEDEE]"
-      >
-        {trainer?.name || 'Trainer Profile'}
-      </Text>
-      <Text
-        style={{ fontSize: 14, fontWeight: '500', color: subTextColor, marginTop: 4 }}
-        className="text-sm text-[#687076] dark:text-[#9BA1A6] font-medium mt-1"
-      >
-        Level {trainer?.level || 1} Trainer
-      </Text>
-    </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  logoutWrapper: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF3B30',
+    paddingVertical: 14,
+    borderRadius: 14,
+    shadowColor: '#FF3B30',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+});

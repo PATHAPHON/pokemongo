@@ -1,21 +1,20 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { capitalizePokemonName } from '@/shared/constants/kanto-pokemon';
-
+import { PokemonRarity } from '@/shared/types';
+import { RarityBadge } from '@/shared/components/rarity-badge';
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 
-export interface CatchHeaderProps {
+interface CatchHeaderProps {
   pokemonName: string;
-  pokemonCp: number;
-  ballCount: number;
+  rarity: PokemonRarity;
   onRunPress: () => void;
 }
 
 export function CatchHeader({
   pokemonName,
-  pokemonCp,
-  ballCount,
+  rarity,
   onRunPress,
 }: CatchHeaderProps) {
   const colorScheme = useColorScheme();
@@ -24,93 +23,98 @@ export function CatchHeader({
   const textColor = isDark ? '#ECEDEE' : '#11181C';
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingTop: 8,
-        zIndex: 30,
-      }}
-      className="flex-row justify-between items-center px-4 pt-2 z-30"
-    >
+    <View style={styles.container}>
+      {/* Run Button */}
       <TouchableOpacity
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 20,
-          gap: 4,
-        }}
-        className="flex-row items-center bg-black/45 px-3 py-1.5 rounded-full gap-1"
+        style={styles.runButton}
         activeOpacity={0.7}
         onPress={onRunPress}
+        accessibilityRole="button"
+        accessibilityLabel="Run from encounter"
       >
         <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }} className="text-white font-bold text-[13px]">
-          Run
-        </Text>
+        <Text style={styles.runText}>Run</Text>
       </TouchableOpacity>
 
-      <View
-        style={{
-          alignItems: 'center',
-          backgroundColor: pillBg,
-          paddingHorizontal: 16,
-          paddingVertical: 6,
-          borderRadius: 20,
-          elevation: 2,
-        }}
-        className="items-center bg-white/90 dark:bg-black/90 px-4 py-1.5 rounded-full shadow-sm"
-      >
-        <Text
-          style={{ fontSize: 16, fontWeight: '800', color: textColor }}
-          className="text-base font-extrabold text-[#11181C] dark:text-[#ECEDEE]"
-        >
+      {/* Center Target Info Pill */}
+      <View style={[styles.targetPill, { backgroundColor: pillBg }]}>
+        <Text style={[styles.targetName, { color: textColor }]}>
           {capitalizePokemonName(pokemonName)}
         </Text>
-        <View
-          style={{
-            backgroundColor: '#11181C',
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-            borderRadius: 6,
-            marginTop: 2,
-          }}
-          className="bg-[#11181C] px-2 py-0.5 rounded-lg mt-0.5"
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }} className="text-white text-[11px] font-extrabold">
-            CP {pokemonCp}
-          </Text>
-        </View>
+        <RarityBadge
+          rarity={rarity}
+          style={styles.rarityBadgeMargin}
+        />
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} className="flex-row items-center gap-2">
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: pillBg,
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 20,
-            gap: 6,
-          }}
-          className="flex-row items-center bg-white/90 dark:bg-black/90 px-3 py-1.5 rounded-full gap-1.5"
-        >
+      {/* Right Infinite Pokeball Pill */}
+      <View style={styles.rightGroup}>
+        <View style={[styles.countPill, { backgroundColor: pillBg }]}>
           <Ionicons name="disc" size={16} color="#FF3B30" />
-          <Text
-            style={{ color: textColor, fontWeight: '800', fontSize: 13 }}
-            className="text-[#11181C] dark:text-[#ECEDEE] font-extrabold text-[13px]"
-          >
-            {ballCount}
-          </Text>
+          <Text style={[styles.countText, { color: textColor }]}>∞</Text>
         </View>
       </View>
     </View>
   );
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    zIndex: 30,
+  },
+  runButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 4,
+  },
+  runText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  targetPill: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  targetName: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  rarityBadgeMargin: {
+    marginTop: 3,
+  },
+  rightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  countPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+    elevation: 2,
+  },
+  countText: {
+    fontWeight: '900',
+    fontSize: 15,
+  },
+});
