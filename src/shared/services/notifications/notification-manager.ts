@@ -476,7 +476,7 @@ export class NotificationManager {
       const p3 = shuffled[2 % shuffled.length];
       const p4 = shuffled[3 % shuffled.length];
 
-      // Round 1: 15 seconds after background
+      // Round 1: 25 seconds after background
       await this.notificationsModule.scheduleNotificationAsync({
         content: {
           title: `${formatRarityEmoji(p1.rarity)} พบ ${formatPokemonName(p1.name)} (${formatRarityLabel(p1.rarity)}) ตัวใหม่ใกล้ตัวคุณ!`,
@@ -486,19 +486,19 @@ export class NotificationManager {
           vibrate: [0, 500, 250, 500],
           data: {
             pokemonId: String(p1.id),
-            instanceId: `bg-spawn-15s-${Date.now()}`,
+            instanceId: `bg-spawn-25s-${Date.now()}`,
             type: 'wild-spawn',
           },
         },
         trigger: {
           type: 'timeInterval',
-          seconds: 15,
+          seconds: 25,
           repeats: false,
           ...(Platform.OS === 'android' ? { channelId: SPAWN_CHANNEL_ID } : {}),
         } as any,
       });
 
-      // Round 2: 1 minute (60s) after background
+      // Round 2: 50 seconds (25s + 25s) after background
       await this.notificationsModule.scheduleNotificationAsync({
         content: {
           title: `${formatRarityEmoji(p2.rarity)} พบ ${formatPokemonName(p2.name)} (${formatRarityLabel(p2.rarity)}) ตัวใหม่ใกล้ตัวคุณ!`,
@@ -508,19 +508,19 @@ export class NotificationManager {
           vibrate: [0, 500, 250, 500],
           data: {
             pokemonId: String(p2.id),
-            instanceId: `bg-spawn-60s-${Date.now()}`,
+            instanceId: `bg-spawn-50s-${Date.now()}`,
             type: 'wild-spawn',
           },
         },
         trigger: {
           type: 'timeInterval',
-          seconds: 60,
+          seconds: 50,
           repeats: false,
           ...(Platform.OS === 'android' ? { channelId: SPAWN_CHANNEL_ID } : {}),
         } as any,
       });
 
-      // Round 3: 5 minutes (300s) after background
+      // Round 3: 75 seconds (50s + 25s) after background
       await this.notificationsModule.scheduleNotificationAsync({
         content: {
           title: `${formatRarityEmoji(p3.rarity)} มีโปเกมอนตัวใหม่ระดับ ${formatRarityLabel(p3.rarity)} เกิดใกล้ตัว!`,
@@ -530,19 +530,19 @@ export class NotificationManager {
           vibrate: [0, 500, 250, 500],
           data: {
             pokemonId: String(p3.id),
-            instanceId: `bg-spawn-300s-${Date.now()}`,
+            instanceId: `bg-spawn-75s-${Date.now()}`,
             type: 'wild-spawn',
           },
         },
         trigger: {
           type: 'timeInterval',
-          seconds: 300,
+          seconds: 75,
           repeats: false,
           ...(Platform.OS === 'android' ? { channelId: SPAWN_CHANNEL_ID } : {}),
         } as any,
       });
 
-      // Round 4: 10 minutes (600s) after background
+      // Round 4: 100 seconds (75s + 25s) after background
       await this.notificationsModule.scheduleNotificationAsync({
         content: {
           title: `${formatRarityEmoji(p4.rarity)} พบ ${formatPokemonName(p4.name)} (${formatRarityLabel(p4.rarity)}) ตัวใหม่ใกล้ตัวคุณ!`,
@@ -552,13 +552,13 @@ export class NotificationManager {
           vibrate: [0, 500, 250, 500],
           data: {
             pokemonId: String(p4.id),
-            instanceId: `bg-spawn-600s-${Date.now()}`,
+            instanceId: `bg-spawn-100s-${Date.now()}`,
             type: 'wild-spawn',
           },
         },
         trigger: {
           type: 'timeInterval',
-          seconds: 600,
+          seconds: 100,
           repeats: false,
           ...(Platform.OS === 'android' ? { channelId: SPAWN_CHANNEL_ID } : {}),
         } as any,
