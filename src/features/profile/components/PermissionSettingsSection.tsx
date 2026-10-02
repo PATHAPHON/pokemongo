@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   View,
   Text,
@@ -64,7 +63,7 @@ export function PermissionSettingsSection({
             icon="location-sharp"
             iconBg="#007AFF"
             title="ตำแหน่ง GPS (Location)"
-            subtitle="ใช้ค้นหาโปเกมอนป่ารอบตัวตามพิกัดแผนที่จริง"
+            subtitle="ใช้ค้นหาพิกัดสถานที่จัดมีตอัปและคำนวณระยะทาง"
             permission={location}
             onPress={onRequestLocation}
             isDark={isDark}
@@ -74,7 +73,7 @@ export function PermissionSettingsSection({
             icon="notifications-sharp"
             iconBg="#FF9500"
             title="การแจ้งเตือน (Notifications)"
-            subtitle="แจ้งเตือนเมื่อมีโปเกมอนตัวใหม่หรือตัวหายากเกิดใกล้ตัว (Heads-up Banner)"
+            subtitle="แจ้งเตือนการเริ่มกิจกรรมมีตอัปและการแจ้งเตือนสำคัญ"
             permission={notifications}
             onPress={onRequestNotifications}
             isDark={isDark}
@@ -112,7 +111,7 @@ export function PermissionSettingsSection({
                     { color: isDark ? '#FBBF24' : '#B45309' },
                   ]}
                 >
-                  ทดสอบการแจ้งเตือนระบบ (System Alerts)
+                  ทดสอบการแจ้งเตือนมีตอัป (Event Alerts)
                 </Text>
                 <Text
                   style={[
@@ -120,7 +119,7 @@ export function PermissionSettingsSection({
                     { color: isDark ? '#D1D5DB' : '#78350F' },
                   ]}
                 >
-                  แถบแจ้งเตือนด้านนอกแอปและหน้าจอล็อก (Heads-up Banner)
+                  ทดสอบส่งการแจ้งเตือนเตือนความจำกิจกรรมมีตอัป (Heads-up Banner)
                 </Text>
               </View>
             </View>
@@ -136,7 +135,7 @@ export function PermissionSettingsSection({
               >
                 <Ionicons name="flash" size={14} color="#FFFFFF" />
                 <Text style={styles.testActionBtnText}>
-                  ⚡ ยิงทันที (ทดสอบเสียงและสั่น)
+                  ⚡ ทดสอบเตือนกิจกรรมทันที
                 </Text>
               </TouchableOpacity>
 
@@ -164,7 +163,7 @@ export function PermissionSettingsSection({
                       { color: isDark ? '#FBBF24' : '#B45309' },
                     ]}
                   >
-                    ⏱️ ใน 5 วิ (สลับไปแอปอื่น / ล็อคหน้าจอ)
+                    ⏱️ เตือนกิจกรรมใน 5 วิ (สลับไปแอปอื่น / ล็อคหน้าจอ)
                   </Text>
                 </TouchableOpacity>
               )}

@@ -3,12 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { isRunningInExpoGo } from 'expo';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
-import {
-  getPokemonMetaById,
-  getAllPokemonMeta,
-} from '@/shared/services/pokemon-registry';
-import { getPokemonRarity } from '@/shared/constants/kanto-pokemon';
-import { PokemonRarity } from '@/shared/types';
+import { getAllPokemonMeta } from '@/shared/services/pokemon-registry';
 
 function formatRarityLabel(rarity?: string): string {
   if (rarity === 'ultra_rare') return 'Ultra Rare';
@@ -28,6 +23,7 @@ function formatPokemonName(name: string): string {
 }
 
 const SPAWN_CHANNEL_ID = 'pokemon-wild-alerts';
+const EVENT_REMINDER_CHANNEL_ID = 'campus-event-reminders';
 const OLD_CHANNEL_IDS = ['pokemon-spawns', 'pokemon-spawns-v2'];
 const NOTIFICATION_PREF_KEY = 'pokemon_go_notifications_enabled';
 
@@ -129,21 +125,18 @@ export class NotificationManager {
           }
         }
       }
+
       await this.notificationsModule.setNotificationChannelAsync(
-        SPAWN_CHANNEL_ID,
+        EVENT_REMINDER_CHANNEL_ID,
         {
-          name: 'การแจ้งเตือนโปเกมอนป่า',
-          importance: this.notificationsModule.AndroidImportance.MAX,
+          name: 'เตือนความจำกิจกรรมมหาวิทยาลัย',
+          importance: this.notificationsModule.AndroidImportance.HIGH,
           lockscreenVisibility:
             this.notificationsModule.AndroidNotificationVisibility.PUBLIC,
-          bypassDnd: true,
           enableLights: true,
-          lightColor: '#FFCB05',
+          lightColor: '#8B5CF6',
           enableVibrate: true,
-          vibrationPattern: [0, 500, 250, 500],
-          // No `sound` key: native falls back to DEFAULT_NOTIFICATION_URI.
-          // Passing sound: 'default' would only trigger a false
-          // "custom sound not found" error log for the same result.
+          vibrationPattern: [0, 400, 200, 400],
         }
       );
     } catch {
@@ -154,7 +147,6 @@ export class NotificationManager {
 
   public async ensurePermission(): Promise<boolean> {
     if (!this.notificationsModule) {
-      await this.setEnabled(true);
       return true;
     }
 
@@ -170,14 +162,9 @@ export class NotificationManager {
         finalStatus = status;
       }
 
-      const granted = finalStatus === 'granted';
-      if (granted) {
-        await this.setEnabled(true);
-      }
-      return granted;
+      return finalStatus === 'granted';
     } catch (error) {
       console.warn('[NotificationManager] Failed to ensure permission:', error);
-      await this.setEnabled(true);
       return true;
     }
   }
@@ -188,10 +175,9 @@ export class NotificationManager {
     canAskAgain: boolean;
   }> {
     if (!this.notificationsModule) {
-      const enabled = await this.isEnabled();
       return {
-        granted: enabled,
-        status: enabled ? 'granted' : 'undetermined',
+        granted: false,
+        status: 'undetermined',
         canAskAgain: true,
       };
     }
@@ -203,31 +189,12 @@ export class NotificationManager {
         canAskAgain: res.canAskAgain,
       };
     } catch {
-      const enabled = await this.isEnabled();
       return {
-        granted: enabled,
-        status: enabled ? 'granted' : 'denied',
+        granted: false,
+        status: 'denied',
         canAskAgain: false,
       };
     }
-  }
-
-  public async isEnabled(): Promise<boolean> {
-    const pref = await this.getStoredPref(NOTIFICATION_PREF_KEY);
-    if (pref === null) {
-      if (!this.notificationsModule) return false;
-      try {
-        const { status } = await this.notificationsModule.getPermissionsAsync();
-        return status === 'granted';
-      } catch {
-        return false;
-      }
-    }
-    return pref === 'true';
-  }
-
-  public async setEnabled(enabled: boolean): Promise<void> {
-    await this.setStoredPref(NOTIFICATION_PREF_KEY, enabled ? 'true' : 'false');
   }
 
   public async resetPreferences(): Promise<void> {
@@ -235,70 +202,6 @@ export class NotificationManager {
       await SecureStore.deleteItemAsync(NOTIFICATION_PREF_KEY);
     } catch {
       this.memoryStorage.delete(NOTIFICATION_PREF_KEY);
-    }
-  }
-
-  public async sendSpawn(
-    pokemonName: string,
-    pokemonId: number,
-    rarityOrIsNew?: PokemonRarity | boolean,
-    instanceId?: string
-  ): Promise<void> {
-    const enabled = await this.isEnabled();
-    if (!enabled) return;
-
-    let rarity: PokemonRarity = 'common';
-    if (typeof rarityOrIsNew === 'string') {
-      rarity = rarityOrIsNew as PokemonRarity;
-    } else {
-      const meta = getPokemonMetaById(pokemonId);
-      rarity =
-        (meta?.rarity as PokemonRarity) ||
-        getPokemonRarity(pokemonId) ||
-        'common';
-    }
-
-    const rarityLabel = formatRarityLabel(rarity);
-    const emoji = formatRarityEmoji(rarity);
-    const formattedName = formatPokemonName(pokemonName);
-
-    const title = `${emoji} New ${rarityLabel} Pokémon Nearby!`;
-    const body = `An uncaught ${formattedName} (${rarityLabel}) appeared nearby! Tap to catch it!`;
-
-    // 1. Always trigger haptic vibration
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {}
-      );
-    } catch {
-      // ignore
-    }
-
-    // 2. Dispatch native system notification
-    if (this.notificationsModule) {
-      try {
-        await this.setupChannels();
-        await this.notificationsModule.scheduleNotificationAsync({
-          content: {
-            title,
-            body,
-            sound: true,
-            priority: 'max',
-            vibrate: [0, 500, 250, 500],
-            data: {
-              pokemonId: String(pokemonId),
-              instanceId: instanceId ?? '',
-            },
-          },
-          trigger:
-            Platform.OS === 'android' ? { channelId: SPAWN_CHANNEL_ID } : null,
-        });
-      } catch (error) {
-        console.warn(
-          '[NotificationManager] Failed to send spawn notification:',
-          error
-        );
-      }
     }
   }
 
@@ -438,8 +341,8 @@ export class NotificationManager {
       );
       return;
     }
-    const enabled = await this.isEnabled();
-    if (!enabled) {
+    const { granted } = await this.getPermissionStatus();
+    if (!granted) {
       console.log(
         '[NotificationManager] Background notifications skipped: alerts disabled or permission not granted'
       );
@@ -583,8 +486,78 @@ export class NotificationManager {
     }
   }
 
+  public async scheduleEventReminder(
+    eventId: string,
+    title: string,
+    startsAt: string,
+    minutesBefore: number = 15
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
+    if (!this.notificationsModule) {
+      return { success: false, error: 'โมดูลการแจ้งเตือนไม่พร้อมใช้งาน' };
+    }
+    const granted = await this.ensurePermission();
+    if (!granted) {
+      return { success: false, error: 'ยังไม่ได้รับสิทธิ์การแจ้งเตือน' };
+    }
+
+    try {
+      await this.setupChannels();
+      const startTime = new Date(startsAt).getTime();
+      const triggerTime = startTime - minutesBefore * 60 * 1000;
+      const now = Date.now();
+
+      // If event starts soon or time calculation gives past, schedule in 5s for demo
+      let triggerSeconds = Math.max(5, Math.floor((triggerTime - now) / 1000));
+      if (triggerTime <= now) {
+        triggerSeconds = 5;
+      }
+
+      const notifId = await this.notificationsModule.scheduleNotificationAsync({
+        content: {
+          title: `📅 เตือนกิจกรรม: ${title}`,
+          body: `กิจกรรมกำลังจะเริ่มในอีก ${minutesBefore} นาที แตะเพื่อดูรายละเอียดและเตรียมตัว`,
+          sound: true,
+          priority: 'max',
+          vibrate: [0, 400, 200, 400],
+          data: {
+            eventId: String(eventId),
+            type: 'event-reminder',
+          },
+        },
+        trigger: {
+          type: 'timeInterval',
+          seconds: triggerSeconds,
+          repeats: false,
+          ...(Platform.OS === 'android'
+            ? { channelId: EVENT_REMINDER_CHANNEL_ID }
+            : {}),
+        } as any,
+      });
+
+      return { success: true, id: notifId };
+    } catch (err: any) {
+      console.warn('[NotificationManager] scheduleEventReminder failed:', err);
+      return {
+        success: false,
+        error: err?.message || 'ตั้งการแจ้งเตือนไม่สำเร็จ',
+      };
+    }
+  }
+
+  public async cancelEventReminder(notificationId: string): Promise<void> {
+    if (!this.notificationsModule || !notificationId) return;
+    try {
+      await this.notificationsModule.cancelScheduledNotificationAsync(
+        notificationId
+      );
+    } catch (err) {
+      console.warn('[NotificationManager] cancelEventReminder failed:', err);
+    }
+  }
+
   public registerTapListener(
-    onNavigateToCatch: (pokemonId: number) => void
+    onNavigateToCatch: (pokemonId: number) => void,
+    onNavigateToEvent?: (eventId: string) => void
   ): () => void {
     if (!this.notificationsModule) {
       return () => {};
@@ -598,7 +571,12 @@ export class NotificationManager {
       if (actionId && actionId !== mod.DEFAULT_ACTION_IDENTIFIER) {
         return;
       }
-      const rawId = response.notification?.request?.content?.data?.pokemonId;
+      const data = response.notification?.request?.content?.data;
+      if (data?.eventId && onNavigateToEvent) {
+        onNavigateToEvent(String(data.eventId));
+        return;
+      }
+      const rawId = data?.pokemonId;
       if (rawId) {
         const parsedId = parseInt(String(rawId), 10);
         if (!isNaN(parsedId) && parsedId > 0) {
@@ -627,5 +605,6 @@ export class NotificationManager {
     }
   }
 }
+
 
 export const defaultNotificationManager = NotificationManager.getInstance();

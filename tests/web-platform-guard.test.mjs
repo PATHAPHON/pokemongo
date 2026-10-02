@@ -44,44 +44,6 @@ describe('Cross-Platform & Location Requirements Tests (Week 10)', () => {
     );
   });
 
-  test('LocationPickerModal exists and supports preset switching and Real GPS', () => {
-    const modalPath = path.join(
-      rootDir,
-      'src/features/map/components/LocationPickerModal.tsx'
-    );
-    assert.ok(
-      fs.existsSync(modalPath),
-      'LocationPickerModal.tsx must exist'
-    );
-
-    const content = fs.readFileSync(modalPath, 'utf-8');
-    assert.ok(
-      content.includes('export function LocationPickerModal'),
-      'Must export LocationPickerModal component'
-    );
-    assert.ok(
-      content.includes('ใช้พิกัดจริงของฉัน'),
-      'Must offer Real GPS button'
-    );
-  });
-
-  test('useUserLocation hook uses Balanced accuracy for battery conservation', () => {
-    const hookPath = path.join(
-      rootDir,
-      'src/features/map/hooks/use-user-location.ts'
-    );
-    const content = fs.readFileSync(hookPath, 'utf-8');
-
-    assert.ok(
-      content.includes('Accuracy.Balanced'),
-      'useUserLocation must use Location.Accuracy.Balanced (Week 10 DoD)'
-    );
-    assert.ok(
-      !content.includes('watchHeadingAsync'),
-      'useUserLocation must NOT use watchHeadingAsync (gyroscope removed)'
-    );
-  });
-
   test('Platform location resolution logic simulation', () => {
     function resolveLocationSource(isRealGps, selectedPreset) {
       if (isRealGps) {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { PokemonRarity, PokemonTypeName } from '@/shared/types';

@@ -90,7 +90,9 @@ export async function mockLoginApi(
  */
 export async function mockRegisterApi(
   username: string,
-  password: string
+  password: string,
+  studentId?: string,
+  faculty?: string
 ): Promise<AuthResponse> {
   await delay(500);
 
@@ -145,6 +147,8 @@ export async function mockRegisterApi(
       stardust: 1000,
       pokeCoins: 100,
       starterPokemonId: 25,
+      studentId: studentId?.trim() || undefined,
+      faculty: faculty?.trim() || undefined,
       createdAt: nowIso,
     };
     await saveStoredTrainerProfile(newProfile);

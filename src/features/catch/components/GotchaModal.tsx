@@ -1,4 +1,3 @@
-import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -69,7 +68,7 @@ export function GotchaModal({
               <Text
                 style={[styles.secondaryButtonText, { color: doneTextColor }]}
               >
-                Returning to Map...
+                กลับสู่มีตอัป...
               </Text>
             </TouchableOpacity>
           </View>

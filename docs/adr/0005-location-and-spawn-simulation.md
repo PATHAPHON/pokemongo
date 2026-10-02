@@ -29,3 +29,10 @@
   - สามารถสลับไปใช้ GPS จริงได้อัตโนมัติเมื่อนำไปเปิดบนมือถือกลางแจ้ง
 - **ข้อพิจารณา:**
   - บน Expo Web หรือกรณีไม่มี Google Maps API Key ให้ตั้งค่าใช้ OpenStreetMap / Apple Maps ตามแพลตฟอร์มมาตรฐานของ react-native-maps
+
+---
+
+## Update 2026-10-01
+Map จริงคือ Leaflet OSM (`LeafletMapView`) ไม่ใช่ react-native-maps.
+Engine 15 spots + `createEventPokemonSpot` (600s expiry) ใช้เฉพาะ event venue (`events/map.tsx`).
+Global map/tab ไม่มีแล้วจนกว่า organizer multi-venue overview จะมา.

@@ -116,9 +116,11 @@ export async function loginWithCredentials(
 
 export async function registerAccount(
   username: string,
-  password: string
+  password: string,
+  studentId?: string,
+  faculty?: string
 ): Promise<AuthResponse> {
-  const result = await mockRegisterApi(username, password);
+  const result = await mockRegisterApi(username, password, studentId, faculty);
   if (result.success && result.token && result.user) {
     await saveSessionToken(result.token);
     await saveActiveTrainerId(result.user.id);

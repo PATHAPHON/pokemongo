@@ -1,5 +1,4 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
 
 import { HapticTab } from '@/shared/components/haptic-tab';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,9 +20,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Map',
+          title: 'Meetups',
           tabBarIcon: ({ color }) => (
-            <Ionicons size={24} name="map" color={color} />
+            <Ionicons size={24} name="people" color={color} />
           ),
         }}
       />
@@ -39,16 +38,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="pokemon"
         options={{
-          title: 'Bag',
+          title: 'ของฉัน',
           tabBarIcon: ({ color }) => (
-            <Ionicons size={24} name="briefcase" color={color} />
+            <Ionicons size={24} name="bookmark" color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'โปรไฟล์',
           tabBarIcon: ({ color }) => (
             <Ionicons size={24} name="person" color={color} />
           ),

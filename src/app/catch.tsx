@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, StyleSheet, BackHandler, Platform } from 'react-native';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, StyleSheet, BackHandler, Platform, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -8,6 +8,7 @@ import {
   getKantoAnimatedSpriteUrl,
   getPokemonRarity,
 } from '@/shared/constants/kanto-pokemon';
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 import { PokemonRarity, PokemonTypeName } from '@/shared/types';
 import {
   useCatchGame,
@@ -17,34 +18,88 @@ import {
   CameraPermissionGate,
   WildPokemonStage,
 } from '@/features/catch';
+import { useEventContext } from '@/shared/context/event-context';
 
 export default function CatchScreen() {
   const router = useRouter();
+  const { markCatchAttempt, registrations } = useEventContext();
   const {
     id,
     name,
     rarity: paramRarity,
     types,
+    eventId,
   } = useLocalSearchParams<{
     id: string;
-    name: string;
+    name?: string;
     rarity?: string;
     types?: string;
+    eventId?: string;
   }>();
 
   const pokemonId = Number(id) || 25;
-  const pokemonName = name || 'pikachu';
+  const pokemonName =
+    name ?? getPokemonMetaById(pokemonId)?.name ?? 'pikachu';
   const rarity: PokemonRarity =
     (paramRarity as PokemonRarity) || getPokemonRarity(pokemonId);
 
-  const pokemonTypes: PokemonTypeName[] = useMemo(
-    () => (types ? JSON.parse(types) : ['electric']),
-    [types]
+  const pokemonTypes: PokemonTypeName[] = useMemo(() => {
+    if (types) {
+      try {
+        return JSON.parse(types);
+      } catch {
+        return getPokemonMetaById(pokemonId)?.types ?? ['normal'];
+      }
+    }
+    return getPokemonMetaById(pokemonId)?.types ?? ['electric'];
+  }, [types, pokemonId]);
+
+  const registration = useMemo(
+    () => (eventId ? registrations.find((r) => r.eventId === eventId) : undefined),
+    [eventId, registrations]
   );
+  const alreadyCaught = Boolean(registration?.hasCaught);
+
+  // Entry guard: if already caught, show alert and redirect back without entering encounter
+  useEffect(() => {
+    if (eventId && alreadyCaught) {
+      Alert.alert(
+        'คุณได้จับโปเกมอนแล้ว',
+        'คุณได้จับโปเกมอนประจำกิจกรรมนี้ไปแล้ว',
+        [
+          {
+            text: 'ตกลง',
+            onPress: () => {
+              router.replace({
+                pathname: '/events/[id]' as any,
+                params: { id: eventId },
+              });
+            },
+          },
+        ],
+        {
+          cancelable: false,
+          onDismiss: () => {
+            router.replace({
+              pathname: '/events/[id]' as any,
+              params: { id: eventId },
+            });
+          },
+        }
+      );
+    }
+  }, [eventId, alreadyCaught, router]);
 
   const [spriteLoadFailed, setSpriteLoadFailed] = useState<boolean>(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const hasExitedRef = useRef(false);
+
+  // Consume catch attempt upon entering encounter (Single Catch Rule)
+  useEffect(() => {
+    if (eventId && !alreadyCaught) {
+      markCatchAttempt(eventId, false);
+    }
+  }, [eventId, alreadyCaught, markCatchAttempt]);
 
   // Request camera permission on mount if needed
   useEffect(() => {
@@ -57,20 +112,26 @@ export default function CatchScreen() {
     }
   }, [cameraPermission, requestCameraPermission]);
 
-  const returnToMap = useCallback(() => {
+  const returnToEvent = useCallback(() => {
     if (hasExitedRef.current) return;
     hasExitedRef.current = true;
-    if (router.canGoBack()) {
+    if (eventId) {
+      // Drop map from history and return directly to Event Detail
+      router.replace({
+        pathname: '/events/[id]' as any,
+        params: { id: eventId },
+      });
+    } else if (router.canGoBack()) {
       router.back();
     } else {
       router.replace('/(tabs)');
     }
-  }, [router]);
+  }, [router, eventId]);
 
   // Android Hardware Back button listener
   useEffect(() => {
     const onBackPress = () => {
-      returnToMap();
+      returnToEvent();
       return true;
     };
     const backHandler = BackHandler.addEventListener(
@@ -78,7 +139,7 @@ export default function CatchScreen() {
       onBackPress
     );
     return () => backHandler.remove();
-  }, [returnToMap]);
+  }, [returnToEvent]);
 
   const {
     gameState,
@@ -96,19 +157,36 @@ export default function CatchScreen() {
     pokemonTypes,
   });
 
-  // Auto-dismiss Gotcha feedback after 1.8s and return to Map
+  // Auto-dismiss Gotcha feedback after 1.8s and return directly to Event Detail
   useEffect(() => {
     if (gameState === 'CAUGHT') {
+      if (eventId) {
+        markCatchAttempt(eventId, true);
+      }
       const timer = setTimeout(() => {
-        returnToMap();
+        returnToEvent();
       }, 1800);
       return () => clearTimeout(timer);
     }
-  }, [gameState, returnToMap]);
+  }, [gameState, eventId, markCatchAttempt, returnToEvent]);
 
   const spriteUrl = spriteLoadFailed
     ? getKantoArtworkUrl(pokemonId)
     : getKantoAnimatedSpriteUrl(pokemonId);
+
+  if (eventId && alreadyCaught) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen
+          options={{
+            presentation: 'fullScreenModal',
+            headerShown: false,
+            animation: 'fade',
+          }}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -134,7 +212,7 @@ export default function CatchScreen() {
         <CatchHeader
           pokemonName={pokemonName}
           rarity={rarity}
-          onRunPress={returnToMap}
+          onRunPress={returnToEvent}
         />
 
         {Platform.OS !== 'web' && !cameraPermission?.granted ? (
@@ -143,7 +221,7 @@ export default function CatchScreen() {
             pokemonName={pokemonName}
             canAskAgain={cameraPermission?.canAskAgain}
             onRequestPermission={() => requestCameraPermission().catch(() => {})}
-            onRunPress={returnToMap}
+            onRunPress={returnToEvent}
           />
         ) : (
           <>
@@ -173,7 +251,7 @@ export default function CatchScreen() {
           pokemonId={pokemonId}
           pokemonName={pokemonName}
           rarity={rarity}
-          onDone={returnToMap}
+          onDone={returnToEvent}
         />
       )}
     </View>

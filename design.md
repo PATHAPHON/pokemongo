@@ -114,8 +114,22 @@
 
 ## 3. รายละเอียดการออกแบบแต่ละหน้าจอ (Screen Specifications)
 
-### 3.1 Tab 1: World Map & Radar Screen (`app/(tabs)/index.tsx`)
-หน้าจอหลักสำหรับการสำรวจ แผนที่ดาวเทียม และตรวจจับโปเกมอนรอบตัว
+### 3.1 Tab 1: Events List Screen (`src/app/(tabs)/index.tsx`)
+หน้าหลักแบบ Events-first: รายการกิจกรรมแคมปัส ค้นหา กรองหมวดหมู่/สถานะ ปุ่มสร้างกิจกรรม
+
+- **Header:** `EventStatsHeader` (total/upcoming/registered/favorites) + offline banner
+- **Filter:** `EventFilterBar` (search + category chips + status)
+- **List:** `EventCard` (banner, `CategoryBadge`, วันที่ formatting ผ่าน `formatEventDateThai`, capacity ผ่าน `isEventFull`)
+- แตะการ์ด -> `events/[id]` สร้างกิจกรรมผ่าน FAB -> `events/create`
+
+### 3.1.1 Tab 2: MyEvents Screen (`src/app/(tabs)/pokemon.tsx`)
+กิจกรรมของฉัน: แท็บย่อย registered/favorites ว่างแล้วมีปุ่มกลับ `/(tabs)`
+ห้าม push `/(tabs)/pokedex` (hidden alias) ห้าม push `/(tabs)/bag` (ไม่มีไฟล์นี้)
+
+### 3.1.2 Event Venue Map (`src/app/events/map.tsx`) — Map อยู่ที่นี่ที่เดียว
+แผนที่ประจำงาน: `LeafletMapView` กลางพิกัด venue + `eventPins` 1 หมุด + `wildList`
+(featured 1 + wild 6) นับถอยหลังผ่าน `formatRemainingLabel` การ์ดล่างจับผ่าน `buildCatchParams` -> `/catch`
+Global map แบบเดิมถูกตัดออกแล้ว โดยระบบแผนที่ถูกจัดให้เป็น Event Venue Map ประจำแต่ละกิจกรรมโดยตรง
 
 ```
 +------------------------------------------------+
@@ -190,8 +204,9 @@
 
 ---
 
-### 3.3 Tab 3: Bag & Inventory Screen (`app/(tabs)/bag.tsx`)
+### 3.3 Pokémon Bag Screen (`src/app/bag.tsx`, stack จาก Profile)
 คลังโปเกมอนที่จับได้และกระเป๋าไอเทม รองรับการทำงาน Offline 100% ผ่าน SQLite
+เปิดจาก Profile menu (`/bag`) ห้ามใช้ `/(tabs)/bag` (ไม่มี route นี้)
 
 ```
 +------------------------------------------------+
@@ -304,7 +319,7 @@
 
 ---
 
-### 3.6 Interactive Modal: AR Catch Screen (`app/catch.tsx`)
+### 3.6 Interactive Modal: AR Catch Screen (`src/app/catch.tsx`)
 หน้าจอจับโปเกมอนด้วยกล้องจริง หรือสนามหญ้าจำลอง พร้อมฟิสิกส์การขว้างบอล
 
 ```
@@ -355,23 +370,7 @@
   - `showIcon?: boolean`
 - **สไตล์:** ขอบมน Capsule (`borderRadius: 9999px`), ตัวอักษรสีขาวหนาพิมพ์ใหญ่ทั้งหมด, สีพื้นหลังตาม `PokemonTypeColors[type].primary`
 
-### 4.2 `StatBar` Component
-- **หน้าที่:** แถบแสดงค่าพลังสถิติพร้อมแอนิเมชันวิ่งเต็มหลอด
-- **Props:**
-  - `name: PokemonStatName`
-  - `value: number`
-  - `maxValue?: number` (default: `255`)
-- **สไตล์:** ความสูง 8px, ขอบมนมน, พื้นหลังสีเทาอ่อน, สีแถบพลังตาม `StatColors[name]`
-
-### 4.3 `PokeballButton` Component
-- **หน้าที่:** ปุ่มแอคชันหลักทรงลูกบอล Pokéball สำหรับกดจับ เปิดเมนู หรือยิงฟังก์ชันสำคัญ
-- **Props:**
-  - `size?: number` (default: `56`)
-  - `onPress: () => void`
-  - `disabled?: boolean`
-- **สไตล์:** ครึ่งบนสีแดง `#FF3B30`, ครึ่งล่างสีขาว `#FFFFFF`, แถบคาดดำตรงกลางพร้อมปุ่มกดตรงกลาง มีเงา Pop-up ชัดเจน
-
-### 4.4 `SimulatorControls` Component
+### 4.2 `SimulatorControls` Component
 - **หน้าที่:** ชุดควบคุมสำหรับการทดสอบบน Simulator และ Web Browser
 - **องค์ประกอบ:**
   - ปุ่มทิศทาง D-pad (ขึ้น, ลง, ซ้าย, ขวา) เชื่อมต่อฟังก์ชันเลื่อนพิกัด Latitude/Longitude

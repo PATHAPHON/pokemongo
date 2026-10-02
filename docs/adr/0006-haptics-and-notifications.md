@@ -27,3 +27,9 @@
   - ทำงานแบบ Local-only ไม่ต้องตั้งค่า Firebase Cloud Messaging หรือ Apple APNs Backend ให้ยุ่งยาก
 - **ข้อพิจารณา:**
   - บน Simulator จะไม่รู้สึกถึงแรงสั่น แต่จะมี Visual Shake Indicator เพื่อยืนยันว่าโค้ด Haptic ถูกเรียกทำงานถูกต้อง
+
+---
+
+## Update 2026-10-01
+เพิ่ม event reminder channel + tap deep link `/events/[id]` คู่กับ `/catch`.
+Channels: `pokemon-spawns`, `pokemon-catch` (+ event reminder).

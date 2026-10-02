@@ -1,8 +1,8 @@
-import {
-  PokemonMeta,
-  getAllPokemonMeta,
-} from '@/shared/services/pokemon-registry';
-import { PokemonRarity } from '@/shared/types';
+import type { PokemonMeta } from '@/shared/constants/pokemon-registry-data';
+import { DEFAULT_POKEMON_REGISTRY_LIST } from '@/shared/constants/pokemon-registry-data';
+import type { PokemonRarity } from '@/shared/types';
+
+const getAllPokemonMeta = (): PokemonMeta[] => DEFAULT_POKEMON_REGISTRY_LIST;
 
 export interface Coordinates {
   latitude: number;
@@ -41,11 +41,15 @@ export const PRESET_LOCATIONS: LocationPreset[] = [
     country: '🇹🇭 Thailand',
     coords: { latitude: 13.7462, longitude: 100.5347 },
   },
+  {
+    id: 'udon',
+    name: 'สวนสาธารณะหนองประจักษ์ (อุดรธานี)',
+    country: '🇹🇭 Udon Thani',
+    coords: { latitude: 17.4138, longitude: 102.7872 },
+  },
 ];
 
 export const DEFAULT_PRESET: LocationPreset = PRESET_LOCATIONS[0];
-
-export type SpawnStatus = 'PENDING' | 'ACTIVE';
 
 export interface WildPokemon {
   instanceId: string;
@@ -55,7 +59,7 @@ export interface WildPokemon {
   latitude: number;
   longitude: number;
   types: string[];
-  status: SpawnStatus;
+  status: 'PENDING' | 'ACTIVE';
   spawnedAt: number; // When spot turns ACTIVE
   expiresAt: number; // When ACTIVE spot despawns (spawnedAt + 60_000)
   createdAt: number;
@@ -64,7 +68,7 @@ export interface WildPokemon {
 /**
  * OOP Class managing procedural spawning and spatial mathematics
  */
-class PokemonSpawnEngine {
+export class PokemonSpawnEngine {
   private static instance: PokemonSpawnEngine | null = null;
 
   public static getInstance(): PokemonSpawnEngine {
@@ -144,125 +148,40 @@ class PokemonSpawnEngine {
   }
 
   /**
-   * Creates a new PENDING spot (countdown 10s) at a random new coordinate on screen.
+   * Creates an ACTIVE event-featured pokemon spot located right at the event venue.
    */
-  public createPendingSpot(
+  public createEventPokemonSpot(
     center: Coordinates,
-    _trainerLevel: number = 1,
-    delayMs: number = 10000,
-    existingCoords: Coordinates[] = [],
-    pool?: PokemonMeta[],
-    excludeIds: Set<number> = new Set()
-  ): WildPokemon | null {
-    const availablePool = (pool || getAllPokemonMeta()).filter(
-      (p) => !excludeIds.has(p.id)
-    );
-    if (availablePool.length === 0) return null;
+    pokemonId: number
+  ): WildPokemon {
+    const meta = getAllPokemonMeta().find((p) => p.id === pokemonId) || {
+      id: pokemonId,
+      name: 'pikachu',
+      rarity: 'rare' as PokemonRarity,
+      types: ['electric'],
+      bst: 320,
+    };
 
-    const randomIndex = Math.floor(Math.random() * availablePool.length);
-    const meta: PokemonMeta = availablePool[randomIndex];
-    const spawnCoord = this.getScatteredCoordinate(center, existingCoords, 14);
-
+    const spawnCoord = this.getRandomNearbyCoordinate(center, 8, 25);
     const now = Date.now();
-    const spawnedAt = now + delayMs;
-    const expiresAt = spawnedAt + 60 * 1000;
+    const spawnedAt = now;
+    const expiresAt = now + 600 * 1000; // 10 minutes at event venue
 
     return {
-      instanceId: `spot-${meta.id}-${now}-${Math.random().toString(36).substring(2, 7)}`,
+      instanceId: `evt-spot-${pokemonId}-${now}-${Math.random().toString(36).substring(2, 6)}`,
       id: meta.id,
       name: meta.name,
       rarity: meta.rarity,
       latitude: spawnCoord.latitude,
       longitude: spawnCoord.longitude,
       types: meta.types,
-      status: 'PENDING',
+      status: 'ACTIVE',
       spawnedAt,
       expiresAt,
       createdAt: now,
     };
   }
-
-  /**
-   * Generates initial spots staggered with mixed ACTIVE and PENDING states.
-   * Ensures no duplicates among current spawns and excludes already caught species.
-   */
-  public generateInitialSpawnSpots(
-    center: Coordinates,
-    totalCount: number = 15,
-    _trainerLevel: number = 1,
-    pool?: PokemonMeta[],
-    excludeIds: Set<number> = new Set()
-  ): WildPokemon[] {
-    const spots: WildPokemon[] = [];
-    const coords: Coordinates[] = [];
-    const now = Date.now();
-
-    const availablePool = (pool || getAllPokemonMeta()).filter(
-      (p) => !excludeIds.has(p.id)
-    );
-    if (availablePool.length === 0) return spots;
-
-    const actualCount = totalCount;
-    const activeCount = Math.floor(actualCount * 0.65);
-    const pendingCount = actualCount - activeCount;
-
-    // 1. Initial ACTIVE spots with staggered remaining lifetime (15s to 55s)
-    for (let i = 0; i < activeCount; i++) {
-      const meta: PokemonMeta =
-        availablePool[Math.floor(Math.random() * availablePool.length)];
-      const spawnCoord = this.getScatteredCoordinate(center, coords, 14);
-      coords.push(spawnCoord);
-
-      const remainingMs = Math.floor(15000 + Math.random() * 40000);
-      const expiresAt = now + remainingMs;
-      const spawnedAt = expiresAt - 60000;
-
-      spots.push({
-        instanceId: `spot-${meta.id}-${now}-${i}-${Math.random().toString(36).substring(2, 6)}`,
-        id: meta.id,
-        name: meta.name,
-        rarity: meta.rarity,
-        latitude: spawnCoord.latitude,
-        longitude: spawnCoord.longitude,
-        types: meta.types,
-        status: 'ACTIVE',
-        spawnedAt,
-        expiresAt,
-        createdAt: now,
-      });
-    }
-
-    // 2. Initial PENDING spots with staggered countdown (2s to 9s)
-    for (let i = 0; i < pendingCount; i++) {
-      const meta: PokemonMeta =
-        availablePool[Math.floor(Math.random() * availablePool.length)];
-      const spawnCoord = this.getScatteredCoordinate(center, coords, 14);
-      coords.push(spawnCoord);
-
-      const delayMs = Math.floor(2000 + Math.random() * 7000);
-      const spawnedAt = now + delayMs;
-      const expiresAt = spawnedAt + 60000;
-
-      spots.push({
-        instanceId: `spot-${meta.id}-${now}-${activeCount + i}-${Math.random().toString(36).substring(2, 6)}`,
-        id: meta.id,
-        name: meta.name,
-        rarity: meta.rarity,
-        latitude: spawnCoord.latitude,
-        longitude: spawnCoord.longitude,
-        types: meta.types,
-        status: 'PENDING',
-        spawnedAt,
-        expiresAt,
-        createdAt: now,
-      });
-    }
-
-    return spots;
-  }
 }
-
-export const defaultSpawnEngine = PokemonSpawnEngine.getInstance();
 
 // -------------------------------------------------------------
 // Backwards-Compatible Facade Exports
@@ -272,40 +191,18 @@ export function getDistanceInMeters(
   coord1: Coordinates,
   coord2: Coordinates
 ): number {
-  return defaultSpawnEngine.calculateDistanceInMeters(coord1, coord2);
-}
-
-export function createPendingSpot(
-  center: Coordinates,
-  trainerLevel: number = 1,
-  delayMs: number = 10000,
-  existingCoords: Coordinates[] = [],
-  pool?: PokemonMeta[],
-  excludeIds?: Set<number>
-): WildPokemon | null {
-  return defaultSpawnEngine.createPendingSpot(
-    center,
-    trainerLevel,
-    delayMs,
-    existingCoords,
-    pool,
-    excludeIds
+  return PokemonSpawnEngine.getInstance().calculateDistanceInMeters(
+    coord1,
+    coord2
   );
 }
 
-export function generateInitialSpawnSpots(
+export function createEventPokemonSpot(
   center: Coordinates,
-  totalCount: number = 15,
-  trainerLevel: number = 1,
-  pool?: PokemonMeta[],
-  excludeIds?: Set<number>
-): WildPokemon[] {
-  return defaultSpawnEngine.generateInitialSpawnSpots(
+  pokemonId: number
+): WildPokemon {
+  return PokemonSpawnEngine.getInstance().createEventPokemonSpot(
     center,
-    totalCount,
-    trainerLevel,
-    pool,
-    excludeIds
+    pokemonId
   );
 }
-

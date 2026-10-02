@@ -1,5 +1,4 @@
 import { defaultNotificationManager } from './notification-manager';
-import { PokemonRarity } from '@/shared/types';
 
 export * from './notification-manager';
 
@@ -25,14 +24,6 @@ export async function getNotificationPermissionStatus(): Promise<{
   return defaultNotificationManager.getPermissionStatus();
 }
 
-export async function isNotificationsEnabled(): Promise<boolean> {
-  return defaultNotificationManager.isEnabled();
-}
-
-export async function setNotificationsEnabled(enabled: boolean): Promise<void> {
-  return defaultNotificationManager.setEnabled(enabled);
-}
-
 export async function resetNotificationPreferences(): Promise<void> {
   return defaultNotificationManager.resetPreferences();
 }
@@ -47,20 +38,6 @@ export async function scheduleBackgroundNotifications(
 
 export async function cancelScheduledNotifications(): Promise<void> {
   return defaultNotificationManager.cancelScheduledNotifications();
-}
-
-export async function sendSpawnNotification(
-  pokemonName: string,
-  pokemonId: number,
-  rarityOrIsNew?: PokemonRarity | boolean,
-  instanceId?: string
-): Promise<void> {
-  return defaultNotificationManager.sendSpawn(
-    pokemonName,
-    pokemonId,
-    rarityOrIsNew,
-    instanceId
-  );
 }
 
 export async function sendTestNotification(): Promise<{
@@ -79,8 +56,33 @@ export async function sendDelayedTestNotification(
   return defaultNotificationManager.sendDelayedTestNotification(delaySeconds);
 }
 
-export function registerNotificationTapListener(
-  onNavigateToCatch: (pokemonId: number) => void
-): () => void {
-  return defaultNotificationManager.registerTapListener(onNavigateToCatch);
+export async function scheduleEventReminder(
+  eventId: string,
+  title: string,
+  startsAt: string,
+  minutesBefore: number = 15
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  return defaultNotificationManager.scheduleEventReminder(
+    eventId,
+    title,
+    startsAt,
+    minutesBefore
+  );
 }
+
+export async function cancelEventReminder(
+  notificationId: string
+): Promise<void> {
+  return defaultNotificationManager.cancelEventReminder(notificationId);
+}
+
+export function registerNotificationTapListener(
+  onNavigateToCatch: (pokemonId: number) => void,
+  onNavigateToEvent?: (eventId: string) => void
+): () => void {
+  return defaultNotificationManager.registerTapListener(
+    onNavigateToCatch,
+    onNavigateToEvent
+  );
+}
+

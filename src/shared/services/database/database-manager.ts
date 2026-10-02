@@ -94,9 +94,80 @@ export class DatabaseManager {
         rarity TEXT NOT NULL DEFAULT 'common',
         cached_at TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS campus_events (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category TEXT NOT NULL,
+        starts_at TEXT NOT NULL,
+        ends_at TEXT,
+        image_url TEXT,
+        location_name TEXT NOT NULL,
+        location_lat REAL NOT NULL,
+        location_lng REAL NOT NULL,
+        capacity INTEGER,
+        registered_count INTEGER NOT NULL DEFAULT 0,
+        organizer TEXT,
+        organizer_id TEXT,
+        featured_pokemon_id INTEGER,
+        is_custom INTEGER NOT NULL DEFAULT 0,
+        cached_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS event_registrations (
+        id TEXT PRIMARY KEY,
+        event_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        registered_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'registered',
+        notes TEXT,
+        photo_uri TEXT,
+        has_caught INTEGER NOT NULL DEFAULT 0,
+        attempted_at TEXT
+      );
     `);
 
     try {
+      // Check event_registrations columns
+      const regTableInfo = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(event_registrations);'
+      );
+      if (!regTableInfo.some((col) => col.name === 'has_caught')) {
+        await db.execAsync(`ALTER TABLE event_registrations ADD COLUMN has_caught INTEGER NOT NULL DEFAULT 0;`);
+      }
+      if (!regTableInfo.some((col) => col.name === 'attempted_at')) {
+        await db.execAsync(`ALTER TABLE event_registrations ADD COLUMN attempted_at TEXT;`);
+      }
+
+      // Check campus_events columns
+      const eventTableInfo = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(campus_events);'
+      );
+      if (!eventTableInfo.some((col) => col.name === 'organizer_id')) {
+        await db.execAsync(`ALTER TABLE campus_events ADD COLUMN organizer_id TEXT;`);
+      }
+      if (!eventTableInfo.some((col) => col.name === 'featured_pokemon_id')) {
+        await db.execAsync(`ALTER TABLE campus_events ADD COLUMN featured_pokemon_id INTEGER;`);
+      }
+      if (!eventTableInfo.some((col) => col.name === 'is_custom')) {
+        await db.execAsync(`ALTER TABLE campus_events ADD COLUMN is_custom INTEGER NOT NULL DEFAULT 0;`);
+      }
+
+      // Check trainer_profile columns
+      const trainerTableInfo = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(trainer_profile);'
+      );
+      const hasStudentId = trainerTableInfo.some((col) => col.name === 'student_id');
+      const hasFaculty = trainerTableInfo.some((col) => col.name === 'faculty');
+
+      if (!hasStudentId) {
+        await db.execAsync(`ALTER TABLE trainer_profile ADD COLUMN student_id TEXT;`);
+      }
+      if (!hasFaculty) {
+        await db.execAsync(`ALTER TABLE trainer_profile ADD COLUMN faculty TEXT;`);
+      }
+
       const tableInfo = await db.getAllAsync<{ name: string; notnull: number }>(
         'PRAGMA table_info(caught_pokemon);'
       );

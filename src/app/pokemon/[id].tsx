@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {

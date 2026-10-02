@@ -11,6 +11,8 @@ export interface TrainerProfile {
   pokeCoins: number;
   avatarUrl?: string;
   starterPokemonId?: number;
+  studentId?: string;
+  faculty?: string;
   createdAt: string;
 }
 

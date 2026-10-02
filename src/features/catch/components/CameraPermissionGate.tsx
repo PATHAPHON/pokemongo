@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,7 +63,7 @@ export function CameraPermissionGate({
           onPress={onRunPress}
         >
           <Text style={styles.gateSecondaryBtnText}>
-            วิ่งหนี (กลับสู่แผนที่)
+            วิ่งหนี (กลับสู่มีตอัป)
           </Text>
         </TouchableOpacity>
       </View>

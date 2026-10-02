@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,156 +11,257 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useTrainer } from '@/shared/context/trainer-context';
-import { CaughtPokemon } from '@/shared/types';
-import {
-  PokemonStatsHeader,
-  PokemonEmptyState,
-  CaughtPokemonCard,
-  RarityFilterBar,
-  RarityFilterType,
-  usePokemonActions,
-} from '@/features/pokemon';
+import { useEventContext } from '@/shared/context/event-context';
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
-import {
-  getPokemonRarity,
-  getRarityLabel,
-} from '@/shared/constants/kanto-pokemon';
-import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
+import { EventCard, EventEmptyState, useEventActions } from '@/features/events';
+import { CampusEvent } from '@/shared/types';
 
-export default function PokemonScreen() {
+type MyEventsTab = 'registered' | 'favorites';
+
+export default function MyEventsScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
   const screenBg = isDark ? '#121212' : '#F4F6F8';
+  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
 
   const { width } = useWindowDimensions();
-  const numColumns = width >= 720 ? 4 : 2;
+  const numColumns = width >= 768 ? 2 : 1;
 
-  const { caughtPokemon, isLoading, releasePokemon } = useTrainer();
+  const { events, registrations, favorites, isLoading, toggleFavorite } =
+    useEventContext();
+  const { handleCancelRegistration } = useEventActions();
 
-  const { handleRelease } = usePokemonActions({
-    releasePokemon,
-  });
+  const [activeTab, setActiveTab] = useState<MyEventsTab>('registered');
 
-  const [selectedRarity, setSelectedRarity] = useState<RarityFilterType>('all');
+  const registeredEvents = useMemo(() => {
+    const regEventMap = new Map(
+      registrations
+        .filter((r) => r.status === 'registered' || r.status === 'attended')
+        .map((r) => [r.eventId, r])
+    );
 
-  const rarityCounts = useMemo(() => {
-    let common = 0;
-    let rare = 0;
-    let ultra_rare = 0;
+    return events
+      .filter((e) => regEventMap.has(e.id))
+      .map((e) => ({
+        event: e,
+        registration: regEventMap.get(e.id)!,
+      }));
+  }, [events, registrations]);
 
-    for (const item of caughtPokemon) {
-      const r =
-        item.rarity ||
-        getPokemonMetaById(item.pokemonId)?.rarity ||
-        getPokemonRarity(item.pokemonId);
-      if (r === 'ultra_rare') ultra_rare++;
-      else if (r === 'rare') rare++;
-      else common++;
-    }
+  const favoriteEvents = useMemo(() => {
+    const favSet = new Set(favorites);
+    return events.filter((e) => favSet.has(e.id));
+  }, [events, favorites]);
 
-    return {
-      all: caughtPokemon.length,
-      common,
-      rare,
-      ultra_rare,
-    };
-  }, [caughtPokemon]);
+  const activeRegistrationsSet = useMemo(() => {
+    return new Set(
+      registrations
+        .filter((r) => r.status === 'registered')
+        .map((r) => r.eventId)
+    );
+  }, [registrations]);
 
-  const filteredPokemon = useMemo(() => {
-    if (selectedRarity === 'all') return caughtPokemon;
-    return caughtPokemon.filter((item) => {
-      const r =
-        item.rarity ||
-        getPokemonMetaById(item.pokemonId)?.rarity ||
-        getPokemonRarity(item.pokemonId);
-      return r === selectedRarity;
-    });
-  }, [caughtPokemon, selectedRarity]);
+  const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: screenBg }]}
       edges={['top']}
     >
-      {/* Top Header Summary */}
-      <PokemonStatsHeader totalCount={caughtPokemon.length} isDark={isDark} />
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <Ionicons name="bookmark" size={22} color="#8B5CF6" />
+          <Text style={[styles.headerTitle, { color: textColor }]}>
+            มีตอัปของฉัน
+          </Text>
+        </View>
+        <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
+          มีตอัปโปเกมอนที่คุณเข้าร่วมหรือบันทึกไว้
+        </Text>
 
-      {/* Rarity Filter Selector */}
-      <RarityFilterBar
-        selectedRarity={selectedRarity}
-        onSelectRarity={setSelectedRarity}
-        counts={rarityCounts}
-        isDark={isDark}
-      />
+        {/* Tab Switcher */}
+        <View
+          style={[
+            styles.tabContainer,
+            { backgroundColor: isDark ? '#1E1E1E' : '#E5E7EB' },
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === 'registered' && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab('registered')}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeTab === 'registered' }}
+            accessibilityLabel={`ลงทะเบียนแล้ว (${registeredEvents.length} รายการ)`}
+          >
+            <Ionicons
+              name="checkmark-circle-outline"
+              size={16}
+              color={activeTab === 'registered' ? '#FFFFFF' : subTextColor}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'registered'
+                  ? styles.activeTabText
+                  : { color: subTextColor },
+              ]}
+            >
+              ลงทะเบียนแล้ว ({registeredEvents.length})
+            </Text>
+          </TouchableOpacity>
 
-      {/* Main Content Grid */}
-      <View style={styles.flex1}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === 'favorites' && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab('favorites')}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeTab === 'favorites' }}
+            accessibilityLabel={`รายการโปรด (${favoriteEvents.length} รายการ)`}
+          >
+            <Ionicons
+              name="heart-outline"
+              size={16}
+              color={activeTab === 'favorites' ? '#FFFFFF' : subTextColor}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'favorites'
+                  ? styles.activeTabText
+                  : { color: subTextColor },
+              ]}
+            >
+              รายการโปรด ({favoriteEvents.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0A7EA4" />
-            <Text style={styles.loadingText}>Loading caught Pokémon...</Text>
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#8B5CF6" />
+            <Text style={[styles.loadingText, { color: subTextColor }]}>
+              กำลังโหลดข้อมูลของคุณ...
+            </Text>
           </View>
-        ) : (
+        ) : activeTab === 'registered' ? (
           <FlatList
-            key={`caught-grid-${numColumns}`}
-            data={filteredPokemon}
-            keyExtractor={(item) => item.instanceId}
-            renderItem={({ item }: { item: CaughtPokemon }) => (
-              <CaughtPokemonCard
-                pokemon={item}
-                numColumns={numColumns}
-                isDark={isDark}
-                onPress={() => router.push(`/pokemon/${item.pokemonId}` as any)}
-                onRelease={handleRelease}
-              />
-            )}
+            key={`my-registered-${numColumns}`}
+            data={registeredEvents}
+            keyExtractor={(item) => `reg-${item.registration.id}`}
             numColumns={numColumns}
+            renderItem={({ item }) => (
+              <View
+                style={[styles.cardItemWrap, numColumns > 1 && styles.gridCol]}
+              >
+                <EventCard
+                  event={item.event}
+                  isFavorite={favoritesSet.has(item.event.id)}
+                  isRegistered={true}
+                  isDark={isDark}
+                  onPress={() => router.push(`/events/${item.event.id}` as any)}
+                  onToggleFavorite={() => toggleFavorite(item.event.id)}
+                />
+
+                {/* Cancel Registration Action Bar */}
+                <View
+                  style={[
+                    styles.regActionBar,
+                    { backgroundColor: cardBg, borderColor },
+                  ]}
+                >
+                  <View style={styles.regInfo}>
+                    <Text style={[styles.regLabel, { color: subTextColor }]}>
+                      รหัส: {item.registration.id.slice(0, 14)}...
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() =>
+                      handleCancelRegistration(
+                        item.registration.id,
+                        item.event.title
+                      )
+                    }
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`ยกเลิกการลงทะเบียน ${item.event.title}`}
+                  >
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={14}
+                      color="#EF4444"
+                    />
+                    <Text style={styles.cancelButtonText}>ยกเลิก</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
             contentContainerStyle={
-              filteredPokemon.length === 0
-                ? styles.emptyListContent
-                : styles.gridContent
+              registeredEvents.length === 0
+                ? styles.emptyListContainer
+                : styles.listContent
             }
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
-              caughtPokemon.length === 0 ? (
-                <PokemonEmptyState
-                  onGoToRadar={() => router.push('/(tabs)' as any)}
-                  textColor={textColor}
+              <EventEmptyState
+                title="ยังไม่มีมีตอัปที่ลงทะเบียน"
+                subtitle="คุณยังไม่ได้ลงทะเบียนเข้าร่วมมีตอัปโปเกมอนใดๆ ไปที่แท็บ Meetups เพื่อดูรายการและสมัครได้เลย!"
+                buttonText="ไปค้นหามีตอัป"
+                iconName="ticket-outline"
+                onAction={() => router.push('/(tabs)' as any)}
+                isDark={isDark}
+              />
+            }
+          />
+        ) : (
+          <FlatList
+            key={`my-favorites-${numColumns}`}
+            data={favoriteEvents}
+            keyExtractor={(item: CampusEvent) => `fav-${item.id}`}
+            numColumns={numColumns}
+            renderItem={({ item }: { item: CampusEvent }) => (
+              <View style={numColumns > 1 ? styles.gridCol : undefined}>
+                <EventCard
+                  event={item}
+                  isFavorite={true}
+                  isRegistered={activeRegistrationsSet.has(item.id)}
+                  isDark={isDark}
+                  onPress={() => router.push(`/events/${item.id}` as any)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
                 />
-              ) : (
-                <View style={styles.filterEmptyContainer}>
-                  <Ionicons
-                    name="filter-outline"
-                    size={48}
-                    color={subTextColor}
-                  />
-                  <Text style={[styles.filterEmptyTitle, { color: textColor }]}>
-                    No {getRarityLabel(selectedRarity as any)} Pokémon
-                  </Text>
-                  <Text
-                    style={[
-                      styles.filterEmptySubtitle,
-                      { color: subTextColor },
-                    ]}
-                  >
-                    No Pokémon with this rarity found in your collection.
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.clearFilterButton}
-                    onPress={() => setSelectedRarity('all')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Show all Pokémon"
-                  >
-                    <Text style={styles.clearFilterButtonText}>
-                      Show All Pokémon
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )
+              </View>
+            )}
+            contentContainerStyle={
+              favoriteEvents.length === 0
+                ? styles.emptyListContainer
+                : styles.listContent
+            }
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <EventEmptyState
+                title="ยังไม่มีรายการโปรด"
+                subtitle="แตะรูปหัวใจที่มีตอัปที่คุณสนใจเพื่อบันทึกไว้ในหน้านี้ เพื่อติดตามและดูย้อนหลังได้สะดวก"
+                buttonText="สำรวจมีตอัปทั้งหมด"
+                iconName="heart-outline"
+                onAction={() => router.push('/(tabs)' as any)}
+                isDark={isDark}
+              />
             }
           />
         )}
@@ -173,56 +274,117 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  flex1: {
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    gap: 6,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 3,
+    marginTop: 6,
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 10,
+    gap: 6,
+  },
+  activeTabButton: {
+    backgroundColor: '#8B5CF6',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  content: {
     flex: 1,
   },
-  loadingContainer: {
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
     marginTop: 12,
-    color: '#687076',
     fontSize: 14,
     fontWeight: '600',
   },
-  gridContent: {
-    padding: 10,
-    paddingBottom: 24,
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 28,
   },
-  emptyListContent: {
+  cardItemWrap: {
+    marginBottom: 6,
+  },
+  gridCol: {
+    flex: 1,
+    marginHorizontal: 6,
+  },
+  regActionBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: -8,
+    marginBottom: 14,
+  },
+  regInfo: {
+    flex: 1,
+  },
+  regLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    gap: 4,
+  },
+  cancelButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  emptyListContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-  },
-  filterEmptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-  },
-  filterEmptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 12,
-    marginBottom: 6,
-    textAlign: 'center',
-  },
-  filterEmptySubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  clearFilterButton: {
-    backgroundColor: '#0A7EA4',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  clearFilterButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
   },
 });

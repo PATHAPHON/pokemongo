@@ -1,191 +1,215 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useTrainer } from '@/shared/context/trainer-context';
 import {
-  useUserLocation,
-  useMapSpawns,
-  useSpawnNotifications,
-  LeafletMapView,
-  LeafletMapViewRef,
-  MapControls,
-  LocationPickerModal,
-  NotificationPermissionModal,
-  WildPokemon,
-} from '@/features/map';
+  View,
+  Text,
+  FlatList,
+  useWindowDimensions,
+  ActivityIndicator,
+  StyleSheet,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useColorScheme } from '@/shared/hooks/use-color-scheme';
+import {
+  useEvents,
+  EventCard,
+  EventFilterBar,
+  EventStatsHeader,
+  EventEmptyState,
+} from '@/features/events';
+import { CampusEvent } from '@/shared/types';
 
-export default function MapScreen() {
+export default function EventsScreen() {
   const router = useRouter();
-  const mapRef = useRef<LeafletMapViewRef>(null);
-  const { trainer, caughtPokemon } = useTrainer();
-  const isNavigatingToCatchRef = useRef(false);
-  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
-  useFocusEffect(
-    useCallback(() => {
-      isNavigatingToCatchRef.current = false;
-    }, [])
-  );
+  const screenBg = isDark ? '#121212' : '#F4F6F8';
+  const subTextColor = isDark ? '#9BA1A6' : '#687076';
 
-  const caughtPokemonIds = useMemo(
-    () => new Set(caughtPokemon.map((p) => p.pokemonId)),
-    [caughtPokemon]
-  );
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 768 ? 2 : 1;
 
   const {
-    notificationsEnabled,
-    showPermissionModal,
-    canAskAgain,
-    toggleNotifications,
-    handleAllowPermission,
-    handleDismissPermissionModal,
-    handleOpenSettings,
-    checkAndNotifySpawn,
-  } = useSpawnNotifications(caughtPokemonIds);
+    events,
+    stats,
+    isLoading,
+    isOffline,
+    lastUpdated,
+    searchQuery,
+    setSearchQuery,
+    categoryFilter,
+    setCategoryFilter,
+    statusFilter,
+    setStatusFilter,
+    registeredEventIds,
+    favoritesSet,
+    refreshEvents,
+    toggleFavorite,
+  } = useEvents();
 
-  const {
-    location,
-    selectedPreset,
-    locationName,
-    isRealGps,
-    isLoading: isLocationLoading,
-    errorMsg: locationErrorMsg,
-    selectPreset,
-    switchToRealGps,
-  } = useUserLocation();
+  const handleCardPress = (event: CampusEvent) => {
+    router.push(`/events/${event.id}` as any);
+  };
 
-  const {
-    wildList,
-    consumeSpotForCatch,
-    despawnSpot,
-    isAllCaught,
-    totalSpeciesCount,
-  } = useMapSpawns({
-    location,
-    trainerLevel: trainer?.level || 1,
-    caughtPokemonIds,
-    onPokemonSpawned: checkAndNotifySpawn,
-  });
-
-  const handleCatch = useCallback(
-    (pokemon: WildPokemon) => {
-      if (!location || isNavigatingToCatchRef.current) return;
-      isNavigatingToCatchRef.current = true;
-
-      consumeSpotForCatch(pokemon);
-
-      router.push({
-        pathname: '/catch' as any,
-        params: {
-          id: String(pokemon.id),
-          name: pokemon.name,
-          rarity: pokemon.rarity,
-          types: JSON.stringify(pokemon.types),
-        },
-      });
-    },
-    [router, location, consumeSpotForCatch]
-  );
-
-  const handleRecenter = useCallback(() => {
-    if (location && mapRef.current) {
-      mapRef.current.recenter(location);
-    }
-  }, [location]);
-
-  const activeSpawnsCount = wildList.filter((s) => s.status === 'ACTIVE').length;
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('all');
+    setStatusFilter('all');
+  };
 
   return (
-    <View style={styles.container}>
-      <LeafletMapView
-        ref={mapRef}
-        location={location}
-        wildList={wildList}
-        onCatch={handleCatch}
-        onExpired={despawnSpot}
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: screenBg }]}
+      edges={['top']}
+    >
+      {/* Overview Stats & Offline Banner Header */}
+      <EventStatsHeader
+        stats={stats}
+        isOffline={isOffline}
+        lastUpdated={lastUpdated}
+        isDark={isDark}
       />
 
-      <MapControls
-        locationName={locationName}
-        isRealGps={isRealGps}
-        nearbyCount={activeSpawnsCount}
-        onOpenLocationPicker={() => setIsLocationPickerOpen(true)}
-        onRecenter={handleRecenter}
-        notificationsEnabled={notificationsEnabled}
-        onToggleNotifications={toggleNotifications}
+      {/* Search Input, Status Tabs, and Category Chips */}
+      <EventFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        categoryFilter={categoryFilter}
+        onCategoryChange={setCategoryFilter}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        isDark={isDark}
       />
 
-      <LocationPickerModal
-        visible={isLocationPickerOpen}
-        onClose={() => setIsLocationPickerOpen(false)}
-        selectedPreset={selectedPreset}
-        isRealGps={isRealGps}
-        isLoading={isLocationLoading}
-        errorMsg={locationErrorMsg}
-        onSelectPreset={selectPreset}
-        onUseRealGps={switchToRealGps}
-      />
+      {/* Main Events List */}
+      <View style={styles.content}>
+        {isLoading && events.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#8B5CF6" />
+            <Text style={[styles.loadingText, { color: subTextColor }]}>
+              กำลังโหลดมีตอัปโปเกมอน...
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            key={`events-list-${numColumns}`}
+            data={events}
+            keyExtractor={(item) => item.id}
+            numColumns={numColumns}
+            renderItem={({ item }) => (
+              <View style={numColumns > 1 ? styles.gridCol : undefined}>
+                <EventCard
+                  event={item}
+                  isFavorite={favoritesSet.has(item.id)}
+                  isRegistered={registeredEventIds.has(item.id)}
+                  isDark={isDark}
+                  onPress={() => handleCardPress(item)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
+                />
+              </View>
+            )}
+            contentContainerStyle={
+              events.length === 0
+                ? styles.emptyListContainer
+                : styles.listContent
+            }
+            showsVerticalScrollIndicator={false}
+            initialNumToRender={8}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews={true}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={refreshEvents}
+                tintColor="#8B5CF6"
+                colors={['#8B5CF6']}
+              />
+            }
+            ListEmptyComponent={
+              <EventEmptyState
+                title="ไม่พบมีตอัปที่ตรงกับเงื่อนไข"
+                subtitle="ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่นเพื่อค้นหามีตอัปทั้งหมด"
+                buttonText="ล้างตัวกรองทั้งหมด"
+                onAction={handleResetFilters}
+                isDark={isDark}
+              />
+            }
+          />
+        )}
+      </View>
 
-      <NotificationPermissionModal
-        visible={showPermissionModal}
-        canAskAgain={canAskAgain}
-        onAllow={handleAllowPermission}
-        onDismiss={handleDismissPermissionModal}
-        onOpenSettings={handleOpenSettings}
-      />
-
-      {isAllCaught && (
-        <View style={styles.completionBanner}>
-          <Text style={styles.completionEmoji}>🏆</Text>
-          <Text style={styles.completionTitle}>
-            จับครบทุกตัวแล้ว!
-          </Text>
-          <Text style={styles.completionSubtitle}>
-            คุณได้จับโปเกมอนครบทั้ง {totalSpeciesCount} สายพันธุ์แล้ว (Gen 1 - Gen 3)
-          </Text>
-        </View>
-      )}
-    </View>
+      {/* Floating Action Button for Organizers */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/events/create' as any)}
+        accessibilityRole="button"
+        accessibilityLabel="สร้างมีตอัปใหม่"
+        activeOpacity={0.85}
+      >
+        <Text style={styles.fabIcon}>➕</Text>
+        <Text style={styles.fabText}>สร้างมีตอัป</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
   },
-  completionBanner: {
-    position: 'absolute',
-    top: 60,
-    left: 16,
-    right: 16,
-    backgroundColor: 'rgba(24, 28, 36, 0.95)',
-    borderRadius: 16,
-    padding: 18,
+  content: {
+    flex: 1,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFD700',
-    shadowColor: '#000',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 28,
+  },
+  gridCol: {
+    flex: 1,
+    marginHorizontal: 6,
+  },
+  emptyListContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    backgroundColor: '#8B5CF6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 30,
+    gap: 6,
+    shadowColor: '#8B5CF6',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 6,
   },
-  completionEmoji: {
-    fontSize: 36,
-    marginBottom: 6,
+  fabIcon: {
+    fontSize: 16,
+    color: '#FFFFFF',
   },
-  completionTitle: {
-    color: '#FFD700',
-    fontSize: 18,
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  completionSubtitle: {
-    color: '#E0E0E0',
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
   },
 });

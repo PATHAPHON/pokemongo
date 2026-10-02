@@ -1,4 +1,4 @@
-import React, {
+import {
   useRef,
   useImperativeHandle,
   forwardRef,
@@ -21,16 +21,24 @@ import {
 import { PokemonTypeColors } from '@/shared/constants/pokemon-theme';
 import { PokemonTypeName } from '@/shared/types';
 
+import { EventVenuePin } from '../hooks/use-event-venue-pins';
+
 export interface LeafletMapViewRef {
   recenter: (coords: Coordinates) => void;
 }
 
-interface Props {
+
+export interface LeafletMapViewProps {
   location: Coordinates;
   wildList: WildPokemon[];
+  eventPins?: EventVenuePin[];
   onCatch: (pokemon: WildPokemon) => void;
+  onEventPress?: (eventId: string) => void;
   onExpired?: (instanceId: string) => void;
+  onSpawned?: (instanceId: string) => void;
 }
+
+type Props = LeafletMapViewProps;
 
 const createMapHtml = (initialLat: number, initialLng: number) => `
 <!DOCTYPE html>
@@ -45,6 +53,34 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
     .leaflet-control-attribution, .leaflet-control-zoom { display: none !important; }
     
     .spawn-spot { display: flex; flex-direction: column; align-items: center; user-select: none; }
+    
+    .event-spot { display: flex; flex-direction: column; align-items: center; cursor: pointer; user-select: none; }
+    .event-pin-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2.5px solid #FFFFFF;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .event-pill {
+      background: rgba(20, 20, 20, 0.92);
+      color: #FFFFFF;
+      font-size: 8.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-top: 2px;
+      max-width: 95px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
     
     /* PENDING SPOT */
     .pending-spot { cursor: pointer; }
@@ -262,6 +298,8 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
 
     var pokemonMarkers = {};
     var currentSpawnsMap = {};
+    var spawnedNotified = {};
+    var expiredNotified = {};
 
     function renderMarkerHtml(p) {
       var now = Date.now();
@@ -275,7 +313,8 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
           '</div>';
       } else {
         var remainingSec = Math.max(0, Math.ceil((p.expiresAt - now) / 1000));
-        var pct = Math.max(0, Math.min(100, (remainingSec / 60) * 100));
+        var totalSec = Math.max(1, Math.round((p.expiresAt - (p.spawnedAt || (p.expiresAt - 600000))) / 1000));
+        var pct = Math.max(0, Math.min(100, (remainingSec / totalSec) * 100));
         var barColor = remainingSec <= 10 ? '#FF3B30' : (remainingSec <= 25 ? '#FF9500' : '#34C759');
         return '<div class="spawn-spot active-spot">' +
           '<div class="active-art-wrap">' +
@@ -315,6 +354,8 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
           map.removeLayer(pokemonMarkers[id]);
           delete pokemonMarkers[id];
           delete currentSpawnsMap[id];
+          delete spawnedNotified[id];
+          delete expiredNotified[id];
         }
       }
 
@@ -341,6 +382,50 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
       });
     };
 
+    var eventMarkers = {};
+    window.updateEvents = function(events) {
+      var activeIds = {};
+      (events || []).forEach(function(e) {
+        activeIds[e.id] = true;
+      });
+
+      for (var id in eventMarkers) {
+        if (!activeIds[id]) {
+          map.removeLayer(eventMarkers[id]);
+          delete eventMarkers[id];
+        }
+      }
+
+      (events || []).forEach(function(e) {
+        var innerPin = '📍';
+        if (e.featuredPokemonId) {
+          innerPin = '<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/' + e.featuredPokemonId + '.png" style="width:34px;height:34px;object-fit:contain;margin-top:-2px;" />';
+        }
+        var iconHtml = '<div class="event-spot">' +
+          '<div class="event-pin-circle" style="background:' + (e.categoryColor || '#8B5CF6') + ';">' + innerPin + '</div>' +
+          '<div class="event-pill">' + (e.title || 'กิจกรรม') + '</div>' +
+          '</div>';
+
+        var icon = L.divIcon({
+          className: 'custom-event-marker',
+          html: iconHtml,
+          iconSize: [80, 65],
+          iconAnchor: [40, 50]
+        });
+
+        if (eventMarkers[e.id]) {
+          eventMarkers[e.id].setLatLng([e.latitude, e.longitude]);
+          eventMarkers[e.id].setIcon(icon);
+        } else {
+          var m = L.marker([e.latitude, e.longitude], { icon: icon, zIndexOffset: 600 }).addTo(map);
+          m.on('click', function() {
+            postToParent({ type: 'EVENT_CLICK', eventId: e.id });
+          });
+          eventMarkers[e.id] = m;
+        }
+      });
+    };
+
     // Continuous 1-second in-DOM ticker for progress bar and countdowns
     setInterval(function() {
       var now = Date.now();
@@ -352,12 +437,14 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
           var remainingSec = Math.max(0, Math.ceil((p.spawnedAt - now) / 1000));
           var labelEl = document.getElementById('pending-time-' + id);
           if (labelEl) labelEl.innerText = 'เกิดใน ' + remainingSec + 's';
-          if (remainingSec <= 0) {
+          if (remainingSec <= 0 && !spawnedNotified[id]) {
+            spawnedNotified[id] = true;
             postToParent({ type: 'SPAWNED', instanceId: id });
           }
         } else if (p.status === 'ACTIVE') {
           var remainingSec = Math.max(0, Math.ceil((p.expiresAt - now) / 1000));
-          var pct = Math.max(0, Math.min(100, (remainingSec / 60) * 100));
+          var totalSec = Math.max(1, Math.round((p.expiresAt - (p.spawnedAt || (p.expiresAt - 600000))) / 1000));
+          var pct = Math.max(0, Math.min(100, (remainingSec / totalSec) * 100));
           var barEl = document.getElementById('bar-fill-' + id);
           var timeEl = document.getElementById('active-time-' + id);
           if (barEl) {
@@ -365,7 +452,8 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
             barEl.style.backgroundColor = remainingSec <= 10 ? '#FF3B30' : (remainingSec <= 25 ? '#FF9500' : '#34C759');
           }
           if (timeEl) timeEl.innerText = remainingSec + 's';
-          if (remainingSec <= 0) {
+          if (remainingSec <= 0 && !expiredNotified[id]) {
+            expiredNotified[id] = true;
             postToParent({ type: 'EXPIRED', instanceId: id });
           }
         }
@@ -380,6 +468,8 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
           window.updatePlayerLocation(data.lat, data.lng);
         } else if (data && data.type === 'UPDATE_SPAWNS') {
           window.updateSpawns(data.spawns);
+        } else if (data && data.type === 'UPDATE_EVENTS') {
+          window.updateEvents(data.events);
         } else if (data && data.type === 'RECENTER') {
           if (window.map) window.map.panTo([data.lat, data.lng], { animate: true, duration: 0.4 });
         }
@@ -394,7 +484,18 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
 `;
 
 export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
-  function LeafletMapView({ location, wildList, onCatch, onExpired }, ref) {
+  function LeafletMapView(
+    {
+      location,
+      wildList,
+      eventPins = [],
+      onCatch,
+      onEventPress,
+      onExpired,
+      onSpawned,
+    },
+    ref
+  ) {
     const webViewRef = useRef<WebView | null>(null);
     const iframeRef = useRef<any>(null);
     const [isReady, setIsReady] = useState(false);
@@ -473,6 +574,14 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       executeJs(js, { type: 'UPDATE_SPAWNS', spawns: formattedSpawns });
     }, [wildList, isReady, executeJs]);
 
+    // Update Event Venue pins
+    useEffect(() => {
+      if (!isReady) return;
+      const serializedEvents = JSON.stringify(eventPins);
+      const js = `if (window.updateEvents) { window.updateEvents(${serializedEvents}); } true;`;
+      executeJs(js, { type: 'UPDATE_EVENTS', events: eventPins });
+    }, [eventPins, isReady, executeJs]);
+
     // Message handler for Web Iframe
     useEffect(() => {
       if (Platform.OS !== 'web') return;
@@ -493,8 +602,12 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
               lastCatchMsgTimeRef.current = now;
               onCatch(data.pokemon);
             }
+          } else if (data.type === 'EVENT_CLICK' && data.eventId) {
+            onEventPress?.(data.eventId);
           } else if (data.type === 'EXPIRED') {
             onExpired?.(data.instanceId);
+          } else if (data.type === 'SPAWNED') {
+            onSpawned?.(data.instanceId);
           }
         } catch {
           // Ignore parsing errors
@@ -505,7 +618,7 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       return () => {
         window.removeEventListener('message', handleWebMessage);
       };
-    }, [onCatch, onExpired]);
+    }, [onCatch, onEventPress, onExpired, onSpawned]);
 
     // Render Web Iframe
     if (Platform.OS === 'web') {
@@ -546,8 +659,12 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
                   lastCatchMsgTimeRef.current = now;
                   onCatch(data.pokemon);
                 }
+              } else if (data.type === 'EVENT_CLICK' && data.eventId) {
+                onEventPress?.(data.eventId);
               } else if (data.type === 'EXPIRED') {
                 onExpired?.(data.instanceId);
+              } else if (data.type === 'SPAWNED') {
+                onSpawned?.(data.instanceId);
               }
             } catch {
               // Ignore parse errors

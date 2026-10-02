@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -18,6 +18,7 @@ import {
   deleteCaughtPokemon,
   getTrainerInventory,
   getStoredTrainerProfile,
+  saveStoredTrainerProfile,
 } from '@/shared/services/database/index';
 import { initPokemonRegistry } from '@/shared/services/pokemon-registry';
 import {
@@ -35,13 +36,16 @@ interface TrainerContextValue {
   isAuthenticated: boolean;
   catchPokemon: (pokemon: CaughtPokemon) => Promise<void>;
   releasePokemon: (instanceId: string) => Promise<void>;
+  updateTrainer: (partial: Partial<TrainerProfile>) => Promise<void>;
   login: (
     username: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
   register: (
     username: string,
-    password: string
+    password: string,
+    studentId?: string,
+    faculty?: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
@@ -130,8 +134,18 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
    * Register handler
    */
   const register = useCallback(
-    async (username: string, password: string) => {
-      const res = await registerAccount(username, password);
+    async (
+      username: string,
+      password: string,
+      studentId?: string,
+      faculty?: string
+    ) => {
+      const res = await registerAccount(
+        username,
+        password,
+        studentId,
+        faculty
+      );
       if (res.success && res.user) {
         await loadData();
         return { success: true };
@@ -175,6 +189,23 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  /**
+   * Update trainer profile fields and persist to SQLite
+   */
+  const updateTrainer = useCallback(
+    async (updates: Partial<TrainerProfile>): Promise<void> => {
+      if (!trainer) return;
+      const next = { ...trainer, ...updates };
+      setTrainer(next);
+      try {
+        await saveStoredTrainerProfile(next);
+      } catch (err) {
+        console.error('[TrainerContext] Failed to save trainer:', err);
+      }
+    },
+    [trainer]
+  );
+
   const value: TrainerContextValue = {
     trainer,
     inventory,
@@ -183,6 +214,7 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
     isAuthenticated,
     catchPokemon,
     releasePokemon,
+    updateTrainer,
     login,
     register,
     logout,

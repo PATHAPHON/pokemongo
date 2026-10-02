@@ -19,9 +19,10 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { TrainerProvider, useTrainer } from '@/shared/context/trainer-context';
+import { EventProvider } from '@/shared/context/event-context';
+
 import {
   registerNotificationTapListener,
-  scheduleBackgroundNotifications,
   cancelScheduledNotifications,
   setupNotificationChannels,
   configureNotificationHandler,
@@ -86,6 +87,48 @@ function NavigationStack() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="bag"
+          options={{
+            presentation: 'card',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="events/[id]"
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="events/register"
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="events/create"
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="events/map"
+          options={{
+            presentation: 'card',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="profile/admin"
+          options={{
+            presentation: 'card',
+            headerShown: false,
+          }}
+        />
       </Stack.Protected>
     </Stack>
   );
@@ -115,6 +158,12 @@ export default function RootLayout() {
             types: JSON.stringify(meta?.types ?? ['normal']),
           },
         });
+      },
+      (eventId) => {
+        router.push({
+          pathname: '/events/[id]' as any,
+          params: { id: eventId },
+        });
       }
     );
 
@@ -122,15 +171,6 @@ export default function RootLayout() {
     const subscriptionAppState = AppState.addEventListener(
       'change',
       (nextAppState) => {
-        if (
-          appState.current === 'active' &&
-          nextAppState.match(/inactive|background/)
-        ) {
-          scheduleBackgroundNotifications().catch((err) => {
-            console.warn('[RootLayout] Error scheduling background notifications:', err);
-          });
-        }
-
         if (
           appState.current.match(/inactive|background/) &&
           nextAppState === 'active'
@@ -151,8 +191,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <TrainerProvider>
-        <NavigationStack />
-        <StatusBar style="auto" />
+        <EventProvider>
+          <NavigationStack />
+          <StatusBar style="auto" />
+        </EventProvider>
       </TrainerProvider>
     </ThemeProvider>
   );

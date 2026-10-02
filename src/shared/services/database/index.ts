@@ -4,17 +4,20 @@ import { DatabaseManager } from './database-manager';
 import { PokemonRepository } from './pokemon-repository';
 import { TrainerRepository } from './trainer-repository';
 import { InventoryRepository } from './inventory-repository';
+import { EventRepository } from './event-repository';
 
 export * from './database-manager';
 export * from './pokemon-repository';
 export * from './trainer-repository';
 export * from './inventory-repository';
+export * from './event-repository';
 
 // Default Singleton Instances
 export const defaultDbManager = DatabaseManager.getInstance();
 export const defaultPokemonRepository = new PokemonRepository(defaultDbManager);
 export const defaultTrainerRepository = new TrainerRepository(defaultDbManager);
 export const defaultInventoryRepository = new InventoryRepository(defaultDbManager);
+export const defaultEventRepository = new EventRepository(defaultDbManager);
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   return defaultDbManager.getDatabase();

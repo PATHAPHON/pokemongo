@@ -9,8 +9,6 @@ import {
   isPokemonInGen,
 } from '../types';
 
-export { isPokemonInGen };
-
 export function usePokedex() {
   const { caughtPokemon, isLoading } = useTrainer();
 

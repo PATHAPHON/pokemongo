@@ -32,3 +32,9 @@
   - ทำงานแบบ Offline-first 100%
 - **ข้อพิจารณา:**
   - ต้องมี Database Migration และ Initial Table Schema Creation เมื่อเปิดแอปครั้งแรก
+
+---
+
+## Update 2026-10-01
+เพิ่มตาราง `campus_events` + `event_registrations` และ `EventRepository`.
+`saveEventsToCache` เป็น merge (INSERT OR REPLACE) ไม่ใช่ DELETE-all เพื่อกัน custom event หาย.

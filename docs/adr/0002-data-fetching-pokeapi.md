@@ -28,3 +28,9 @@ PokéAPI (`https://pokeapi.co/`) มีข้อมูลโปเกมอน�
   - ตอบโจทย์เนื้อหาการใช้งาน `fetch`, `async/await`, และ `try/catch` ของสัปดาห์ที่ 6
 - **ข้อพิจารณา:**
   - โปเกมอนที่ดึงมาจะเป็นชุด Gen 1 เท่านั้น หากต้องการขยายเป็น Gen 2+ ในอนาคต สามารถปรับพารามิเตอร์ `limit` หรือเพิ่มระบบ Pagination ได้
+
+---
+
+## Update 2026-10-01
+Scope จริงคือ Gen1-3 ผ่าน `shared/constants/pokemon-registry-data.ts` (ถึง #386) และ
+`shared/services/pokeapi/` ไม่ใช่ Kanto-only `limit=151` / `services/pokeapi.ts` เดิม.

@@ -36,3 +36,10 @@
   - หน้าจอจับมอนสเตอร์ `/catch` แสดงผลแบบเต็มจอได้โดยไม่ถูก Tab Bar ด้านล่างบดบัง
 - **ข้อพิจารณา:**
   - ไฟล์ในโฟลเดอร์ `app/` จะต้องเป็น Screen หรือ Layout เท่านั้น คอมโพเนนต์ย่อยต้องแยกไว้ใน `components/` ภายนอกเพื่อไม่ให้เกิดเส้นทาง URL ปลอม
+
+---
+
+## Update 2026-10-01 (Events-first unification, ADR-007)
+4 tabs เดิม (Map/Pokédex/Bag/Profile) เปลี่ยนเป็น Events-first:
+tabs `index`=Events, `pokemon`=MyEvents, `profile`=Profile, `pokedex` hidden alias (`href:null`).
+Map อยู่แค่ `events/map.tsx` (venue). Bag ฟื้นเป็น `/bag` stack. ห้าม push `/(tabs)/pokedex` หรือ `/(tabs)/bag`.
