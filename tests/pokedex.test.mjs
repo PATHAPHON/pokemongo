@@ -153,4 +153,15 @@ describe('Pokédex System & Logic Tests', () => {
       ['bulbasaur', 'pikachu']
     );
   });
+
+  test('Pokédex Gen 1 entries restriction (1 to 151)', () => {
+    const gen1Entries = DEFAULT_POKEMON_REGISTRY_LIST.filter(
+      (m) => m.id >= 1 && m.id <= 151
+    );
+    assert.equal(gen1Entries.length, 151, 'Pokédex must strictly contain 151 species');
+    assert.equal(gen1Entries[0].id, 1);
+    assert.equal(gen1Entries[0].name, 'bulbasaur');
+    assert.equal(gen1Entries[150].id, 151);
+    assert.equal(gen1Entries[150].name, 'mew');
+  });
 });

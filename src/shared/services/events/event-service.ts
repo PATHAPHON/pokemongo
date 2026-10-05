@@ -177,6 +177,13 @@ export async function createEvent(
   if (!eventData.location?.name?.trim()) {
     return { success: false, error: 'กรุณาระบุสถานที่จัดงาน' };
   }
+  if (
+    !eventData.featuredPokemonId ||
+    typeof eventData.featuredPokemonId !== 'number' ||
+    eventData.featuredPokemonId <= 0
+  ) {
+    return { success: false, error: 'กรุณาเลือกโปเกมอนประจำมีตอัป' };
+  }
 
   const newEvent: CampusEvent = {
     ...eventData,

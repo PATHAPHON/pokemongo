@@ -7,30 +7,15 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  EventCategoryFilter,
-  EventStatusFilter,
-} from '../types';
-import { getCategoryLabel } from '@/shared/constants/event-theme';
+import { EventStatusFilter } from '../types';
 
 interface EventFilterBarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  categoryFilter: EventCategoryFilter;
-  onCategoryChange: (cat: EventCategoryFilter) => void;
   statusFilter: EventStatusFilter;
   onStatusChange: (status: EventStatusFilter) => void;
   isDark?: boolean;
 }
-
-const CATEGORIES: EventCategoryFilter[] = [
-  'all',
-  'workshop',
-  'academic',
-  'sports',
-  'social',
-  'career',
-];
 
 const STATUSES: { key: EventStatusFilter; label: string; icon: string }[] = [
   { key: 'all', label: 'ทั้งหมด', icon: 'apps-outline' },
@@ -42,8 +27,6 @@ const STATUSES: { key: EventStatusFilter; label: string; icon: string }[] = [
 export function EventFilterBar({
   searchQuery,
   onSearchChange,
-  categoryFilter,
-  onCategoryChange,
   statusFilter,
   onStatusChange,
   isDark = false,
@@ -53,7 +36,7 @@ export function EventFilterBar({
   const inputBg = isDark ? '#1E1E1E' : '#FFFFFF';
   const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
   const chipBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const chipActiveBg = '#8B5CF6';
+  const chipActiveBg = '#EE1515';
 
   return (
     <View style={styles.container}>
@@ -67,7 +50,7 @@ export function EventFilterBar({
         <Ionicons name="search" size={18} color={subTextColor} />
         <TextInput
           style={[styles.input, { color: textColor }]}
-          placeholder="ค้นหามีตอัป, สถานที่จัด, หรือกลุ่มเทรนเนอร์..."
+          placeholder="ค้นหามีตอัปโปเกมอน, สถานที่จัด, หรือกลุ่มเทรนเนอร์..."
           placeholderTextColor={subTextColor}
           value={searchQuery}
           onChangeText={onSearchChange}
@@ -128,51 +111,6 @@ export function EventFilterBar({
           );
         })}
       </ScrollView>
-
-      {/* Category Pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryScroll}
-      >
-        {CATEGORIES.map((cat) => {
-          const isActive = categoryFilter === cat;
-          const label = cat === 'all' ? 'ทุกหมวดหมู่' : getCategoryLabel(cat);
-          return (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryChip,
-                {
-                  backgroundColor: isActive
-                    ? isDark
-                      ? '#3A3A3C'
-                      : '#374151'
-                    : 'transparent',
-                  borderColor: isActive ? 'transparent' : borderColor,
-                },
-              ]}
-              onPress={() => onCategoryChange(cat)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
-              accessibilityLabel={`หมวดหมู่ ${label}`}
-            >
-              <Text
-                style={[
-                  styles.categoryChipText,
-                  {
-                    color: isActive ? '#FFFFFF' : subTextColor,
-                    fontWeight: isActive ? '700' : '500',
-                  },
-                ]}
-              >
-                {label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
     </View>
   );
 }
@@ -214,18 +152,5 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 12,
     fontWeight: '600',
-  },
-  categoryScroll: {
-    gap: 6,
-    paddingVertical: 2,
-  },
-  categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  categoryChipText: {
-    fontSize: 12,
   },
 });

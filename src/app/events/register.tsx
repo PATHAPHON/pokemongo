@@ -19,6 +19,12 @@ import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { useEventContext } from '@/shared/context/event-context';
 import { useTrainer } from '@/shared/context/trainer-context';
 import { EventImagePicker } from '@/features/events';
+import { buildCatchParams } from '@/shared/utils/event-helpers';
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
+import {
+  formatPokemonId,
+  capitalizePokemonName,
+} from '@/shared/constants/kanto-pokemon';
 
 export default function EventRegisterScreen() {
   const router = useRouter();
@@ -82,31 +88,7 @@ export default function EventRegisterScreen() {
           // Ignore haptic errors on web/simulators
         }
 
-        Alert.alert(
-          'ลงทะเบียนสำเร็จ 🎉',
-          `คุณได้ลงทะเบียนกิจกรรม "${event.title}" เรียบร้อยแล้ว`,
-          [
-            {
-              text: 'ไปจับโปเกมอนในกิจกรรมทันที ⚡',
-              onPress: () => {
-                router.replace({
-                  pathname: '/events/map' as any,
-                  params: { id: event.id },
-                });
-              },
-            },
-            {
-              text: 'ดูรายการของฉัน',
-              onPress: () => {
-                router.replace('/(tabs)/pokemon' as any);
-              },
-            },
-            {
-              text: 'ปิด',
-              onPress: () => router.back(),
-            },
-          ]
-        );
+        router.replace('/(tabs)/pokemon' as any);
       } else {
         setErrorMessage(res.error || 'เกิดข้อผิดพลาดในการลงทะเบียน');
       }
@@ -148,7 +130,7 @@ export default function EventRegisterScreen() {
             <View style={styles.badgeRow}>
               <View style={styles.eventDot} />
               <Text style={styles.eventCatText}>
-                {event.category.toUpperCase()}
+                POKÉMON MEETUP • #{formatPokemonId(event.featuredPokemonId)} {capitalizePokemonName(getPokemonMetaById(event.featuredPokemonId)?.name || 'Pokemon')}
               </Text>
             </View>
             <Text style={[styles.eventTitle, { color: textColor }]}>

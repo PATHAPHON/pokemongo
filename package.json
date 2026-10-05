@@ -10,7 +10,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "test": "tsx --test tests/**/*.test.mjs",
-    "postinstall": "node scripts/patch-expo-notifications.js"
+    "postinstall": "node scripts/patch-expo-notifications.js && node scripts/patch-expo-sqlite.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

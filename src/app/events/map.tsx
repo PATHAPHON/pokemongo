@@ -30,7 +30,6 @@ import {
   capitalizePokemonName,
 } from '@/shared/constants/kanto-pokemon';
 import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
-import { EventCategoryColors } from '@/shared/constants/event-theme';
 
 export default function EventCatchMapScreen() {
   const router = useRouter();
@@ -117,14 +116,11 @@ export default function EventCatchMapScreen() {
   // Event venue pin for Leaflet
   const eventPins: EventVenuePin[] = useMemo(() => {
     if (!event) return [];
-    const color =
-      EventCategoryColors[event.category]?.primary || '#8B5CF6';
     return [
       {
         id: event.id,
         title: event.title,
-        category: event.category,
-        categoryColor: color,
+        categoryColor: '#EE1515',
         latitude: event.location.latitude,
         longitude: event.location.longitude,
         venueName: event.location.name,

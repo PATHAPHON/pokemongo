@@ -4,21 +4,15 @@ import { PokedexStats, PokedexGenFilter } from '../types';
 
 interface PokedexHeaderProps {
   stats: PokedexStats;
-  currentGen: PokedexGenFilter;
+  currentGen?: PokedexGenFilter;
+  subtitle?: string;
   isDark: boolean;
 }
 
-const GEN_TITLES: Record<PokedexGenFilter, string> = {
-  all: 'All Regions (Gen 1 - 3)',
-  gen1: 'Kanto Region (Gen 1)',
-  gen2: 'Johto Region (Gen 2)',
-  gen3: 'Hoenn Region (Gen 3)',
-};
-
 export function PokedexHeader({
   stats,
-  currentGen,
   isDark,
+  subtitle,
 }: PokedexHeaderProps) {
   const containerBg = isDark ? '#1E1E1E' : '#FFFFFF';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
@@ -37,7 +31,7 @@ export function PokedexHeader({
           <View>
             <Text style={[styles.title, { color: textColor }]}>Pokédex</Text>
             <Text style={[styles.subtitle, { color: subTextColor }]}>
-              {GEN_TITLES[currentGen]}
+              {subtitle ?? 'Kanto Region (Gen 1)'}
             </Text>
           </View>
         </View>

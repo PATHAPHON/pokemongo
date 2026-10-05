@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEventContext } from '@/shared/context/event-context';
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
-import { EventCard, EventEmptyState, useEventActions } from '@/features/events';
+import { EventCard, EventEmptyState } from '@/features/events';
 import { CampusEvent } from '@/shared/types';
 
 type MyEventsTab = 'registered' | 'favorites';
@@ -34,7 +34,8 @@ export default function MyEventsScreen() {
 
   const { events, registrations, favorites, isLoading, toggleFavorite } =
     useEventContext();
-  const { handleCancelRegistration } = useEventActions();
+
+
 
   const [activeTab, setActiveTab] = useState<MyEventsTab>('registered');
 
@@ -76,14 +77,10 @@ export default function MyEventsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Ionicons name="bookmark" size={22} color="#8B5CF6" />
           <Text style={[styles.headerTitle, { color: textColor }]}>
             มีตอัปของฉัน
           </Text>
         </View>
-        <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
-          มีตอัปโปเกมอนที่คุณเข้าร่วมหรือบันทึกไว้
-        </Text>
 
         {/* Tab Switcher */}
         <View
@@ -169,7 +166,7 @@ export default function MyEventsScreen() {
               <View
                 style={[styles.cardItemWrap, numColumns > 1 && styles.gridCol]}
               >
-                <EventCard
+              <EventCard
                   event={item.event}
                   isFavorite={favoritesSet.has(item.event.id)}
                   isRegistered={true}
@@ -178,38 +175,6 @@ export default function MyEventsScreen() {
                   onToggleFavorite={() => toggleFavorite(item.event.id)}
                 />
 
-                {/* Cancel Registration Action Bar */}
-                <View
-                  style={[
-                    styles.regActionBar,
-                    { backgroundColor: cardBg, borderColor },
-                  ]}
-                >
-                  <View style={styles.regInfo}>
-                    <Text style={[styles.regLabel, { color: subTextColor }]}>
-                      รหัส: {item.registration.id.slice(0, 14)}...
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() =>
-                      handleCancelRegistration(
-                        item.registration.id,
-                        item.event.title
-                      )
-                    }
-                    activeOpacity={0.8}
-                    accessibilityRole="button"
-                    accessibilityLabel={`ยกเลิกการลงทะเบียน ${item.event.title}`}
-                  >
-                    <Ionicons
-                      name="close-circle-outline"
-                      size={14}
-                      color="#EF4444"
-                    />
-                    <Text style={styles.cancelButtonText}>ยกเลิก</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
             )}
             contentContainerStyle={
@@ -283,12 +248,13 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: -0.5,
+    textAlign: 'center',
   },
   headerSubtitle: {
     fontSize: 12,

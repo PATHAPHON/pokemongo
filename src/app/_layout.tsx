@@ -23,11 +23,9 @@ import { EventProvider } from '@/shared/context/event-context';
 
 import {
   registerNotificationTapListener,
-  cancelScheduledNotifications,
   setupNotificationChannels,
   configureNotificationHandler,
 } from '@/shared/services/notifications/index';
-import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -123,6 +121,13 @@ function NavigationStack() {
           }}
         />
         <Stack.Screen
+          name="events/pick-location"
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="profile/admin"
           options={{
             presentation: 'card',
@@ -146,19 +151,8 @@ export default function RootLayout() {
     setupNotificationChannels().catch(() => {});
 
     // 1. Observe notification taps (both Cold Start and Foreground/Background)
+    // Event-only: validate eventId then open /events/[id].
     const unsubscribeNotifications = registerNotificationTapListener(
-      (pokemonId) => {
-        const meta = getPokemonMetaById(pokemonId);
-        router.replace({
-          pathname: '/catch' as any,
-          params: {
-            id: String(pokemonId),
-            name: meta?.name ?? 'pikachu',
-            rarity: meta?.rarity ?? 'common',
-            types: JSON.stringify(meta?.types ?? ['normal']),
-          },
-        });
-      },
       (eventId) => {
         router.push({
           pathname: '/events/[id]' as any,
@@ -167,17 +161,12 @@ export default function RootLayout() {
       }
     );
 
-    // 2. Observe AppState transitions (e.g. going to background, returning from System Settings)
+    // 2. Observe AppState transitions (e.g. returning from System Settings).
+    // NOTE: do NOT cancel scheduled notifications here — that would wipe
+    // the 30-min event reminder and the 10s test loop.
     const subscriptionAppState = AppState.addEventListener(
       'change',
       (nextAppState) => {
-        if (
-          appState.current.match(/inactive|background/) &&
-          nextAppState === 'active'
-        ) {
-          // App returned to foreground, cancel pending background notifications
-          cancelScheduledNotifications().catch(() => {});
-        }
         appState.current = nextAppState;
       }
     );

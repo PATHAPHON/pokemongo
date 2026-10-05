@@ -3,10 +3,6 @@ import assert from 'node:assert/strict';
 
 import { CAMPUS_EVENTS } from '../src/shared/constants/campus-events-data.ts';
 import {
-  EventCategoryColors,
-  getCategoryLabel,
-} from '../src/shared/constants/event-theme';
-import {
   getEvents,
   getEventById,
   registerForEvent,
@@ -22,7 +18,7 @@ import {
 import { buildCatchParams } from '../src/shared/utils/event-helpers.ts';
 
 describe('Campus Events Data & Domain Model Tests', () => {
-  it('CAMPUS_EVENTS contains valid events with required fields', () => {
+  it('CAMPUS_EVENTS contains valid events with required fields and no category', () => {
     assert.ok(
       CAMPUS_EVENTS.length >= 10,
       'Must have at least 10 campus events'
@@ -32,11 +28,10 @@ describe('Campus Events Data & Domain Model Tests', () => {
       assert.ok(event.id, 'Event must have an id');
       assert.ok(event.title, 'Event must have a title');
       assert.ok(event.description, 'Event must have a description');
-      assert.ok(
-        ['workshop', 'academic', 'sports', 'social', 'career'].includes(
-          event.category
-        ),
-        `Event category ${event.category} must be one of allowed categories`
+      assert.equal(
+        event.category,
+        undefined,
+        `Event ${event.id} must not have category`
       );
       assert.ok(
         !isNaN(new Date(event.startsAt).getTime()),
@@ -55,21 +50,11 @@ describe('Campus Events Data & Domain Model Tests', () => {
         typeof event.registeredCount === 'number',
         'registeredCount must be number'
       );
-    }
-  });
-
-  it('EventCategoryColors and label helpers map correctly', () => {
-    const categories = ['workshop', 'academic', 'sports', 'social', 'career'];
-    for (const cat of categories) {
-      assert.ok(EventCategoryColors[cat], `Theme color for ${cat} must exist`);
       assert.ok(
-        getCategoryLabel(cat).length > 0,
-        `Category label for ${cat} must exist`
+        typeof event.featuredPokemonId === 'number' && event.featuredPokemonId > 0,
+        `Event ${event.id} must have a valid featuredPokemonId number`
       );
     }
-
-    assert.equal(getCategoryLabel('workshop'), 'เวิร์กช็อปเทคนิค');
-    assert.equal(getCategoryLabel('academic'), 'วิจัยฟิลด์รีเสิร์ช');
   });
 });
 
@@ -139,9 +124,9 @@ describe('Campus Event Service Layer Tests', () => {
     const invalidRes = await createEvent({
       title: '',
       description: 'Test description',
-      category: 'social',
       startsAt: new Date().toISOString(),
       location: { name: 'Campus Lawn', latitude: 13.793, longitude: 100.323 },
+      featuredPokemonId: 25,
     });
     assert.equal(invalidRes.success, false);
     assert.ok(invalidRes.error?.includes('ชื่อกิจกรรม'));
@@ -150,7 +135,6 @@ describe('Campus Event Service Layer Tests', () => {
     const createRes = await createEvent({
       title: 'Pikachu Community Gathering',
       description: 'รวมพลจับพิคาชูริมสระน้ำมหาวิทยาลัย',
-      category: 'social',
       startsAt: '2026-10-15T09:00:00.000Z',
       endsAt: '2026-10-15T12:00:00.000Z',
       location: {
@@ -176,6 +160,27 @@ describe('Campus Event Service Layer Tests', () => {
     assert.equal(fetched.id, createRes.event.id);
     assert.equal(fetched.title, 'Pikachu Community Gathering');
     assert.equal(fetched.featuredPokemonId, 25);
+  });
+
+  it('createEvent rejects events missing or invalid featuredPokemonId', async () => {
+    const res1 = await createEvent({
+      title: 'No Pokemon Meetup',
+      description: 'Missing pokemon',
+      startsAt: '2026-10-15T09:00:00.000Z',
+      location: { name: 'Room 101', latitude: 13.7, longitude: 100.5 },
+    });
+    assert.equal(res1.success, false);
+    assert.equal(res1.error, 'กรุณาเลือกโปเกมอนประจำมีตอัป');
+
+    const res2 = await createEvent({
+      title: 'Zero Pokemon Meetup',
+      description: 'Invalid pokemon id',
+      startsAt: '2026-10-15T09:00:00.000Z',
+      location: { name: 'Room 101', latitude: 13.7, longitude: 100.5 },
+      featuredPokemonId: 0,
+    });
+    assert.equal(res2.success, false);
+    assert.equal(res2.error, 'กรุณาเลือกโปเกมอนประจำมีตอัป');
   });
 
   it('verifies Udon Thani event exists and has valid coordinates & featured Pokemon', () => {

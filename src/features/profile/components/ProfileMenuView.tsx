@@ -1,12 +1,11 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useTrainer } from '@/shared/context/trainer-context';
 
 interface ProfileMenuViewProps {
   isDark: boolean;
   onEdit: () => void;
-  onAdmin: () => void;
+  onAdmin?: () => void;
   onLogout: () => void;
 }
 
@@ -17,7 +16,6 @@ export function ProfileMenuView({
   onLogout,
 }: ProfileMenuViewProps) {
   const router = useRouter();
-  const { caughtPokemon } = useTrainer();
   const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
   const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
@@ -32,13 +30,6 @@ export function ProfileMenuView({
       onPress: onEdit,
     },
     {
-      key: 'bag',
-      icon: 'briefcase-outline' as const,
-      title: `กระเป๋าโปเกมอน (${caughtPokemon.length})`,
-      subtitle: 'ดูรายการโปเกมอนที่จับได้',
-      onPress: () => router.push('/bag' as any),
-    },
-    {
       key: 'events',
       icon: 'ticket-outline' as const,
       title: 'กิจกรรมโปเกมอนของฉัน',
@@ -50,7 +41,7 @@ export function ProfileMenuView({
       icon: 'settings-outline' as const,
       title: 'สิทธิ์การใช้งานแอป & ผู้ดูแลระบบ (Admin Console)',
       subtitle: 'GPS / แจ้งเตือน / กล้อง / ทดสอบระบบ',
-      onPress: onAdmin,
+      onPress: onAdmin ?? (() => router.push('/profile/admin' as any)),
     },
   ];
 

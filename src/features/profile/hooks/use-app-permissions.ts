@@ -190,8 +190,8 @@ export function useAppPermissions(): AppPermissionsState {
 
       if (!current.canAskAgain && current.status === 'denied') {
         promptOpenSettings(
-          'ต้องการสิทธิ์การแจ้งเตือน (Notifications)',
-          'กรุณาเปิดการแจ้งเตือนในการตั้งค่าระบบของอุปกรณ์เพื่อรับการแจ้งเตือนเมื่อพบโปเกมอนหายาก'
+          'ต้องการสิทธิ์การแจ้งเตือนกิจกรรม (Notifications)',
+          'กรุณาเปิดการแจ้งเตือนในการตั้งค่าระบบของอุปกรณ์เพื่อรับแจ้งเตือนกิจกรรมมีตอัปล่วงหน้า 30 นาที'
         );
         return false;
       }
@@ -202,8 +202,8 @@ export function useAppPermissions(): AppPermissionsState {
 
       if (!granted) {
         promptOpenSettings(
-          'ต้องการสิทธิ์การแจ้งเตือน (Notifications)',
-          'กรุณาเปิดการแจ้งเตือนในการตั้งค่าระบบของอุปกรณ์เพื่อรับการแจ้งเตือนเมื่อพบโปเกมอนหายาก'
+          'ต้องการสิทธิ์การแจ้งเตือนกิจกรรม (Notifications)',
+          'กรุณาเปิดการแจ้งเตือนในการตั้งค่าระบบของอุปกรณ์เพื่อรับแจ้งเตือนกิจกรรมมีตอัปล่วงหน้า 30 นาที'
         );
       }
       return granted;

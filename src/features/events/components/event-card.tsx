@@ -1,12 +1,17 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CampusEvent } from '@/shared/types';
-import { CategoryBadge } from './category-badge';
 import {
   formatEventDateThai,
   formatEventTimeThai,
   isEventFull,
 } from '@/shared/utils/event-helpers';
+import {
+  getArtworkUrl,
+  formatPokemonId,
+  capitalizePokemonName,
+} from '@/shared/constants/kanto-pokemon';
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 
 interface EventCardProps {
   event: CampusEvent;
@@ -36,13 +41,16 @@ export function EventCard({
       ? Math.max(0, event.capacity - event.registeredCount)
       : null;
 
+  const pokemonMeta = getPokemonMetaById(event.featuredPokemonId);
+  const pokemonName = capitalizePokemonName(pokemonMeta?.name || 'Pokemon');
+
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: cardBg, borderColor }]}
       onPress={onPress}
       activeOpacity={0.88}
       accessibilityRole="button"
-      accessibilityLabel={`กิจกรรม: ${event.title}, สถานที่ ${event.location.name}`}
+      accessibilityLabel={`กิจกรรม: ${event.title}, โปเกมอน ${pokemonName}, สถานที่ ${event.location.name}`}
     >
       {/* Top Banner Image with Overlay Tags */}
       <View style={styles.imageContainer}>
@@ -62,6 +70,18 @@ export function EventCard({
             <Ionicons name="calendar-outline" size={40} color={subTextColor} />
           </View>
         )}
+
+        {/* Featured Pokemon Overlay Badge */}
+        <View style={styles.featuredOverlayBadge}>
+          <Image
+            source={{ uri: getArtworkUrl(event.featuredPokemonId) }}
+            style={styles.featuredOverlayImg}
+            resizeMode="contain"
+          />
+          <Text style={styles.featuredOverlayText} numberOfLines={1}>
+            {pokemonName}
+          </Text>
+        </View>
 
         {/* Favorite Heart Button */}
         {onToggleFavorite && (
@@ -97,7 +117,31 @@ export function EventCard({
       {/* Card Details */}
       <View style={styles.body}>
         <View style={styles.categoryRow}>
-          <CategoryBadge category={event.category} size="sm" />
+          <View style={styles.badgeGroup}>
+            <View
+              style={[
+                styles.pokemonTag,
+                {
+                  backgroundColor: isDark ? '#2D1B4E' : '#F5F3FF',
+                  borderColor: isDark ? '#6B21A8' : '#DDD6FE',
+                },
+              ]}
+            >
+              <Image
+                source={{ uri: getArtworkUrl(event.featuredPokemonId) }}
+                style={styles.pokemonTagImg}
+                resizeMode="contain"
+              />
+              <Text
+                style={[
+                  styles.pokemonTagText,
+                  { color: isDark ? '#C4B5FD' : '#6D28D9' },
+                ]}
+              >
+                #{formatPokemonId(event.featuredPokemonId)} {pokemonName}
+              </Text>
+            </View>
+          </View>
           {seatsRemaining !== null && (
             <Text
               style={[
@@ -226,5 +270,51 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     flex: 1,
+  },
+  featuredOverlayBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  featuredOverlayImg: {
+    width: 20,
+    height: 20,
+  },
+  featuredOverlayText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  badgeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+  },
+  pokemonTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  pokemonTagImg: {
+    width: 16,
+    height: 16,
+  },
+  pokemonTagText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

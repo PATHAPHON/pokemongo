@@ -18,5 +18,12 @@ export const Routes = {
     params: { id },
   }),
   eventMap: (id: string) => ({ pathname: '/events/map', params: { id } }),
+  eventPickLocation: (lat?: number | string, lng?: number | string) => ({
+    pathname: '/events/pick-location',
+    params: {
+      ...(lat !== undefined ? { lat: String(lat) } : {}),
+      ...(lng !== undefined ? { lng: String(lng) } : {}),
+    },
+  }),
   admin: '/profile/admin',
 } as const;

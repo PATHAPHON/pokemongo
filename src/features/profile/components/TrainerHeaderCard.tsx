@@ -1,12 +1,10 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TrainerProfile } from '@/shared/types';
-import { useTrainer } from '@/shared/context/trainer-context';
 
 interface TrainerHeaderCardProps {
   trainer: TrainerProfile | null;
   isDark: boolean;
-  caughtCount?: number;
 }
 
 const TEAM_META: Record<string, { label: string; color: string; bg: string; icon: string }> = {
@@ -16,8 +14,7 @@ const TEAM_META: Record<string, { label: string; color: string; bg: string; icon
   none: { label: 'No Team', color: '#6B7280', bg: 'rgba(107,114,128,0.15)', icon: '◌' },
 };
 
-export function TrainerHeaderCard({ trainer, isDark, caughtCount }: TrainerHeaderCardProps) {
-  const { caughtPokemon } = useTrainer();
+export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
   const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
   const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
@@ -25,12 +22,6 @@ export function TrainerHeaderCard({ trainer, isDark, caughtCount }: TrainerHeade
 
   const team = TEAM_META[trainer?.team || 'none'] || TEAM_META.none;
   const level = trainer?.level ?? 1;
-  const exp = trainer?.experience ?? 0;
-  const nextExp = trainer?.nextLevelExperience ?? 1000;
-  const progress = nextExp > 0 ? Math.min(1, exp / nextExp) : 0;
-  const caught = caughtCount ?? caughtPokemon.length;
-  const stardust = trainer?.stardust ?? 0;
-  const coins = trainer?.pokeCoins ?? 0;
 
   return (
     <View
@@ -73,36 +64,6 @@ export function TrainerHeaderCard({ trainer, isDark, caughtCount }: TrainerHeade
               {team.icon} {team.label}
             </Text>
           </View>
-        </View>
-      </View>
-
-      <View style={styles.xpRow}>
-        <Text style={[styles.xpLabel, { color: subTextColor }]}>
-          XP {exp} / {nextExp}
-        </Text>
-        <Text style={[styles.xpLabel, { color: subTextColor }]}>
-          {Math.round(progress * 100)}%
-        </Text>
-      </View>
-      <View style={styles.xpTrack}>
-        <View style={[styles.xpFill, { width: `${Math.round(progress * 100)}%` }]} />
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statBox}>
-          <Text style={styles.statEmoji}>🎒</Text>
-          <Text style={[styles.statValue, { color: textColor }]}>{caught}</Text>
-          <Text style={[styles.statLabel, { color: subTextColor }]}>จับได้</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statEmoji}>✨</Text>
-          <Text style={[styles.statValue, { color: textColor }]}>{stardust}</Text>
-          <Text style={[styles.statLabel, { color: subTextColor }]}>Stardust</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statEmoji}>🪙</Text>
-          <Text style={[styles.statValue, { color: textColor }]}>{coins}</Text>
-          <Text style={[styles.statLabel, { color: subTextColor }]}>PokéCoins</Text>
         </View>
       </View>
     </View>
@@ -158,48 +119,5 @@ const styles = StyleSheet.create({
   teamText: {
     fontSize: 12,
     fontWeight: '800',
-  },
-  xpRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  xpLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  xpTrack: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E5E7EB',
-    overflow: 'hidden',
-  },
-  xpFill: {
-    height: '100%',
-    backgroundColor: '#0A7EA4',
-    borderRadius: 4,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: 'rgba(128,128,128,0.12)',
-    gap: 2,
-  },
-  statEmoji: {
-    fontSize: 16,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '600',
   },
 });

@@ -25,5 +25,4 @@ export const Colors = {
 };
 
 export * from './pokemon-theme';
-export * from './event-theme';
 

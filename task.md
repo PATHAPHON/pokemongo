@@ -34,6 +34,9 @@
 - [ ] `TASK-43` P1 Organizer: date picker + venue picker + registry search + admin approve (ดู plan.md)
 - [ ] `TASK-44` P2 Venue map: `SPAWNED/EXPIRED` handler + `onExpired` + spawn bar 600s fix
 - [x] `TASK-45` Restore Pokédex tab in `(tabs)/pokedex.tsx` with full Gen1-3 catalog, search, and filters
+- [x] `TASK-47` Mandatory Meetup Featured Pokémon & Direct Catch flow (featuredPokemonId required, EventCard badge, direct /catch bypass)
+- [x] `TASK-48` Pure Pokémon GO Meetups & Category System Removal (100% Pokémon GO meetups, removed category filter, types, forms, badges, and legacy theme constants)
+- [x] `TASK-49` Gen 1 Only Pokédex & Remove Gen Filter Bar (Scoped Pokédex to 151 Kanto Pokémon, removed horizontal Gen pills, and updated stats out of 151)
 
 ---
 

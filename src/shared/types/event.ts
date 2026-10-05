@@ -1,15 +1,7 @@
-export type EventCategory =
-  | 'workshop'
-  | 'academic'
-  | 'sports'
-  | 'social'
-  | 'career';
-
 export interface CampusEvent {
   id: string;
   title: string;
   description: string;
-  category: EventCategory;
   startsAt: string; // ISO 8601
   endsAt?: string; // ISO 8601
   imageUrl?: string;
@@ -22,7 +14,7 @@ export interface CampusEvent {
   registeredCount: number;
   organizer?: string;
   organizerId?: string;
-  featuredPokemonId?: number;
+  featuredPokemonId: number;
   isCustom?: boolean;
 }
 
@@ -40,5 +32,4 @@ export interface EventRegistration {
   attemptedAt?: string;
 }
 
-export type EventFilterCategory = 'all' | EventCategory;
 export type EventFilterStatus = 'all' | 'upcoming' | 'registered' | 'favorites';

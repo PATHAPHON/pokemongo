@@ -23,8 +23,7 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [studentId, setStudentId] = useState('');
-  const [faculty, setFaculty] = useState('');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -50,7 +49,7 @@ export default function LoginScreen() {
           setErrorMessage(res.error || 'เข้าสู่ระบบไม่สำเร็จ');
         }
       } else {
-        const res = await register(username, password, studentId, faculty);
+        const res = await register(username, password, '', '');
         if (!res.success) {
           setErrorMessage(res.error || 'ลงทะเบียนไม่สำเร็จ');
         }
@@ -209,65 +208,6 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {/* Additional Student Fields in Register Mode */}
-            {mode === 'register' && (
-              <>
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: textColor }]}>
-                    รหัสนักศึกษา (Student ID - ไม่บังคับ)
-                  </Text>
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      { backgroundColor: inputBg, borderColor },
-                    ]}
-                  >
-                    <Ionicons
-                      name="id-card-outline"
-                      size={18}
-                      color={subTextColor}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      style={[styles.input, { color: textColor }]}
-                      placeholder="เช่น 66010001"
-                      placeholderTextColor={subTextColor}
-                      autoCapitalize="none"
-                      value={studentId}
-                      onChangeText={setStudentId}
-                      editable={!isSubmitting}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: textColor }]}>
-                    คณะ / ภาควิชา (Faculty - ไม่บังคับ)
-                  </Text>
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      { backgroundColor: inputBg, borderColor },
-                    ]}
-                  >
-                    <Ionicons
-                      name="school-outline"
-                      size={18}
-                      color={subTextColor}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      style={[styles.input, { color: textColor }]}
-                      placeholder="เช่น วิศวกรรมศาสตร์, วิทยาการสารสนเทศ"
-                      placeholderTextColor={subTextColor}
-                      value={faculty}
-                      onChangeText={setFaculty}
-                      editable={!isSubmitting}
-                    />
-                  </View>
-                </View>
-              </>
-            )}
 
             {/* Submit Button */}
             <TouchableOpacity

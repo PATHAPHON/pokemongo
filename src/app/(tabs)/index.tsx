@@ -39,8 +39,6 @@ export default function EventsScreen() {
     lastUpdated,
     searchQuery,
     setSearchQuery,
-    categoryFilter,
-    setCategoryFilter,
     statusFilter,
     setStatusFilter,
     registeredEventIds,
@@ -55,7 +53,6 @@ export default function EventsScreen() {
 
   const handleResetFilters = () => {
     setSearchQuery('');
-    setCategoryFilter('all');
     setStatusFilter('all');
   };
 
@@ -72,12 +69,10 @@ export default function EventsScreen() {
         isDark={isDark}
       />
 
-      {/* Search Input, Status Tabs, and Category Chips */}
+      {/* Search Input and Status Tabs */}
       <EventFilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        categoryFilter={categoryFilter}
-        onCategoryChange={setCategoryFilter}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
         isDark={isDark}

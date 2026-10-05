@@ -14,7 +14,6 @@ import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import {
   usePokedex,
   PokedexCard,
-  PokedexHeader,
   PokedexFilterBar,
   PokedexEntry,
 } from '@/features/pokedex';
@@ -39,8 +38,6 @@ export default function PokedexScreen() {
     setSearchQuery,
     statusFilter,
     setStatusFilter,
-    genFilter,
-    setGenFilter,
   } = usePokedex();
 
   const handleCardPress = (entry: PokedexEntry) => {
@@ -50,7 +47,6 @@ export default function PokedexScreen() {
   const handleResetFilters = () => {
     setSearchQuery('');
     setStatusFilter('all');
-    setGenFilter('all');
   };
 
   return (
@@ -58,8 +54,12 @@ export default function PokedexScreen() {
       style={[styles.container, { backgroundColor: screenBg }]}
       edges={['top']}
     >
-      {/* Pokédex Progress Header */}
-      <PokedexHeader stats={stats} currentGen={genFilter} isDark={isDark} />
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: textColor }]}>
+          Pokédex
+        </Text>
+      </View>
 
       {/* Search & Filters */}
       <PokedexFilterBar
@@ -67,8 +67,6 @@ export default function PokedexScreen() {
         onSearchChange={setSearchQuery}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
-        genFilter={genFilter}
-        onGenChange={setGenFilter}
         isDark={isDark}
       />
 
@@ -137,6 +135,19 @@ export default function PokedexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+    textAlign: 'center',
   },
   content: {
     flex: 1,

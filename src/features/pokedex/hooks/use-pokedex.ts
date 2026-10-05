@@ -4,9 +4,7 @@ import { getAllPokemonMeta } from '@/shared/services/pokemon-registry';
 import {
   PokedexEntry,
   PokedexStatusFilter,
-  PokedexGenFilter,
   PokedexStats,
-  isPokemonInGen,
 } from '../types';
 
 export function usePokedex() {
@@ -14,7 +12,6 @@ export function usePokedex() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PokedexStatusFilter>('all');
-  const [genFilter, setGenFilter] = useState<PokedexGenFilter>('all');
 
   // Map caught pokemon by pokemonId -> count and first caught date
   const caughtStatsMap = useMemo(() => {
@@ -39,10 +36,11 @@ export function usePokedex() {
     return map;
   }, [caughtPokemon]);
 
-  // Build full registry entries with caught state
+  // Build full registry entries with caught state (Gen 1 only: 1 to 151)
   const allEntries: PokedexEntry[] = useMemo(() => {
     const registryList = getAllPokemonMeta();
-    return registryList.map((meta) => {
+    const gen1List = registryList.filter((meta) => meta.id >= 1 && meta.id <= 151);
+    return gen1List.map((meta) => {
       const stat = caughtStatsMap.get(meta.id);
       return {
         id: meta.id,
@@ -76,12 +74,7 @@ export function usePokedex() {
     const query = searchQuery.trim().toLowerCase().replace(/^#/, '');
 
     return allEntries.filter((entry) => {
-      // 1. Generation filter
-      if (!isPokemonInGen(entry.id, genFilter)) {
-        return false;
-      }
-
-      // 2. Status filter
+      // 1. Status filter
       if (statusFilter === 'caught' && !entry.isCaught) {
         return false;
       }
@@ -89,7 +82,7 @@ export function usePokedex() {
         return false;
       }
 
-      // 3. Search query filter
+      // 2. Search query filter
       if (query.length > 0) {
         const matchesName = entry.name.toLowerCase().includes(query);
         const matchesId = String(entry.id).includes(query);
@@ -103,7 +96,7 @@ export function usePokedex() {
 
       return true;
     });
-  }, [allEntries, genFilter, statusFilter, searchQuery]);
+  }, [allEntries, statusFilter, searchQuery]);
 
   return {
     entries: filteredEntries,
@@ -113,7 +106,5 @@ export function usePokedex() {
     setSearchQuery,
     statusFilter,
     setStatusFilter,
-    genFilter,
-    setGenFilter,
   };
 }

@@ -3,22 +3,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { EventStats } from '../types';
 
 interface EventStatsHeaderProps {
-  stats: EventStats;
+  stats?: EventStats;
   isOffline?: boolean;
   lastUpdated?: string | null;
   isDark?: boolean;
 }
 
 export function EventStatsHeader({
-  stats,
   isOffline = false,
   lastUpdated,
   isDark = false,
 }: EventStatsHeaderProps) {
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
 
   const formatLastUpdated = (iso?: string | null) => {
     if (!iso) return '';
@@ -65,56 +62,6 @@ export function EventStatsHeader({
           </Text>
         </View>
       )}
-
-      {/* Quick Metrics Bar */}
-      <View
-        style={[
-          styles.metricsCard,
-          { backgroundColor: cardBg, borderColor },
-        ]}
-      >
-        <View style={styles.metricItem}>
-          <Text style={[styles.metricNumber, { color: '#8B5CF6' }]}>
-            {stats.total}
-          </Text>
-          <Text style={[styles.metricLabel, { color: subTextColor }]}>
-            ทั้งหมด
-          </Text>
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: borderColor }]} />
-
-        <View style={styles.metricItem}>
-          <Text style={[styles.metricNumber, { color: '#10B981' }]}>
-            {stats.upcoming}
-          </Text>
-          <Text style={[styles.metricLabel, { color: subTextColor }]}>
-            เร็วๆ นี้
-          </Text>
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: borderColor }]} />
-
-        <View style={styles.metricItem}>
-          <Text style={[styles.metricNumber, { color: '#3B82F6' }]}>
-            {stats.registered}
-          </Text>
-          <Text style={[styles.metricLabel, { color: subTextColor }]}>
-            ลงทะเบียน
-          </Text>
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: borderColor }]} />
-
-        <View style={styles.metricItem}>
-          <Text style={[styles.metricNumber, { color: '#EF4444' }]}>
-            {stats.favorites}
-          </Text>
-          <Text style={[styles.metricLabel, { color: subTextColor }]}>
-            บันทึกไว้
-          </Text>
-        </View>
-      </View>
     </View>
   );
 }
@@ -174,31 +121,5 @@ const styles = StyleSheet.create({
     color: '#B45309',
     fontWeight: '600',
     flex: 1,
-  },
-  metricsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  metricItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  metricNumber: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  metricLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  divider: {
-    width: 1,
-    height: 24,
   },
 });

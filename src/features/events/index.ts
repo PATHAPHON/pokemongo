@@ -2,7 +2,6 @@ export * from './types';
 export * from './hooks/use-events';
 export * from './hooks/use-event-detail';
 export * from './hooks/use-event-actions';
-export * from './components/category-badge';
 export * from './components/event-card';
 export * from './components/event-filter-bar';
 export * from './components/event-stats-header';

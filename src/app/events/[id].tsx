@@ -18,7 +18,11 @@ import {
   useEventActions,
 } from '@/features/events';
 import { useTrainer } from '@/shared/context/trainer-context';
-import { formatRemainingLabel } from '@/shared/utils/event-helpers';
+import {
+  formatRemainingLabel,
+  buildCatchParams,
+} from '@/shared/utils/event-helpers';
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 
 export default function EventDetailScreen() {
   const router = useRouter();
@@ -43,12 +47,27 @@ export default function EventDetailScreen() {
     hasAttended,
     isFavorite,
     hasReminder,
+    hasTestLoop,
     reload,
     toggleFavorite,
     toggleReminder,
+    toggleTestLoop,
   } = useEventDetail(id || '');
 
   const { handleCancelRegistration } = useEventActions();
+
+  const handleDirectCatch = () => {
+    if (!id || !event?.featuredPokemonId) return;
+    const meta = getPokemonMetaById(event.featuredPokemonId);
+    const catchParams = buildCatchParams({
+      id: event.featuredPokemonId,
+      name: meta?.name ?? 'Pokemon',
+      rarity: meta?.rarity ?? 'rare',
+      types: meta?.types ?? ['normal'],
+      eventId: event.id,
+    });
+    router.push(catchParams as any);
+  };
 
   const handleViewOnMap = () => {
     if (!id) return;
@@ -136,84 +155,17 @@ export default function EventDetailScreen() {
           isDark={isDark}
         />
 
-        {isRegistered && event.featuredPokemonId ? (
-          <View
-            style={{
-              marginHorizontal: 20,
-              marginTop: 12,
-              backgroundColor: hasCaught ? '#ECFDF5' : hasAttended ? '#FEF2F2' : '#EFF6FF',
-              borderWidth: 1,
-              borderColor: hasCaught ? '#A7F3D0' : hasAttended ? '#FECACA' : '#BFDBFE',
-              borderRadius: 14,
-              padding: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <Ionicons
-              name={hasCaught ? 'checkmark-circle' : hasAttended ? 'close-circle' : 'sparkles'}
-              size={24}
-              color={hasCaught ? '#10B981' : hasAttended ? '#EF4444' : '#3B82F6'}
-            />
-            <View style={{ flex: 1, gap: 4 }}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '800',
-                  color: hasCaught ? '#065F46' : hasAttended ? '#991B1B' : '#1E40AF',
-                }}
-              >
-                {hasCaught
-                  ? 'จับโปเกมอนประจำงานสำเร็จแล้ว 🎉'
-                  : hasAttended
-                    ? 'คุณใช้สิทธิ์จับของกิจกรรมนี้ไปแล้ว'
-                    : 'มีสิทธิ์เข้าจับโปเกมอนประจำงานแล้ว!'}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: hasCaught ? '#047857' : hasAttended ? '#B91C1C' : '#1D4ED8',
-                  fontWeight: '500',
-                }}
-              >
-                {hasCaught || hasAttended
-                  ? `จำกัดสิทธิ์ 1 ครั้งต่อคน • ${formatRemainingLabel(event.endsAt, Date.now())}`
-                  : 'เปิดแผนที่จัดงานเพื่อสแกนและเริ่มจับโปเกมอน'}
-              </Text>
-              {!hasCaught && !hasAttended ? (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: '#EE1515',
-                    paddingVertical: 10,
-                    borderRadius: 10,
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    gap: 6,
-                    marginTop: 4,
-                  }}
-                  onPress={handleViewOnMap}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityLabel="เปิดแผนที่และเริ่มจับโปเกมอนในงาน"
-                >
-                  <Ionicons name="map" size={16} color="#FFFFFF" />
-                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>
-                    เปิดแผนที่ & สแกนจับโปเกมอน
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          </View>
-        ) : null}
+
 
         <EventDetailInfo
           event={event}
           registration={registration}
           isDark={isDark}
           onViewOnMap={handleViewOnMap}
+          onCatchDirect={handleDirectCatch}
           isOrganizer={isOrganizer}
+          hasTestLoop={hasTestLoop}
+          onToggleTestLoop={toggleTestLoop}
         />
       </ScrollView>
 
@@ -227,61 +179,7 @@ export default function EventDetailScreen() {
           },
         ]}
       >
-        {isRegistered ? (
-          <View style={styles.registeredBar}>
-            <View style={styles.registeredTextGroup}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.registeredLabel}>คุณลงทะเบียนแล้ว</Text>
-            </View>
-            <View style={styles.registeredActionsRow}>
-              {event.featuredPokemonId && !hasCaught && !hasAttended ? (
-                <TouchableOpacity
-                  style={styles.bottomCatchButton}
-                  onPress={handleViewOnMap}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityLabel="เปิดแผนที่จัดงานและจับโปเกมอน"
-                >
-                  <Ionicons name="map" size={16} color="#FFFFFF" />
-                  <Text style={styles.bottomCatchButtonText}>
-                    แผนที่ & จับโปเกมอน
-                  </Text>
-                </TouchableOpacity>
-              ) : event.featuredPokemonId ? (
-                <View
-                  style={[
-                    styles.bottomCatchButton,
-                    {
-                      backgroundColor: hasCaught ? '#059669' : '#6B7280',
-                      shadowOpacity: 0,
-                      elevation: 0,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={hasCaught ? 'checkmark-circle' : 'lock-closed'}
-                    size={16}
-                    color="#FFFFFF"
-                  />
-                  <Text style={styles.bottomCatchButtonText}>
-                    {hasCaught ? 'จับสำเร็จแล้ว' : 'ใช้สิทธิ์แล้ว'}
-                  </Text>
-                </View>
-              ) : null}
-              <TouchableOpacity
-                style={styles.cancelRegButton}
-                onPress={() => {
-                  if (registration) {
-                    handleCancelRegistration(registration.id, event.title);
-                  }
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.cancelRegButtonText}>ยกเลิก</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : isFull ? (
+        {!isRegistered && (isFull ? (
           <View style={[styles.primaryButton, styles.disabledButton]}>
             <Ionicons name="close-circle-outline" size={18} color="#FFFFFF" />
             <Text style={styles.primaryButtonText}>
@@ -306,8 +204,9 @@ export default function EventDetailScreen() {
               ลงทะเบียนเข้าร่วมมีตอัป
             </Text>
           </TouchableOpacity>
-        )}
+        ))}
       </View>
+
     </View>
   );
 }
@@ -459,5 +358,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
+  },
+  bottomMapIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

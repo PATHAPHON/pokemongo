@@ -8,7 +8,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CampusEvent } from '@/shared/types';
-import { CategoryBadge } from './category-badge';
+import {
+  getArtworkUrl,
+  formatPokemonId,
+  capitalizePokemonName,
+} from '@/shared/constants/kanto-pokemon';
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 
 interface EventDetailHeroProps {
   event: CampusEvent;
@@ -31,6 +36,9 @@ export function EventDetailHero({
 }: EventDetailHeroProps) {
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const subTextColor = isDark ? '#9BA1A6' : '#687076';
+
+  const pokemonMeta = getPokemonMetaById(event.featuredPokemonId);
+  const pokemonName = capitalizePokemonName(pokemonMeta?.name || 'Pokemon');
 
   return (
     <View style={styles.container}>
@@ -66,7 +74,7 @@ export function EventDetailHero({
               onPress={onToggleReminder}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel={hasReminder ? 'ยกเลิกการแจ้งเตือน' : 'ตั้งการแจ้งเตือน'}
+              accessibilityLabel={hasReminder ? 'ยกเลิกเตือนล่วงหน้า 30 นาที' : 'ตั้งเตือนล่วงหน้า 30 นาที'}
             >
               <Ionicons
                 name={hasReminder ? 'notifications' : 'notifications-outline'}
@@ -94,7 +102,16 @@ export function EventDetailHero({
 
       {/* Hero Titles */}
       <View style={styles.titleSection}>
-        <CategoryBadge category={event.category} size="md" />
+        <View style={styles.pokemonHeroBadge}>
+          <Image
+            source={{ uri: getArtworkUrl(event.featuredPokemonId) }}
+            style={styles.pokemonHeroBadgeImg}
+            resizeMode="contain"
+          />
+          <Text style={styles.pokemonHeroBadgeText}>
+            #{formatPokemonId(event.featuredPokemonId)} {pokemonName}
+          </Text>
+        </View>
 
         <Text style={[styles.title, { color: textColor }]}>
           {event.title}
@@ -108,6 +125,12 @@ export function EventDetailHero({
             </Text>
           </View>
         )}
+
+        {event.description ? (
+          <Text style={[styles.description, { color: subTextColor }]}>
+            {event.description}
+          </Text>
+        ) : null}
       </View>
     </View>
   );
@@ -172,5 +195,32 @@ const styles = StyleSheet.create({
   organizerText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '400',
+    marginTop: 2,
+  },
+
+  pokemonHeroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: '#EE1515',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 4,
+  },
+  pokemonHeroBadgeImg: {
+    width: 22,
+    height: 22,
+  },
+  pokemonHeroBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

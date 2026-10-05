@@ -1,4 +1,5 @@
 import { defaultNotificationManager } from './notification-manager';
+import type { CampusEvent } from '@/shared/types';
 
 export * from './notification-manager';
 
@@ -28,14 +29,6 @@ export async function resetNotificationPreferences(): Promise<void> {
   return defaultNotificationManager.resetPreferences();
 }
 
-export async function scheduleBackgroundNotifications(
-  caughtPokemonIds?: Set<number>
-): Promise<void> {
-  return defaultNotificationManager.scheduleBackgroundSpawnNotifications(
-    caughtPokemonIds
-  );
-}
-
 export async function cancelScheduledNotifications(): Promise<void> {
   return defaultNotificationManager.cancelScheduledNotifications();
 }
@@ -44,7 +37,8 @@ export async function sendTestNotification(): Promise<{
   success: boolean;
   message: string;
 }> {
-  return defaultNotificationManager.sendTestNotification();
+  const res = await defaultNotificationManager.sendChannelTestNotification();
+  return { success: res.success, message: res.message };
 }
 
 export async function sendDelayedTestNotification(
@@ -53,21 +47,30 @@ export async function sendDelayedTestNotification(
   success: boolean;
   message: string;
 }> {
-  return defaultNotificationManager.sendDelayedTestNotification(delaySeconds);
+  const res =
+    await defaultNotificationManager.sendDelayedChannelTestNotification(
+      delaySeconds
+    );
+  return { success: res.success, message: res.message };
 }
 
+type ReminderEvent = Pick<CampusEvent, 'id' | 'title' | 'startsAt' | 'location'>;
+
 export async function scheduleEventReminder(
-  eventId: string,
-  title: string,
-  startsAt: string,
-  minutesBefore: number = 15
+  event: ReminderEvent,
+  minutesBefore: number = 30
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   return defaultNotificationManager.scheduleEventReminder(
-    eventId,
-    title,
-    startsAt,
+    event,
     minutesBefore
   );
+}
+
+export async function scheduleEventTestLoop(
+  event: Pick<CampusEvent, 'id' | 'title' | 'location'>,
+  minutesBefore: number = 30
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  return defaultNotificationManager.scheduleEventTestLoop(event, minutesBefore);
 }
 
 export async function cancelEventReminder(
@@ -76,13 +79,14 @@ export async function cancelEventReminder(
   return defaultNotificationManager.cancelEventReminder(notificationId);
 }
 
-export function registerNotificationTapListener(
-  onNavigateToCatch: (pokemonId: number) => void,
-  onNavigateToEvent?: (eventId: string) => void
-): () => void {
-  return defaultNotificationManager.registerTapListener(
-    onNavigateToCatch,
-    onNavigateToEvent
-  );
+export async function cancelEventTestLoop(
+  notificationId: string
+): Promise<void> {
+  return defaultNotificationManager.cancelEventTestLoop(notificationId);
 }
 
+export function registerNotificationTapListener(
+  onNavigateToEvent: (eventId: string) => void
+): () => void {
+  return defaultNotificationManager.registerTapListener(onNavigateToEvent);
+}

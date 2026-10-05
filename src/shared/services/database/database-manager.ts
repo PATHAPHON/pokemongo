@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
 export class DatabaseManager {
@@ -40,9 +41,15 @@ export class DatabaseManager {
   }
 
   public async initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
-    await db.execAsync(`
-      PRAGMA journal_mode = WAL;
+    if (Platform.OS !== 'web') {
+      try {
+        await db.execAsync('PRAGMA journal_mode = WAL;');
+      } catch (err) {
+        console.warn('Could not set WAL journal mode:', err);
+      }
+    }
 
+    await db.execAsync(`
       CREATE TABLE IF NOT EXISTS caught_pokemon (
         instance_id TEXT PRIMARY KEY,
         pokemon_id INTEGER NOT NULL,

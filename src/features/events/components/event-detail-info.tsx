@@ -17,7 +17,10 @@ interface EventDetailInfoProps {
   registration?: EventRegistration;
   isDark?: boolean;
   onViewOnMap?: () => void;
+  onCatchDirect?: () => void;
   isOrganizer?: boolean;
+  hasTestLoop?: boolean;
+  onToggleTestLoop?: () => void;
 }
 
 function formatEventTimeRange(startIso: string, endIso?: string): string {
@@ -30,7 +33,10 @@ export function EventDetailInfo({
   registration,
   isDark = false,
   onViewOnMap,
+  onCatchDirect,
   isOrganizer = false,
+  hasTestLoop = false,
+  onToggleTestLoop,
 }: EventDetailInfoProps) {
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const subTextColor = isDark ? '#9BA1A6' : '#687076';
@@ -57,140 +63,124 @@ export function EventDetailInfo({
         </View>
       )}
 
-      {/* Registration Status Banner (if registered) */}
-      {registration && (
-        <View style={styles.statusBanner}>
-          <View style={styles.statusHeader}>
-            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-            <Text style={styles.statusTitle}>
-              คุณได้ลงทะเบียนกิจกรรมนี้แล้ว
-            </Text>
-          </View>
-          <Text style={styles.statusDetail}>
-            รหัสลงทะเบียน: {registration.id} • ลงทะเบียนเมื่อ:{' '}
-            {new Date(registration.registeredAt).toLocaleDateString('th-TH')}
-          </Text>
-          {registration.notes ? (
-            <Text style={styles.statusNotes}>
-              หมายเหตุ: {registration.notes}
-            </Text>
-          ) : null}
-          {registration.photoUri ? (
-            <View style={styles.ticketPhotoWrap}>
-              <Text style={styles.ticketPhotoLabel}>รูปภาพหลักฐาน:</Text>
-              <Image
-                source={{ uri: registration.photoUri }}
-                style={styles.ticketPhoto}
-                resizeMode="cover"
-              />
-            </View>
-          ) : null}
-        </View>
-      )}
 
-      {/* Info Cards: Date, Venue, Capacity */}
-      <View style={styles.cardGroup}>
-        {/* Date & Time */}
-        <View
-          style={[styles.infoCard, { backgroundColor: cardBg, borderColor }]}
-        >
-          <View style={[styles.iconCircle, { backgroundColor: '#F3E8FF' }]}>
-            <Ionicons name="calendar-outline" size={22} color="#8B5CF6" />
+
+
+      {/* Unified Info Card */}
+      <View style={[styles.unifiedCard, { backgroundColor: cardBg, borderColor }]}>
+
+        {/* Date & Time Row */}
+        <View style={styles.unifiedRow}>
+          <View style={[styles.unifiedIconWrap, { backgroundColor: '#F3E8FF' }]}>
+            <Ionicons name="calendar-outline" size={20} color="#8B5CF6" />
           </View>
-          <View style={styles.infoContent}>
-            <Text style={[styles.infoLabel, { color: subTextColor }]}>
-              วันและเวลา
-            </Text>
-            <Text style={[styles.infoValue, { color: textColor }]}>
+          <View style={styles.unifiedContent}>
+            <Text style={[styles.unifiedLabel, { color: subTextColor }]}>วันและเวลา</Text>
+            <Text style={[styles.unifiedValue, { color: textColor }]}>
               {formatEventDateThai(event.startsAt)}
             </Text>
-            <Text style={[styles.infoSubValue, { color: subTextColor }]}>
+            <Text style={[styles.unifiedSub, { color: subTextColor }]}>
               {formatEventTimeRange(event.startsAt, event.endsAt)}
             </Text>
           </View>
         </View>
 
-        {/* Location & Venue */}
-        <View
-          style={[styles.infoCard, { backgroundColor: cardBg, borderColor }]}
-        >
-          <View style={[styles.iconCircle, { backgroundColor: '#FEE2E2' }]}>
-            <Ionicons name="location-outline" size={22} color="#EF4444" />
+        <View style={[styles.divider, { backgroundColor: borderColor }]} />
+
+        {/* Venue Row */}
+        <View style={styles.unifiedRow}>
+          <View style={[styles.unifiedIconWrap, { backgroundColor: '#FEE2E2' }]}>
+            <Ionicons name="location-outline" size={20} color="#EF4444" />
           </View>
-          <View style={styles.infoContent}>
-            <Text style={[styles.infoLabel, { color: subTextColor }]}>
-              สถานที่จัดงาน
-            </Text>
-            <Text style={[styles.infoValue, { color: textColor }]}>
+          <View style={styles.unifiedContent}>
+            <Text style={[styles.unifiedLabel, { color: subTextColor }]}>สถานที่จัดงาน</Text>
+            <Text style={[styles.unifiedValue, { color: textColor }]}>
               {event.location.name}
             </Text>
-            <Text style={[styles.infoSubValue, { color: subTextColor }]}>
-              พิกัด GPS: {event.location.latitude.toFixed(4)},{' '}
-              {event.location.longitude.toFixed(4)}
+            <Text style={[styles.unifiedSub, { color: subTextColor }]}>
+              GPS: {event.location.latitude.toFixed(4)}, {event.location.longitude.toFixed(4)}
             </Text>
             {onViewOnMap ? (
               <TouchableOpacity
-                style={styles.mapLinkRow}
+                style={styles.mapChip}
                 onPress={onViewOnMap}
                 activeOpacity={0.7}
               >
-                <Ionicons name="map-outline" size={14} color="#3B82F6" />
-                <Text style={styles.mapLinkText}>
-                  เปิดแผนที่จัดงาน & สำรวจสถานที่
-                </Text>
+                <Ionicons name="map-outline" size={13} color="#3B82F6" />
+                <Text style={styles.mapChipText}>เปิดแผนที่ & สำรวจสถานที่</Text>
               </TouchableOpacity>
             ) : null}
           </View>
         </View>
 
-        {/* Capacity Progress */}
-        <View
-          style={[styles.infoCard, { backgroundColor: cardBg, borderColor }]}
-        >
-          <View style={[styles.iconCircle, { backgroundColor: '#E0E7FF' }]}>
-            <Ionicons name="people-outline" size={22} color="#3B82F6" />
+        <View style={[styles.divider, { backgroundColor: borderColor }]} />
+
+        {/* Capacity Row */}
+        <View style={styles.unifiedRow}>
+          <View style={[styles.unifiedIconWrap, { backgroundColor: '#E0E7FF' }]}>
+            <Ionicons name="people-outline" size={20} color="#3B82F6" />
           </View>
-          <View style={styles.infoContent}>
-            <View style={styles.capacityHeader}>
-              <Text style={[styles.infoLabel, { color: subTextColor }]}>
-                จำนวนที่เปิดรับ
-              </Text>
-              <Text
-                style={[
-                  styles.capacityRemaining,
-                  { color: seatsRemaining === 0 ? '#EF4444' : '#10B981' },
-                ]}
-              >
-                {seatsRemaining === 0
-                  ? 'เต็มจำนวนแล้ว'
-                  : `ว่างอีก ${seatsRemaining} ที่`}
+          <View style={styles.unifiedContent}>
+            <View style={styles.capacityHeaderRow}>
+              <Text style={[styles.unifiedLabel, { color: subTextColor }]}>จำนวนที่เปิดรับ</Text>
+              <Text style={[
+                styles.seatsBadge,
+                { color: seatsRemaining === 0 ? '#EF4444' : '#10B981' },
+              ]}>
+                {seatsRemaining === 0 ? 'เต็มแล้ว' : `ว่างอีก ${seatsRemaining} ที่`}
               </Text>
             </View>
-
-            <View style={styles.progressBarTrack}>
+            <View style={styles.progressTrack}>
               <View
                 style={[
-                  styles.progressBarFill,
+                  styles.progressFill,
                   {
-                    width: `${Math.round(progressRatio * 100)}%`,
+                    width: `${Math.round(progressRatio * 100)}%` as any,
                     backgroundColor:
-                      progressRatio >= 1
-                        ? '#EF4444'
-                        : progressRatio > 0.8
-                          ? '#F59E0B'
-                          : '#10B981',
+                      progressRatio >= 1 ? '#EF4444' : progressRatio > 0.8 ? '#F59E0B' : '#10B981',
                   },
                 ]}
               />
             </View>
-
-            <Text style={[styles.infoSubValue, { color: subTextColor }]}>
-              ลงทะเบียนแล้ว {registered} / {capacity} ที่นั่ง (
-              {Math.round(progressRatio * 100)}%)
+            <Text style={[styles.unifiedSub, { color: subTextColor }]}>
+              ลงทะเบียนแล้ว {registered} / {capacity} ที่นั่ง ({Math.round(progressRatio * 100)}%)
             </Text>
           </View>
         </View>
+
       </View>
+
+      {/* Test loop toggle: verify tap-to-detail when meetup is far away */}
+      {onToggleTestLoop ? (
+        <TouchableOpacity
+          style={[
+            styles.testLoopCard,
+            {
+              backgroundColor: isDark ? '#1E1E1E' : '#FFFBEB',
+              borderColor: hasTestLoop ? '#F59E0B' : borderColor,
+            },
+          ]}
+          onPress={onToggleTestLoop}
+          activeOpacity={0.8}
+          accessibilityRole="switch"
+          accessibilityLabel={hasTestLoop ? 'ปิดโหมดทดสอบ' : 'เปิดโหมดทดสอบ'}
+        >
+          <Ionicons
+            name={hasTestLoop ? 'notifications' : 'notifications-outline'}
+            size={20}
+            color="#F59E0B"
+          />
+          <View style={styles.testLoopContent}>
+            <Text style={[styles.testLoopTitle, { color: textColor }]}>
+              {hasTestLoop ? '⏱️ ทดสอบทุก 10 วิ: เปิดอยู่ (แตะเพื่อปิด)' : '⏱️ ทดสอบทุก 10 วิ (มีตอัปยังอีกนาน)'}
+            </Text>
+            <Text style={[styles.testLoopSub, { color: subTextColor }]}>
+              เด้งซ้ำทุก 10 วินาทีพร้อม eventId จริง แตะเพื่อเปิดรายละเอียด
+            </Text>
+          </View>
+        </TouchableOpacity>
+      ) : null}
+
 
       {/* Featured Pokemon Card */}
       {event.featuredPokemonId ? (
@@ -250,34 +240,50 @@ export function EventDetailInfo({
                     จับสำเร็จแล้ว (1 ครั้ง)
                   </Text>
                 </View>
-              ) : onViewOnMap && registration != null && registration.status !== 'cancelled' ? (
-                <TouchableOpacity
-                  style={styles.catchEventButton}
-                  onPress={onViewOnMap}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons name="map" size={16} color="#FFFFFF" />
-                  <Text style={styles.catchEventButtonText}>
-                    เปิดแผนที่จัดงาน & สแกนจับโปเกมอน
-                  </Text>
-                </TouchableOpacity>
+              ) : (onCatchDirect || onViewOnMap) && registration != null && registration.status !== 'cancelled' ? (
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  {onCatchDirect ? (
+                    <TouchableOpacity
+                      style={[styles.catchEventButton, { flex: 1 }]}
+                      onPress={onCatchDirect}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel="จับโปเกมอนประจำงานทันที"
+                    >
+                      <Ionicons name="sparkles" size={16} color="#FFFFFF" />
+                      <Text style={styles.catchEventButtonText}>
+                        จับ {capitalizePokemonName(pokemonMeta?.name || 'Pokemon')} ทันที ⚡
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  {onViewOnMap ? (
+                    <TouchableOpacity
+                      style={[
+                        styles.catchEventButton,
+                        {
+                          backgroundColor: isDark ? '#374151' : '#E5E7EB',
+                          paddingHorizontal: 12,
+                        },
+                      ]}
+                      onPress={onViewOnMap}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel="ดูแผนที่จัดงาน"
+                    >
+                      <Ionicons
+                        name="map-outline"
+                        size={16}
+                        color={isDark ? '#F3F4F6' : '#374151'}
+                      />
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               ) : null}
             </View>
           </View>
         </View>
       ) : null}
 
-      {/* Description Section */}
-      <View
-        style={[styles.descSection, { backgroundColor: cardBg, borderColor }]}
-      >
-        <Text style={[styles.descHeading, { color: textColor }]}>
-          เกี่ยวกับมีตอัป
-        </Text>
-        <Text style={[styles.descText, { color: textColor }]}>
-          {event.description}
-        </Text>
-      </View>
     </View>
   );
 }
@@ -332,61 +338,84 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 8,
   },
-  cardGroup: {
-    gap: 12,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    padding: 14,
-    borderRadius: 16,
+  unifiedCard: {
+    borderRadius: 20,
     borderWidth: 1,
-    gap: 14,
-    alignItems: 'flex-start',
+    overflow: 'hidden',
   },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  unifiedRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  unifiedIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  infoContent: {
+  unifiedContent: {
     flex: 1,
     gap: 3,
   },
-  infoLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+  unifiedLabel: {
+    fontSize: 11,
+    fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
-  infoValue: {
+  unifiedValue: {
     fontSize: 15,
     fontWeight: '800',
   },
-  infoSubValue: {
-    fontSize: 13,
+  unifiedSub: {
+    fontSize: 12,
     fontWeight: '500',
   },
-  capacityHeader: {
+  divider: {
+    height: 1,
+    marginHorizontal: 16,
+  },
+  capacityHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 6,
   },
-  capacityRemaining: {
+  seatsBadge: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  progressBarTrack: {
-    height: 8,
+  progressTrack: {
+    height: 7,
     borderRadius: 4,
     backgroundColor: '#E5E7EB',
     width: '100%',
-    marginVertical: 4,
+    marginBottom: 6,
     overflow: 'hidden',
   },
-  progressBarFill: {
+  progressFill: {
     height: '100%',
     borderRadius: 4,
+  },
+  mapChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 7,
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  mapChipText: {
+    color: '#3B82F6',
+    fontSize: 12,
+    fontWeight: '700',
   },
   descSection: {
     padding: 18,
@@ -394,6 +423,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 8,
   },
+
   descHeading: {
     fontSize: 16,
     fontWeight: '800',
@@ -494,5 +524,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
+  },
+  testLoopCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+  },
+  testLoopContent: {
+    flex: 1,
+    gap: 2,
+  },
+  testLoopTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  testLoopSub: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

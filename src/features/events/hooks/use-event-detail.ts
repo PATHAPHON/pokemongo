@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { CampusEvent, EventRegistration } from '@/shared/types';
 import { getEventById } from '@/shared/services/events';
 import { useEventContext } from '@/shared/context/event-context';
+import { EVENT_REMINDER_MINUTES_BEFORE } from '@/shared/services/notifications';
 
 export function useEventDetail(eventId: string) {
   const {
@@ -9,9 +10,12 @@ export function useEventDetail(eventId: string) {
     registrations,
     favorites,
     reminders,
+    testReminders,
     toggleFavorite,
     scheduleReminder,
     cancelReminder,
+    scheduleTestLoop,
+    cancelTestLoop,
   } = useEventContext();
 
   const [event, setEvent] = useState<CampusEvent | null>(() => {
@@ -28,6 +32,7 @@ export function useEventDetail(eventId: string) {
   const hasAttended = registration?.status === 'attended';
   const isFavorite = favorites.includes(eventId);
   const hasReminder = Boolean(reminders[eventId]);
+  const hasTestLoop = Boolean(testReminders[eventId]);
 
   const loadDetail = useCallback(() => {
     const controller = new AbortController();
@@ -84,6 +89,7 @@ export function useEventDetail(eventId: string) {
     hasAttended,
     isFavorite,
     hasReminder,
+    hasTestLoop,
     reload: loadDetail,
     toggleFavorite: () => toggleFavorite(eventId),
     toggleReminder: async () => {
@@ -91,7 +97,15 @@ export function useEventDetail(eventId: string) {
         await cancelReminder(eventId);
         return { success: true };
       } else {
-        return scheduleReminder(eventId, 15);
+        return scheduleReminder(eventId, EVENT_REMINDER_MINUTES_BEFORE);
+      }
+    },
+    toggleTestLoop: async () => {
+      if (hasTestLoop) {
+        await cancelTestLoop(eventId);
+        return { success: true };
+      } else {
+        return scheduleTestLoop(eventId);
       }
     },
   };

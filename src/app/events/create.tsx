@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -21,14 +21,11 @@ import * as Location from 'expo-location';
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { useEventContext } from '@/shared/context/event-context';
 import { useTrainer } from '@/shared/context/trainer-context';
-import { EventCategory } from '@/shared/types';
-import {
-  EventCategoryColors,
-  getCategoryLabel,
-} from '@/shared/constants/event-theme';
 import { getArtworkUrl, capitalizePokemonName } from '@/shared/constants/kanto-pokemon';
 import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 import { EventImagePicker } from '@/features/events';
+import { Routes } from '@/shared/utils/routes';
+import { consumePendingPick } from '@/shared/utils/pick-location-store';
 
 const FEATURED_POKEMON_OPTIONS = [
   { id: 25, name: 'Pikachu', rarity: 'rare' },
@@ -41,41 +38,6 @@ const FEATURED_POKEMON_OPTIONS = [
   { id: 147, name: 'Dratini', rarity: 'rare' },
   { id: 131, name: 'Lapras', rarity: 'rare' },
   { id: 130, name: 'Gyarados', rarity: 'rare' },
-];
-
-const CATEGORIES: EventCategory[] = [
-  'social',
-  'workshop',
-  'academic',
-  'sports',
-  'career',
-];
-
-const LOCATION_PRESETS = [
-  {
-    label: '🌳 สวนหนองประจักษ์ (อุดรธานี)',
-    name: 'สวนสาธารณะหนองประจักษ์ศิลปาคม อุดรธานี',
-    lat: '17.4138',
-    lng: '102.7872',
-  },
-  {
-    label: '🏛️ ม.ราชภัฏอุดรธานี',
-    name: 'มหาวิทยาลัยราชภัฏอุดรธานี',
-    lat: '17.3970',
-    lng: '102.7940',
-  },
-  {
-    label: '🎓 ลานกิจกรรมมหาวิทยาลัย',
-    name: 'ลานอเนกประสงค์ หอสมุดกลาง วิทยาเขตหลัก',
-    lat: '13.7470',
-    lng: '100.5350',
-  },
-  {
-    label: '🏢 สยามพารากอน (กรุงเทพฯ)',
-    name: 'ลานพาร์ค พารากอน',
-    lat: '13.7462',
-    lng: '100.5347',
-  },
 ];
 
 export default function CreateEventScreen() {
@@ -96,7 +58,6 @@ export default function CreateEventScreen() {
   // Form states
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<EventCategory>('social');
   const [venueName, setVenueName] = useState('ลานกิจกรรมกลาง มหาวิทยาลัย');
   const [latitude, setLatitude] = useState('13.7462');
   const [longitude, setLongitude] = useState('100.5347');
@@ -106,6 +67,22 @@ export default function CreateEventScreen() {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Receive map pin back from events/pick-location (one-shot handoff)
+  useFocusEffect(
+    useCallback(() => {
+      const pick = consumePendingPick();
+      if (pick) {
+        setLatitude(pick.latitude.toFixed(4));
+        setLongitude(pick.longitude.toFixed(4));
+        setVenueName(pick.venueName);
+      }
+    }, [])
+  );
+
+  const handleOpenMapPicker = () => {
+    router.push(Routes.eventPickLocation(latitude, longitude) as any);
+  };
 
   const handleUseCurrentLocation = async () => {
     try {
@@ -163,6 +140,11 @@ export default function CreateEventScreen() {
     const capNum = parseInt(capacity, 10);
     const validCapacity = !isNaN(capNum) && capNum > 0 ? capNum : 50;
 
+    if (!featuredPokemonId || featuredPokemonId <= 0) {
+      setErrorMessage('กรุณาเลือกโปเกมอนประจำมีตอัป');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -174,7 +156,6 @@ export default function CreateEventScreen() {
       const res = await createEvent({
         title: title.trim(),
         description: description.trim(),
-        category,
         startsAt,
         endsAt,
         imageUrl: photoUri || 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=800',
@@ -286,50 +267,6 @@ export default function CreateEventScreen() {
                 onChangeText={setTitle}
                 editable={!isSubmitting}
               />
-            </View>
-
-            {/* Category Selector */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: textColor }]}>
-                หมวดหมู่มีตอัป
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryRow}
-              >
-                {CATEGORIES.map((cat) => {
-                  const isSelected = category === cat;
-                  const theme = EventCategoryColors[cat];
-                  return (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[
-                        styles.categoryPill,
-                        {
-                          backgroundColor: isSelected
-                            ? theme.primary
-                            : isDark
-                            ? '#2A2A2A'
-                            : '#F3F4F6',
-                          borderColor: isSelected ? theme.primary : borderColor,
-                        },
-                      ]}
-                      onPress={() => setCategory(cat)}
-                      activeOpacity={0.8}
-                    >
-                      <Text
-                        style={[
-                          styles.categoryPillText,
-                          { color: isSelected ? '#FFFFFF' : textColor },
-                        ]}
-                      >
-                        {getCategoryLabel(cat)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
             </View>
 
             {/* Description */}
@@ -473,55 +410,36 @@ export default function CreateEventScreen() {
               />
             </View>
 
-            {/* Quick Location Preset Chips */}
-            <View style={styles.presetSection}>
-              <Text style={[styles.presetSectionLabel, { color: subTextColor }]}>
-                เลือกสถานที่และพิกัดยอดนิยมอย่างรวดเร็ว:
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.presetChipsRow}
-              >
-                {LOCATION_PRESETS.map((p) => {
-                  const isSelected = latitude === p.lat && longitude === p.lng;
-                  return (
-                    <TouchableOpacity
-                      key={p.name}
-                      style={[
-                        styles.presetChip,
-                        {
-                          backgroundColor: isSelected
-                            ? isDark
-                              ? '#3B82F6'
-                              : '#EFF6FF'
-                            : inputBg,
-                          borderColor: isSelected ? '#3B82F6' : borderColor,
-                        },
-                      ]}
-                      onPress={() => {
-                        setVenueName(p.name);
-                        setLatitude(p.lat);
-                        setLongitude(p.lng);
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text
-                        style={[
-                          styles.presetChipText,
-                          {
-                            color: isSelected ? '#3B82F6' : textColor,
-                            fontWeight: isSelected ? '700' : '500',
-                          },
-                        ]}
-                      >
-                        {p.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+            {/* Picked Location Preview */}
+            <View
+              style={[
+                styles.pickPreview,
+                { backgroundColor: inputBg, borderColor },
+              ]}
+            >
+              <Ionicons name="location-sharp" size={18} color="#EF4444" />
+              <View style={styles.pickPreviewInfo}>
+                <Text style={[styles.pickPreviewName, { color: textColor }]} numberOfLines={1}>
+                  {venueName.trim() || 'ยังไม่ได้ระบุชื่อสถานที่'}
+                </Text>
+                <Text style={[styles.pickPreviewCoords, { color: subTextColor }]}>
+                  {latitude || '–'}, {longitude || '–'}
+                </Text>
+              </View>
             </View>
+
+            {/* Open Full-screen Map Picker */}
+            <TouchableOpacity
+              style={styles.mapButton}
+              onPress={handleOpenMapPicker}
+              disabled={isSubmitting}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="map-outline" size={18} color="#FFFFFF" />
+              <Text style={styles.mapButtonText}>
+                เลือกบนแผนที่ (แตะปักหมุดจุดจัดงาน)
+              </Text>
+            </TouchableOpacity>
 
             {/* GPS Fetch Button */}
             <TouchableOpacity
@@ -719,21 +637,6 @@ const styles = StyleSheet.create({
     minHeight: 76,
     textAlignVertical: 'top',
   },
-  categoryRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 2,
-  },
-  categoryPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  categoryPillText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
   selectedPokemonBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -835,26 +738,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
-  presetSection: {
-    gap: 8,
-    marginTop: 6,
-    marginBottom: 6,
-  },
-  presetSectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  presetChipsRow: {
-    gap: 8,
-    paddingVertical: 2,
-  },
-  presetChip: {
+  pickPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
+    gap: 8,
   },
-  presetChipText: {
+  pickPreviewInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  pickPreviewName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  pickPreviewCoords: {
     fontSize: 12,
+    fontWeight: '500',
+  },
+  mapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#8B5CF6',
+    height: 46,
+    borderRadius: 12,
+    gap: 6,
+    marginTop: 4,
+  },
+  mapButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

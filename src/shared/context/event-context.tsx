@@ -25,6 +25,9 @@ import { useTrainer } from '@/shared/context/trainer-context';
 import {
   scheduleEventReminder,
   cancelEventReminder,
+  scheduleEventTestLoop,
+  cancelEventTestLoop,
+  EVENT_REMINDER_MINUTES_BEFORE,
 } from '@/shared/services/notifications';
 
 interface EventContextValue {
@@ -34,7 +37,8 @@ interface EventContextValue {
   isLoading: boolean;
   isOffline: boolean;
   lastUpdated: string | null;
-  reminders: Record<string, string>; // eventId -> notificationId
+  reminders: Record<string, string>; // eventId -> notificationId (30-min DATE)
+  testReminders: Record<string, string>; // eventId -> test loop notificationId (10s)
   registerEvent: (
     eventId: string,
     notes?: string,
@@ -49,6 +53,10 @@ interface EventContextValue {
     minutesBefore?: number
   ) => Promise<{ success: boolean; error?: string }>;
   cancelReminder: (eventId: string) => Promise<void>;
+  scheduleTestLoop: (
+    eventId: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  cancelTestLoop: (eventId: string) => Promise<void>;
   refreshEvents: () => Promise<void>;
   createEvent: (
     eventData: Omit<CampusEvent, 'id' | 'registeredCount'>
@@ -69,6 +77,9 @@ export function EventProvider({ children }: { children: ReactNode }) {
   const [isOffline, setIsOffline] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [reminders, setReminders] = useState<Record<string, string>>({});
+  const [testReminders, setTestReminders] = useState<Record<string, string>>(
+    {}
+  );
 
   /**
    * Initialize events from API (with fallback to SQLite offline cache)
@@ -233,22 +244,17 @@ export function EventProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Schedule local push reminder for an event
+   * Schedule fixed 30-min DATE reminder for an event
    */
   const scheduleReminder = useCallback(
     async (
       eventId: string,
-      minutesBefore: number = 15
+      minutesBefore: number = EVENT_REMINDER_MINUTES_BEFORE
     ): Promise<{ success: boolean; error?: string }> => {
       const event = events.find((e) => e.id === eventId);
       if (!event) return { success: false, error: 'ไม่พบกิจกรรม' };
 
-      const res = await scheduleEventReminder(
-        event.id,
-        event.title,
-        event.startsAt,
-        minutesBefore
-      );
+      const res = await scheduleEventReminder(event, minutesBefore);
 
       if (res.success && res.id) {
         setReminders((prev) => ({ ...prev, [eventId]: res.id! }));
@@ -263,7 +269,7 @@ export function EventProvider({ children }: { children: ReactNode }) {
   );
 
   /**
-   * Cancel local push reminder for an event
+   * Cancel fixed reminder for an event
    */
   const cancelReminder = useCallback(
     async (eventId: string) => {
@@ -278,6 +284,45 @@ export function EventProvider({ children }: { children: ReactNode }) {
       }
     },
     [reminders]
+  );
+
+  /**
+   * Test loop for far-away meetups: repeats every 10s, toggleable.
+   */
+  const scheduleTestLoop = useCallback(
+    async (eventId: string): Promise<{ success: boolean; error?: string }> => {
+      const event = events.find((e) => e.id === eventId);
+      if (!event) return { success: false, error: 'ไม่พบกิจกรรม' };
+
+      const res = await scheduleEventTestLoop(
+        event,
+        EVENT_REMINDER_MINUTES_BEFORE
+      );
+      if (res.success && res.id) {
+        setTestReminders((prev) => ({ ...prev, [eventId]: res.id! }));
+        return { success: true };
+      }
+      return {
+        success: false,
+        error: res.error || 'ตั้งการแจ้งเตือนทดสอบไม่สำเร็จ',
+      };
+    },
+    [events]
+  );
+
+  const cancelTestLoop = useCallback(
+    async (eventId: string) => {
+      const notifId = testReminders[eventId];
+      if (notifId) {
+        await cancelEventTestLoop(notifId);
+        setTestReminders((prev) => {
+          const next = { ...prev };
+          delete next[eventId];
+          return next;
+        });
+      }
+    },
+    [testReminders]
   );
 
   /**
@@ -340,11 +385,14 @@ export function EventProvider({ children }: { children: ReactNode }) {
     isOffline,
     lastUpdated,
     reminders,
+    testReminders,
     registerEvent,
     cancelUserRegistration,
     toggleFavorite,
     scheduleReminder,
     cancelReminder,
+    scheduleTestLoop,
+    cancelTestLoop,
     refreshEvents,
     createEvent,
     markCatchAttempt,

@@ -3,19 +3,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PokedexStatusFilter, PokedexGenFilter } from '../types';
+import { PokedexStatusFilter } from '../types';
 
 interface PokedexFilterBarProps {
   searchQuery: string;
   onSearchChange: (text: string) => void;
   statusFilter: PokedexStatusFilter;
   onStatusChange: (status: PokedexStatusFilter) => void;
-  genFilter: PokedexGenFilter;
-  onGenChange: (gen: PokedexGenFilter) => void;
   isDark: boolean;
 }
 
@@ -29,20 +26,11 @@ const STATUS_OPTIONS: {
   { id: 'uncaught', label: 'ยังไม่จับ', icon: 'help-circle-outline' },
 ];
 
-const GEN_OPTIONS: { id: PokedexGenFilter; label: string }[] = [
-  { id: 'all', label: 'All Gens' },
-  { id: 'gen1', label: 'Gen 1 (Kanto)' },
-  { id: 'gen2', label: 'Gen 2 (Johto)' },
-  { id: 'gen3', label: 'Gen 3 (Hoenn)' },
-];
-
 export function PokedexFilterBar({
   searchQuery,
   onSearchChange,
   statusFilter,
   onStatusChange,
-  genFilter,
-  onGenChange,
   isDark,
 }: PokedexFilterBarProps) {
   const inputBg = isDark ? '#1E1E1E' : '#FFFFFF';
@@ -127,47 +115,6 @@ export function PokedexFilterBar({
           );
         })}
       </View>
-
-      {/* Generation Horizontal Filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.genScrollContent}
-      >
-        {GEN_OPTIONS.map((gen) => {
-          const isActive = genFilter === gen.id;
-          return (
-            <TouchableOpacity
-              key={gen.id}
-              activeOpacity={0.7}
-              onPress={() => onGenChange(gen.id)}
-              style={[
-                styles.genChip,
-                {
-                  backgroundColor: isActive ? '#0A7EA4' : chipBg,
-                  borderColor: isActive ? '#0A7EA4' : chipBorder,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.genChipText,
-                  {
-                    color: isActive
-                      ? '#FFFFFF'
-                      : isDark
-                        ? '#94A3B8'
-                        : '#475569',
-                    fontWeight: isActive ? '700' : '500',
-                  },
-                ]}
-              >
-                {gen.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
     </View>
   );
 }
@@ -211,18 +158,5 @@ const styles = StyleSheet.create({
   },
   statusChipText: {
     fontSize: 12,
-  },
-  genScrollContent: {
-    gap: 6,
-    paddingVertical: 2,
-  },
-  genChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  genChipText: {
-    fontSize: 11,
   },
 });

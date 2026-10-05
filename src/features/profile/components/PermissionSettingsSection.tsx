@@ -48,8 +48,7 @@ export function PermissionSettingsSection({
           สิทธิ์การใช้งานแอพ (Permissions)
         </Text>
         <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
-          เปิดสิทธิ์เพื่อค้นหาโปเกมอนตามพิกัดจริง การแจ้งเตือน และเปิดโหมด AR
-          จับโปเกมอน
+          เปิดสิทธิ์เพื่อดูสถานที่จัดมีตอัป การแจ้งเตือนกิจกรรม และเปิดโหมด AR
         </Text>
       </View>
 
@@ -72,8 +71,8 @@ export function PermissionSettingsSection({
           <PermissionCard
             icon="notifications-sharp"
             iconBg="#FF9500"
-            title="การแจ้งเตือน (Notifications)"
-            subtitle="แจ้งเตือนการเริ่มกิจกรรมมีตอัปและการแจ้งเตือนสำคัญ"
+            title="การแจ้งเตือนกิจกรรม (Notifications)"
+            subtitle="แจ้งเตือนกิจกรรมมีตอัปล่วงหน้า 30 นาที"
             permission={notifications}
             onPress={onRequestNotifications}
             isDark={isDark}
@@ -111,7 +110,7 @@ export function PermissionSettingsSection({
                     { color: isDark ? '#FBBF24' : '#B45309' },
                   ]}
                 >
-                  ทดสอบการแจ้งเตือนมีตอัป (Event Alerts)
+                  ทดสอบการแจ้งเตือนกิจกรรม (Event Alerts)
                 </Text>
                 <Text
                   style={[
@@ -119,7 +118,7 @@ export function PermissionSettingsSection({
                     { color: isDark ? '#D1D5DB' : '#78350F' },
                   ]}
                 >
-                  ทดสอบส่งการแจ้งเตือนเตือนความจำกิจกรรมมีตอัป (Heads-up Banner)
+                  ทดสอบส่งแจ้งเตือนกิจกรรมมีตอัป (Heads-up Banner)
                 </Text>
               </View>
             </View>

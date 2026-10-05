@@ -32,10 +32,13 @@ export interface LeafletMapViewProps {
   location: Coordinates;
   wildList: WildPokemon[];
   eventPins?: EventVenuePin[];
-  onCatch: (pokemon: WildPokemon) => void;
+  onCatch?: (pokemon: WildPokemon) => void;
   onEventPress?: (eventId: string) => void;
   onExpired?: (instanceId: string) => void;
   onSpawned?: (instanceId: string) => void;
+  mode?: 'catch' | 'pick';
+  pickPin?: Coordinates | null;
+  onMapPick?: (coords: Coordinates) => void;
 }
 
 type Props = LeafletMapViewProps;
@@ -232,6 +235,21 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
       border-radius: 50%;
       background: #FFFFFF;
     }
+
+    /* Pick-mode draggable pin */
+    .pick-pin-wrap { display: flex; flex-direction: column; align-items: center; user-select: none; }
+    .pick-pin-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #8B5CF6;
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
   </style>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
@@ -426,6 +444,40 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
       });
     };
 
+    // Pick-mode draggable pin (used by event creation map picker)
+    var pickMarker = null;
+    var lastPickTime = 0;
+    function emitPick(lat, lng) {
+      var now = Date.now();
+      if (now - lastPickTime < 500) return;
+      lastPickTime = now;
+      postToParent({ type: 'MAP_PICK', lat: lat, lng: lng });
+    }
+    window.setPick = function(lat, lng) {
+      var icon = L.divIcon({
+        className: 'pick-pin-wrap',
+        html: '<div class="pick-pin-wrap">' +
+          '<div class="pick-pin-circle">📍</div>' +
+          '</div>',
+        iconSize: [44, 50],
+        iconAnchor: [22, 44]
+      });
+      if (pickMarker) {
+        pickMarker.setLatLng([lat, lng]);
+        pickMarker.setIcon(icon);
+      } else {
+        pickMarker = L.marker([lat, lng], { icon: icon, draggable: true, zIndexOffset: 1200 }).addTo(map);
+        pickMarker.on('dragend', function() {
+          var ll = pickMarker.getLatLng();
+          emitPick(ll.lat, ll.lng);
+        });
+      }
+    };
+    map.on('click', function(e) {
+      window.setPick(e.latlng.lat, e.latlng.lng);
+      emitPick(e.latlng.lat, e.latlng.lng);
+    });
+
     // Continuous 1-second in-DOM ticker for progress bar and countdowns
     setInterval(function() {
       var now = Date.now();
@@ -472,6 +524,8 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
           window.updateEvents(data.events);
         } else if (data && data.type === 'RECENTER') {
           if (window.map) window.map.panTo([data.lat, data.lng], { animate: true, duration: 0.4 });
+        } else if (data && data.type === 'SET_PICK') {
+          if (window.setPick) window.setPick(data.lat, data.lng);
         }
       } catch (e) {}
     });
@@ -493,6 +547,9 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       onEventPress,
       onExpired,
       onSpawned,
+      mode = 'catch',
+      pickPin = null,
+      onMapPick,
     },
     ref
   ) {
@@ -500,6 +557,7 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
     const iframeRef = useRef<any>(null);
     const [isReady, setIsReady] = useState(false);
     const lastCatchMsgTimeRef = useRef<number>(0);
+    const lastPickMsgTimeRef = useRef<number>(0);
 
     // Capture initial coordinates
     const initialLocationRef = useRef<Coordinates>(location);
@@ -554,9 +612,9 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       });
     }, [location, isReady, executeJs]);
 
-    // Update Wild Pokémon markers
+    // Update Wild Pokémon markers (skipped in pick mode)
     useEffect(() => {
-      if (!isReady) return;
+      if (!isReady || mode === 'pick') return;
 
       const formattedSpawns = wildList.map((p) => {
         const primaryType = (p.types[0] || 'normal') as PokemonTypeName;
@@ -572,15 +630,26 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       const serializedSpawns = JSON.stringify(formattedSpawns);
       const js = `if (window.updateSpawns) { window.updateSpawns(${serializedSpawns}); } true;`;
       executeJs(js, { type: 'UPDATE_SPAWNS', spawns: formattedSpawns });
-    }, [wildList, isReady, executeJs]);
+    }, [wildList, isReady, executeJs, mode]);
 
-    // Update Event Venue pins
+    // Update Event Venue pins (skipped in pick mode)
     useEffect(() => {
-      if (!isReady) return;
+      if (!isReady || mode === 'pick') return;
       const serializedEvents = JSON.stringify(eventPins);
       const js = `if (window.updateEvents) { window.updateEvents(${serializedEvents}); } true;`;
       executeJs(js, { type: 'UPDATE_EVENTS', events: eventPins });
-    }, [eventPins, isReady, executeJs]);
+    }, [eventPins, isReady, executeJs, mode]);
+
+    // Push pick pin to map (pick mode only)
+    useEffect(() => {
+      if (!isReady || mode !== 'pick' || !pickPin) return;
+      const js = `if (window.setPick) { window.setPick(${pickPin.latitude}, ${pickPin.longitude}); } true;`;
+      executeJs(js, {
+        type: 'SET_PICK',
+        lat: pickPin.latitude,
+        lng: pickPin.longitude,
+      });
+    }, [pickPin, isReady, executeJs, mode]);
 
     // Message handler for Web Iframe
     useEffect(() => {
@@ -600,7 +669,14 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
             const now = Date.now();
             if (now - lastCatchMsgTimeRef.current > 1000) {
               lastCatchMsgTimeRef.current = now;
-              onCatch(data.pokemon);
+              onCatch?.(data.pokemon);
+            }
+          } else if (data.type === 'MAP_PICK' && typeof data.lat === 'number' && typeof data.lng === 'number') {
+            if (mode !== 'pick') return;
+            const now = Date.now();
+            if (now - lastPickMsgTimeRef.current > 500) {
+              lastPickMsgTimeRef.current = now;
+              onMapPick?.({ latitude: data.lat, longitude: data.lng });
             }
           } else if (data.type === 'EVENT_CLICK' && data.eventId) {
             onEventPress?.(data.eventId);
@@ -618,7 +694,7 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       return () => {
         window.removeEventListener('message', handleWebMessage);
       };
-    }, [onCatch, onEventPress, onExpired, onSpawned]);
+    }, [onCatch, onEventPress, onExpired, onSpawned, onMapPick, mode]);
 
     // Render Web Iframe
     if (Platform.OS === 'web') {
@@ -657,7 +733,14 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
                 const now = Date.now();
                 if (now - lastCatchMsgTimeRef.current > 1000) {
                   lastCatchMsgTimeRef.current = now;
-                  onCatch(data.pokemon);
+                  onCatch?.(data.pokemon);
+                }
+              } else if (data.type === 'MAP_PICK' && typeof data.lat === 'number' && typeof data.lng === 'number') {
+                if (mode !== 'pick') return;
+                const now = Date.now();
+                if (now - lastPickMsgTimeRef.current > 500) {
+                  lastPickMsgTimeRef.current = now;
+                  onMapPick?.({ latitude: data.lat, longitude: data.lng });
                 }
               } else if (data.type === 'EVENT_CLICK' && data.eventId) {
                 onEventPress?.(data.eventId);
