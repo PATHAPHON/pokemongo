@@ -18,9 +18,8 @@ export function useEventDetail(eventId: string) {
     cancelTestLoop,
   } = useEventContext();
 
-  const [event, setEvent] = useState<CampusEvent | null>(() => {
-    return events.find((e) => e.id === eventId) ?? null;
-  });
+  const [fetchedEvent, setFetchedEvent] = useState<CampusEvent | null>(null);
+  const event = events.find((e) => e.id === eventId) ?? fetchedEvent;
   const [isLoading, setIsLoading] = useState<boolean>(!event);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +34,8 @@ export function useEventDetail(eventId: string) {
   const hasTestLoop = Boolean(testReminders[eventId]);
 
   const loadDetail = useCallback(() => {
+    if (!eventId) return;
+
     const controller = new AbortController();
     let cancelled = false;
 
@@ -42,18 +43,10 @@ export function useEventDetail(eventId: string) {
       try {
         setIsLoading(true);
         setError(null);
-        // Prefer in-context event (single source of truth for list);
-        // fall back to service fetch only when missing (deep link).
-        const cached = events.find((e) => e.id === eventId);
-        if (cached) {
-          setEvent(cached);
-          setIsLoading(false);
-          return;
-        }
         const data = await getEventById(eventId, controller.signal);
         if (cancelled) return;
         if (data) {
-          setEvent(data);
+          setFetchedEvent(data);
         } else {
           setError('ไม่พบข้อมูลกิจกรรมนี้');
         }
@@ -72,12 +65,13 @@ export function useEventDetail(eventId: string) {
       cancelled = true;
       controller.abort();
     };
-  }, [eventId, events]);
+  }, [eventId]);
 
   useEffect(() => {
+    if (!eventId || event) return;
     const cleanup = loadDetail();
     return cleanup;
-  }, [loadDetail]);
+  }, [eventId, event, loadDetail]);
 
   return {
     event,

@@ -19,6 +19,8 @@ import {
   EventEmptyState,
 } from '@/features/events';
 import { CampusEvent } from '@/shared/types';
+import { useTrainer } from '@/shared/context/trainer-context';
+import { isEventOrganizer } from '@/shared/utils/event-helpers';
 
 export default function EventsScreen() {
   const router = useRouter();
@@ -31,9 +33,9 @@ export default function EventsScreen() {
   const { width } = useWindowDimensions();
   const numColumns = width >= 768 ? 2 : 1;
 
+  const { trainer } = useTrainer();
   const {
     events,
-    stats,
     isLoading,
     isOffline,
     lastUpdated,
@@ -63,7 +65,6 @@ export default function EventsScreen() {
     >
       {/* Overview Stats & Offline Banner Header */}
       <EventStatsHeader
-        stats={stats}
         isOffline={isOffline}
         lastUpdated={lastUpdated}
         isDark={isDark}
@@ -99,6 +100,7 @@ export default function EventsScreen() {
                   event={item}
                   isFavorite={favoritesSet.has(item.id)}
                   isRegistered={registeredEventIds.has(item.id)}
+                  isOrganizer={isEventOrganizer(item, trainer)}
                   isDark={isDark}
                   onPress={() => handleCardPress(item)}
                   onToggleFavorite={() => toggleFavorite(item.id)}

@@ -4,7 +4,8 @@
     "slug": "pokemongo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "pokemongo",
+    "scheme": ["pokemongo", "campusevents"],
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
@@ -15,6 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#E6F4FE"
       },
       "permissions": [
@@ -31,9 +33,11 @@
       [
         "expo-splash-screen",
         {
+          "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
+            "image": "./assets/images/splash-icon.png",
             "backgroundColor": "#000000"
           }
         }

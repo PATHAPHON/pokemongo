@@ -17,7 +17,8 @@ export const CAMPUS_EVENTS: CampusEvent[] = [
     },
     capacity: 45,
     registeredCount: 38,
-    organizer: 'Silph Co. Trainers Club',
+    organizer: 'Ash Ketchum (Kanto Champion)',
+    organizerId: 'trainer-ash-101',
     featuredPokemonId: 137, // Porygon
   },
   {
@@ -36,7 +37,8 @@ export const CAMPUS_EVENTS: CampusEvent[] = [
     },
     capacity: 100,
     registeredCount: 74,
-    organizer: 'Pokémon GO Community League',
+    organizer: 'Ash Ketchum (Silph Co. Trainers Club)',
+    organizerId: 'trainer-ash-101',
     featuredPokemonId: 25, // Pikachu
   },
   {
@@ -55,7 +57,8 @@ export const CAMPUS_EVENTS: CampusEvent[] = [
     },
     capacity: 200,
     registeredCount: 185,
-    organizer: 'Team Mystic Expedition Squad',
+    organizer: 'Misty Waterflower (Cerulean Gym Leader)',
+    organizerId: 'trainer-misty-202',
     featuredPokemonId: 144, // Articuno
   },
   {

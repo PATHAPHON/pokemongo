@@ -1,9 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { EventStats } from '../types';
 
 interface EventStatsHeaderProps {
-  stats?: EventStats;
   isOffline?: boolean;
   lastUpdated?: string | null;
   isDark?: boolean;

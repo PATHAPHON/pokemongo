@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CampusEvent } from '@/shared/types';
 import {
@@ -13,12 +13,14 @@ import {
 } from '@/shared/constants/kanto-pokemon';
 import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 
-interface EventCardProps {
+export interface EventCardProps {
   event: CampusEvent;
   isFavorite?: boolean;
   isRegistered?: boolean;
+  isOrganizer?: boolean;
   isDark?: boolean;
-  onPress: () => void;
+  onPress?: () => void;
+  onOpen?: () => void;
   onToggleFavorite?: () => void;
 }
 
@@ -26,10 +28,13 @@ export function EventCard({
   event,
   isFavorite = false,
   isRegistered = false,
+  isOrganizer = false,
   isDark = false,
   onPress,
+  onOpen,
   onToggleFavorite,
 }: EventCardProps) {
+  const handlePress = onOpen ?? onPress ?? (() => {});
   const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const subTextColor = isDark ? '#9BA1A6' : '#687076';
@@ -47,9 +52,10 @@ export function EventCard({
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: cardBg, borderColor }]}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.88}
       accessibilityRole="button"
+      role={Platform.OS === 'web' ? 'article' : undefined}
       accessibilityLabel={`กิจกรรม: ${event.title}, โปเกมอน ${pokemonName}, สถานที่ ${event.location.name}`}
     >
       {/* Top Banner Image with Overlay Tags */}
@@ -59,6 +65,8 @@ export function EventCard({
             source={{ uri: event.imageUrl }}
             style={styles.image}
             resizeMode="cover"
+            accessibilityRole="image"
+            accessibilityLabel={`ภาพกิจกรรม ${event.title}`}
           />
         ) : (
           <View
@@ -77,6 +85,8 @@ export function EventCard({
             source={{ uri: getArtworkUrl(event.featuredPokemonId) }}
             style={styles.featuredOverlayImg}
             resizeMode="contain"
+            accessibilityRole="image"
+            accessibilityLabel={`โปเกมอน ${pokemonName}`}
           />
           <Text style={styles.featuredOverlayText} numberOfLines={1}>
             {pokemonName}
@@ -88,7 +98,7 @@ export function EventCard({
           <TouchableOpacity
             style={styles.favoriteButton}
             onPress={(e) => {
-              e.stopPropagation();
+              e?.stopPropagation?.();
               onToggleFavorite();
             }}
             accessibilityRole="button"
@@ -112,6 +122,14 @@ export function EventCard({
             <Text style={styles.registeredText}>ลงทะเบียนแล้ว</Text>
           </View>
         )}
+
+        {/* Organizer status indicator */}
+        {isOrganizer && (
+          <View style={[styles.organizerBadge, isRegistered && styles.organizerBadgeShifted]}>
+            <Ionicons name="ribbon" size={14} color="#FFFFFF" />
+            <Text style={styles.organizerBadgeText}>ผู้จัด (Host)</Text>
+          </View>
+        )}
       </View>
 
       {/* Card Details */}
@@ -131,6 +149,8 @@ export function EventCard({
                 source={{ uri: getArtworkUrl(event.featuredPokemonId) }}
                 style={styles.pokemonTagImg}
                 resizeMode="contain"
+                accessibilityRole="image"
+                accessibilityLabel={`โปเกมอน ${pokemonName}`}
               />
               <Text
                 style={[
@@ -240,6 +260,28 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
+  },
+  organizerBadge: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#C4B5FD',
+  },
+  organizerBadgeShifted: {
+    left: 116,
+  },
+  organizerBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
   body: {
     padding: 14,

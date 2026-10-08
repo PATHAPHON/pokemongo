@@ -13,24 +13,15 @@ export function usePokedex() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PokedexStatusFilter>('all');
 
-  // Map caught pokemon by pokemonId -> count and first caught date
+  // Map caught pokemon by pokemonId -> count
   const caughtStatsMap = useMemo(() => {
-    const map = new Map<number, { count: number; firstCaughtAt?: string }>();
+    const map = new Map<number, { count: number }>();
     for (const item of caughtPokemon) {
       const existing = map.get(item.pokemonId);
       if (existing) {
         existing.count += 1;
-        if (
-          item.caughtAt &&
-          (!existing.firstCaughtAt || item.caughtAt < existing.firstCaughtAt)
-        ) {
-          existing.firstCaughtAt = item.caughtAt;
-        }
       } else {
-        map.set(item.pokemonId, {
-          count: 1,
-          firstCaughtAt: item.caughtAt,
-        });
+        map.set(item.pokemonId, { count: 1 });
       }
     }
     return map;
@@ -47,10 +38,8 @@ export function usePokedex() {
         name: meta.name,
         types: meta.types,
         rarity: meta.rarity,
-        bst: meta.bst,
         isCaught: Boolean(stat && stat.count > 0),
         caughtCount: stat ? stat.count : 0,
-        firstCaughtAt: stat?.firstCaughtAt,
       };
     });
   }, [caughtStatsMap]);

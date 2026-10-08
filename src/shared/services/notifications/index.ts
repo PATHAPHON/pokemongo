@@ -3,8 +3,6 @@ import type { CampusEvent } from '@/shared/types';
 
 export * from './notification-manager';
 
-export const isAndroidExpoGo = defaultNotificationManager.isAndroidExpoGo;
-
 export async function setupNotificationChannels(): Promise<void> {
   return defaultNotificationManager.setupChannels();
 }
@@ -27,10 +25,6 @@ export async function getNotificationPermissionStatus(): Promise<{
 
 export async function resetNotificationPreferences(): Promise<void> {
   return defaultNotificationManager.resetPreferences();
-}
-
-export async function cancelScheduledNotifications(): Promise<void> {
-  return defaultNotificationManager.cancelScheduledNotifications();
 }
 
 export async function sendTestNotification(): Promise<{
@@ -85,8 +79,20 @@ export async function cancelEventTestLoop(
   return defaultNotificationManager.cancelEventTestLoop(notificationId);
 }
 
+export async function cancelAllNotifications(): Promise<void> {
+  return defaultNotificationManager.cancelAllNotifications();
+}
+
 export function registerNotificationTapListener(
   onNavigateToEvent: (eventId: string) => void
 ): () => void {
   return defaultNotificationManager.registerTapListener(onNavigateToEvent);
 }
+
+export async function getScheduledReminders(): Promise<{
+  reminders: Record<string, string>;
+  testReminders: Record<string, string>;
+}> {
+  return defaultNotificationManager.getScheduledReminders();
+}
+

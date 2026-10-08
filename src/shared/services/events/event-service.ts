@@ -9,6 +9,10 @@ const runtimeRegistrations: EventRegistration[] = [];
  * Fetch all campus events with simulated network delay and AbortSignal support
  */
 export async function getEvents(signal?: AbortSignal): Promise<CampusEvent[]> {
+  if (signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
+  }
+
   await new Promise((resolve, reject) => {
     const timer = setTimeout(resolve, 250);
     if (signal) {
@@ -29,6 +33,10 @@ export async function getEventById(
   id: string,
   signal?: AbortSignal
 ): Promise<CampusEvent | null> {
+  if (signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
+  }
+
   await new Promise((resolve, reject) => {
     const timer = setTimeout(resolve, 150);
     if (signal) {

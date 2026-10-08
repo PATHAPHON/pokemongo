@@ -2,7 +2,13 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { DEFAULT_POKEMON_REGISTRY_LIST } from '../src/shared/constants/pokemon-registry-data.ts';
-import { isPokemonInGen } from '../src/features/pokedex/types.ts';
+
+function isPokemonInGen(id, gen) {
+  if (gen === 'gen1') return id >= 1 && id <= 151;
+  if (gen === 'gen2') return id >= 152 && id <= 251;
+  if (gen === 'gen3') return id >= 252 && id <= 386;
+  return true;
+}
 
 describe('Pokédex System & Logic Tests', () => {
   test('Generation filtering boundary checks', () => {

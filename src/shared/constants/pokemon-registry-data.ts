@@ -14,6 +14,21 @@ export function computeRarityFromBST(bst: number): PokemonRarity {
   return 'common';
 }
 
+/**
+ * Safely parse JSON types string with fallback to ['normal']
+ */
+export function safeParsePokemonTypes(typesJson: unknown): PokemonTypeName[] {
+  if (typeof typesJson !== 'string') return ['normal'];
+  try {
+    const parsed = JSON.parse(typesJson);
+    return Array.isArray(parsed) && parsed.length > 0
+      ? (parsed as PokemonTypeName[])
+      : ['normal'];
+  } catch {
+    return ['normal'];
+  }
+}
+
 export const DEFAULT_POKEMON_REGISTRY_LIST: PokemonMeta[] = [
   { id: 1, name: 'bulbasaur', types: ["grass","poison"], bst: 318, rarity: 'common' },
   { id: 2, name: 'ivysaur', types: ["grass","poison"], bst: 405, rarity: 'rare' },

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Pokemon } from '@/shared/types';
 import { getPokemonDetail } from '@/shared/services/pokeapi/index';
 
@@ -15,6 +15,7 @@ export function usePokemonDetail(
   const [pokemon, setPokemon] = useState<Pokemon | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadDetail = useCallback(
     async (signal?: AbortSignal) => {
@@ -24,7 +25,8 @@ export function usePokemonDetail(
         return;
       }
 
-      setIsLoading(true);
+      // Avoid redundant setState if already loading
+      setIsLoading((prev) => (prev ? prev : true));
       setError(null);
       try {
         const data = await getPokemonDetail(idOrName, signal);
@@ -46,7 +48,9 @@ export function usePokemonDetail(
   );
 
   useEffect(() => {
+    abortControllerRef.current?.abort();
     const controller = new AbortController();
+    abortControllerRef.current = controller;
     loadDetail(controller.signal);
 
     return () => {
@@ -55,7 +59,10 @@ export function usePokemonDetail(
   }, [loadDetail]);
 
   const reload = useCallback(async () => {
-    await loadDetail();
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    await loadDetail(controller.signal);
   }, [loadDetail]);
 
   return {

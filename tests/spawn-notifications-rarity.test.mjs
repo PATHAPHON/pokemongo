@@ -85,24 +85,24 @@ describe('Spawn Engine: Duplicate & Unrestricted Species Spawning', () => {
   });
 
   test('generateInitialSpawnSpots allows duplicate species from small pool', () => {
-    // Pool of only 2 species, but generating 10 spots
+    // Pool of only 2 species, but generating 30 spots
     const tinyPool = [
       { id: 25, name: 'pikachu', types: ['electric'], bst: 320, rarity: 'common' },
       { id: 133, name: 'eevee', types: ['normal'], bst: 325, rarity: 'common' },
     ];
 
     const spots = generateInitialSpawnSpots(
-      10,
+      30,
       tinyPool
     );
 
-    assert.equal(spots.length, 10);
-    // Since only 2 species exist for 10 spots, duplicates are guaranteed
+    assert.equal(spots.length, 30);
+    // Since only 2 species exist for 30 spots, duplicates are guaranteed
     const pikachuCount = spots.filter((s) => s.id === 25).length;
     const eeveeCount = spots.filter((s) => s.id === 133).length;
     assert.ok(pikachuCount > 0, 'Pikachu must appear');
     assert.ok(eeveeCount > 0, 'Eevee must appear');
-    assert.equal(pikachuCount + eeveeCount, 10);
+    assert.equal(pikachuCount + eeveeCount, 30);
   });
 
   test('createPendingSpot spawns without excluding caught pokemon', () => {

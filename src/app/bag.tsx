@@ -8,7 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTrainer } from '@/shared/context/trainer-context';
@@ -112,12 +112,10 @@ export default function BagScreen() {
   }, [caughtPokemon, selectedRarity]);
 
   return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: screenBg }]}
-        edges={['top']}
-      >
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: screenBg }]}
+      edges={['top']}
+    >
         <View style={[styles.navBar, { backgroundColor: screenBg }]}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -213,7 +211,6 @@ export default function BagScreen() {
           )}
         </View>
       </SafeAreaView>
-    </>
   );
 }
 

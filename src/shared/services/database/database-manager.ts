@@ -52,6 +52,7 @@ export class DatabaseManager {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS caught_pokemon (
         instance_id TEXT PRIMARY KEY,
+        user_id TEXT,
         pokemon_id INTEGER NOT NULL,
         nickname TEXT,
         name TEXT NOT NULL,
@@ -167,12 +168,20 @@ export class DatabaseManager {
       );
       const hasStudentId = trainerTableInfo.some((col) => col.name === 'student_id');
       const hasFaculty = trainerTableInfo.some((col) => col.name === 'faculty');
+      const hasProgram = trainerTableInfo.some((col) => col.name === 'program');
+      const hasInterests = trainerTableInfo.some((col) => col.name === 'interests_json');
 
       if (!hasStudentId) {
         await db.execAsync(`ALTER TABLE trainer_profile ADD COLUMN student_id TEXT;`);
       }
       if (!hasFaculty) {
         await db.execAsync(`ALTER TABLE trainer_profile ADD COLUMN faculty TEXT;`);
+      }
+      if (!hasProgram) {
+        await db.execAsync(`ALTER TABLE trainer_profile ADD COLUMN program TEXT;`);
+      }
+      if (!hasInterests) {
+        await db.execAsync(`ALTER TABLE trainer_profile ADD COLUMN interests_json TEXT;`);
       }
 
       const tableInfo = await db.getAllAsync<{ name: string; notnull: number }>(
@@ -238,6 +247,15 @@ export class DatabaseManager {
       } else if (!hasRarity) {
         await db.execAsync(
           `ALTER TABLE caught_pokemon ADD COLUMN rarity TEXT DEFAULT 'common';`
+        );
+      }
+
+      const postTableInfo = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(caught_pokemon);'
+      );
+      if (!postTableInfo.some((col) => col.name === 'user_id')) {
+        await db.execAsync(
+          `ALTER TABLE caught_pokemon ADD COLUMN user_id TEXT;`
         );
       }
     } catch (err) {

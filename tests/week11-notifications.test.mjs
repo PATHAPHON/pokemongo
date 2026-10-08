@@ -1,5 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const EVENT_REMINDER_CHANNEL_ID = 'event-reminders';
 const EVENT_REMINDER_MINUTES_BEFORE = 30;
@@ -184,4 +186,376 @@ describe('Week 11: Event Reminder Notifications Contract Tests', () => {
       assert.equal(shouldNavigate(null), false);
     });
   });
+
+  describe('5. Permission Safety Contract (ensurePermission)', () => {
+    async function simulateEnsurePermission(
+      notificationsModule,
+      setupChannels = async () => {}
+    ) {
+      if (!notificationsModule) {
+        return false;
+      }
+      try {
+        await setupChannels();
+        const { status: existingStatus } =
+          await notificationsModule.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } =
+            await notificationsModule.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        return finalStatus === 'granted';
+      } catch {
+        return false;
+      }
+    }
+
+    test('Returns true when permissions are already granted', async () => {
+      const mockModule = {
+        getPermissionsAsync: async () => ({ status: 'granted' }),
+        requestPermissionsAsync: async () => ({ status: 'granted' }),
+      };
+      const result = await simulateEnsurePermission(mockModule);
+      assert.equal(typeof result, 'boolean');
+      assert.equal(result, true);
+    });
+
+    test('Returns true when permission requested and granted by user', async () => {
+      const mockModule = {
+        getPermissionsAsync: async () => ({ status: 'undetermined' }),
+        requestPermissionsAsync: async () => ({ status: 'granted' }),
+      };
+      const result = await simulateEnsurePermission(mockModule);
+      assert.equal(typeof result, 'boolean');
+      assert.equal(result, true);
+    });
+
+    test('Returns false when permission is denied', async () => {
+      const mockModule = {
+        getPermissionsAsync: async () => ({ status: 'denied' }),
+        requestPermissionsAsync: async () => ({ status: 'denied' }),
+      };
+      const result = await simulateEnsurePermission(mockModule);
+      assert.equal(typeof result, 'boolean');
+      assert.equal(result, false);
+    });
+
+    test('Fails safely and returns false (boolean) when permission request throws', async () => {
+      const mockModule = {
+        getPermissionsAsync: async () => {
+          throw new Error('OS Permission system error');
+        },
+        requestPermissionsAsync: async () => ({ status: 'granted' }),
+      };
+      const result = await simulateEnsurePermission(mockModule);
+      assert.equal(typeof result, 'boolean');
+      assert.equal(result, false);
+    });
+
+    test('Fails safely and returns false when channel setup throws', async () => {
+      const mockModule = {
+        getPermissionsAsync: async () => ({ status: 'granted' }),
+      };
+      const setupChannels = async () => {
+        throw new Error('Channel setup error');
+      };
+      const result = await simulateEnsurePermission(mockModule, setupChannels);
+      assert.equal(typeof result, 'boolean');
+      assert.equal(result, false);
+    });
+
+    test('Returns false when notificationsModule is null/unavailable', async () => {
+      const result = await simulateEnsurePermission(null);
+      assert.equal(typeof result, 'boolean');
+      assert.equal(result, false);
+    });
+
+    test('Source code verification: ensurePermission catches error and returns false', () => {
+      const filePath = path.resolve(
+        process.cwd(),
+        'src/shared/services/notifications/notification-manager.ts'
+      );
+      assert.ok(fs.existsSync(filePath), 'notification-manager.ts must exist');
+      const content = fs.readFileSync(filePath, 'utf8');
+
+      const methodMatch = content.match(
+        /ensurePermission\s*\(\s*\)[^{]*\{([\s\S]*?)\n\s*public\s+async\s+getPermissionStatus/
+      );
+      assert.ok(methodMatch, 'ensurePermission method must be present');
+      const methodBody = methodMatch[1];
+
+      assert.match(
+        methodBody,
+        /catch\s*\([^)]*\)\s*\{[\s\S]*?return\s+false\s*;/,
+        'ensurePermission catch block must return false, not true'
+      );
+      assert.doesNotMatch(
+        methodBody,
+        /catch\s*\([^)]*\)\s*\{[\s\S]*?return\s+true\s*;/,
+        'ensurePermission catch block must NOT return true'
+      );
+    });
+  });
+
+  describe('6. Scheduled Reminders Recovery Contract (getScheduledReminders)', () => {
+    function parseScheduledReminders(scheduled) {
+      const reminders = {};
+      const testReminders = {};
+      if (!Array.isArray(scheduled)) {
+        return { reminders, testReminders };
+      }
+      for (const item of scheduled) {
+        const notifId = item?.identifier ?? item?.id;
+        const data = item?.content?.data ?? item?.request?.content?.data;
+        const eventId =
+          data?.eventId != null ? String(data.eventId).trim() : '';
+        const type = data?.type;
+        if (
+          eventId.length > 0 &&
+          typeof notifId === 'string' &&
+          notifId.length > 0
+        ) {
+          if (type === 'event-reminder-test') {
+            testReminders[eventId] = notifId;
+          } else if (type === 'event-reminder') {
+            reminders[eventId] = notifId;
+          }
+        }
+      }
+      return { reminders, testReminders };
+    }
+
+    test('Maps scheduled notification IDs to reminders and testReminders by eventId', () => {
+      const scheduled = [
+        {
+          identifier: 'notif-fixed-1',
+          content: {
+            data: {
+              eventId: 'evt-101',
+              type: 'event-reminder',
+            },
+          },
+        },
+        {
+          identifier: 'notif-loop-1',
+          content: {
+            data: {
+              eventId: 'evt-202',
+              type: 'event-reminder-test',
+            },
+          },
+        },
+        {
+          identifier: 'notif-channel-test',
+          content: {
+            data: {
+              type: 'event-channel-test',
+            },
+          },
+        },
+      ];
+
+      const result = parseScheduledReminders(scheduled);
+      assert.deepEqual(result.reminders, { 'evt-101': 'notif-fixed-1' });
+      assert.deepEqual(result.testReminders, { 'evt-202': 'notif-loop-1' });
+    });
+
+    test('Supports id property fallback if identifier is missing', () => {
+      const scheduled = [
+        {
+          id: 'legacy-id-1',
+          content: {
+            data: {
+              eventId: 'evt-303',
+              type: 'event-reminder',
+            },
+          },
+        },
+      ];
+
+      const result = parseScheduledReminders(scheduled);
+      assert.equal(result.reminders['evt-303'], 'legacy-id-1');
+    });
+
+    test('Ignores items with empty or missing eventId or notifId', () => {
+      const scheduled = [
+        {
+          identifier: 'notif-bad-1',
+          content: { data: { eventId: '', type: 'event-reminder' } },
+        },
+        {
+          identifier: 'notif-bad-2',
+          content: { data: { type: 'event-reminder' } },
+        },
+        {
+          identifier: '',
+          content: { data: { eventId: 'evt-valid', type: 'event-reminder' } },
+        },
+        null,
+        undefined,
+      ];
+
+      const result = parseScheduledReminders(scheduled);
+      assert.deepEqual(result.reminders, {});
+      assert.deepEqual(result.testReminders, {});
+    });
+
+    test('Returns empty maps when scheduled notifications list is empty or non-array', () => {
+      assert.deepEqual(parseScheduledReminders([]), {
+        reminders: {},
+        testReminders: {},
+      });
+      assert.deepEqual(parseScheduledReminders(null), {
+        reminders: {},
+        testReminders: {},
+      });
+      assert.deepEqual(parseScheduledReminders(undefined), {
+        reminders: {},
+        testReminders: {},
+      });
+    });
+
+    test('Source code verification: getScheduledReminders implemented and exported', () => {
+      const managerPath = path.resolve(
+        process.cwd(),
+        'src/shared/services/notifications/notification-manager.ts'
+      );
+      const indexPath = path.resolve(
+        process.cwd(),
+        'src/shared/services/notifications/index.ts'
+      );
+
+      const managerContent = fs.readFileSync(managerPath, 'utf8');
+      const indexContent = fs.readFileSync(indexPath, 'utf8');
+
+      assert.match(
+        managerContent,
+        /getScheduledReminders\s*\(\s*\)\s*:\s*Promise\s*<\s*\{\s*reminders:\s*Record<string,\s*string>;\s*testReminders:\s*Record<string,\s*string>;?\s*\}\s*>/,
+        'NotificationManager must have getScheduledReminders method with matching signature'
+      );
+      assert.match(
+        managerContent,
+        /getAllScheduledNotificationsAsync\s*\(/,
+        'NotificationManager must use getAllScheduledNotificationsAsync()'
+      );
+      assert.match(
+        indexContent,
+        /export\s+(async\s+)?function\s+getScheduledReminders/,
+        'src/shared/services/notifications/index.ts must export getScheduledReminders'
+      );
+    });
+  });
+
+  describe('7. Logout & Notification Cleanup Contract (cancelAllNotifications)', () => {
+    async function simulateCancelAll(notificationsModule) {
+      if (!notificationsModule) return;
+      try {
+        if (typeof notificationsModule.cancelAllScheduledNotificationsAsync === 'function') {
+          await notificationsModule.cancelAllScheduledNotificationsAsync();
+        }
+        if (typeof notificationsModule.dismissAllNotificationsAsync === 'function') {
+          await notificationsModule.dismissAllNotificationsAsync();
+        }
+      } catch {
+        // safe swallow
+      }
+    }
+
+    test('Cancels all scheduled notifications and dismisses delivered notifications on logout', async () => {
+      let cancelledCount = 0;
+      let dismissedCount = 0;
+      const mockModule = {
+        cancelAllScheduledNotificationsAsync: async () => {
+          cancelledCount++;
+        },
+        dismissAllNotificationsAsync: async () => {
+          dismissedCount++;
+        },
+      };
+
+      await simulateCancelAll(mockModule);
+      assert.equal(cancelledCount, 1, 'Must cancel all scheduled notifications');
+      assert.equal(dismissedCount, 1, 'Must dismiss delivered notifications');
+    });
+
+    test('Handles missing notificationsModule or thrown error safely without crashing', async () => {
+      // Null module
+      await assert.doesNotReject(async () => {
+        await simulateCancelAll(null);
+      });
+
+      // Throwing methods
+      const errorModule = {
+        cancelAllScheduledNotificationsAsync: async () => {
+          throw new Error('OS error');
+        },
+        dismissAllNotificationsAsync: async () => {
+          throw new Error('OS error');
+        },
+      };
+      await assert.doesNotReject(async () => {
+        await simulateCancelAll(errorModule);
+      });
+    });
+
+    test('Source code verification: cancelAllNotifications exported and integrated with logout', () => {
+      const managerPath = path.resolve(
+        process.cwd(),
+        'src/shared/services/notifications/notification-manager.ts'
+      );
+      const indexPath = path.resolve(
+        process.cwd(),
+        'src/shared/services/notifications/index.ts'
+      );
+      const trainerContextPath = path.resolve(
+        process.cwd(),
+        'src/shared/context/trainer-context.tsx'
+      );
+      const eventContextPath = path.resolve(
+        process.cwd(),
+        'src/shared/context/event-context.tsx'
+      );
+
+      const managerContent = fs.readFileSync(managerPath, 'utf8');
+      const indexContent = fs.readFileSync(indexPath, 'utf8');
+      const trainerContent = fs.readFileSync(trainerContextPath, 'utf8');
+      const eventContent = fs.readFileSync(eventContextPath, 'utf8');
+
+      // 1. NotificationManager defines cancelAllNotifications
+      assert.match(
+        managerContent,
+        /public\s+async\s+cancelAllNotifications\s*\(\s*\)/,
+        'NotificationManager must define cancelAllNotifications'
+      );
+      assert.match(
+        managerContent,
+        /cancelAllScheduledNotificationsAsync\s*\(/,
+        'cancelAllNotifications must invoke cancelAllScheduledNotificationsAsync()'
+      );
+
+      // 2. index.ts exports cancelAllNotifications
+      assert.match(
+        indexContent,
+        /export\s+(async\s+)?function\s+cancelAllNotifications/,
+        'notifications/index.ts must export cancelAllNotifications'
+      );
+
+      // 3. trainer-context.tsx calls cancelAllNotifications during logout
+      assert.match(
+        trainerContent,
+        /cancelAllNotifications\s*\(\s*\)/,
+        'trainer-context.tsx must call cancelAllNotifications during logout'
+      );
+
+      // 4. event-context.tsx clears reminder state on logout / unauthenticated
+      assert.match(
+        eventContent,
+        /setReminders\s*\(\s*\{\s*\}\s*\)/,
+        'event-context.tsx must clear reminders when session is unauthenticated'
+      );
+    });
+  });
 });
+
+

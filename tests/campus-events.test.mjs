@@ -15,7 +15,10 @@ import {
   createEventPokemonSpot,
   getDistanceInMeters,
 } from '../src/features/map/services/spawn-engine';
-import { buildCatchParams } from '../src/shared/utils/event-helpers.ts';
+import {
+  buildCatchParams,
+  isEventOrganizer,
+} from '../src/shared/utils/event-helpers.ts';
 
 describe('Campus Events Data & Domain Model Tests', () => {
   it('CAMPUS_EVENTS contains valid events with required fields and no category', () => {
@@ -183,6 +186,30 @@ describe('Campus Event Service Layer Tests', () => {
     assert.equal(res2.error, 'กรุณาเลือกโปเกมอนประจำมีตอัป');
   });
 
+  it('createEvent supports any Pokédex Gen 1 featured Pokemon (e.g. #1 Bulbasaur, #151 Mew)', async () => {
+    const resBulba = await createEvent({
+      title: 'Bulbasaur Garden Meetup',
+      description: 'Meetup featuring Bulbasaur #1',
+      startsAt: '2026-10-20T10:00:00.000Z',
+      location: { name: 'Botanical Garden', latitude: 13.75, longitude: 100.5 },
+      capacity: 30,
+      featuredPokemonId: 1,
+    });
+    assert.equal(resBulba.success, true);
+    assert.equal(resBulba.event?.featuredPokemonId, 1);
+
+    const resMew = await createEvent({
+      title: 'Mythical Mew Expedition',
+      description: 'Meetup featuring Mew #151',
+      startsAt: '2026-10-21T10:00:00.000Z',
+      location: { name: 'Clock Tower', latitude: 13.76, longitude: 100.51 },
+      capacity: 100,
+      featuredPokemonId: 151,
+    });
+    assert.equal(resMew.success, true);
+    assert.equal(resMew.event?.featuredPokemonId, 151);
+  });
+
   it('verifies Udon Thani event exists and has valid coordinates & featured Pokemon', () => {
     const udonEvent = CAMPUS_EVENTS.find((e) => e.id === 'evt-udon-01');
     assert.ok(udonEvent, 'Udon Thani event evt-udon-01 must exist');
@@ -249,4 +276,61 @@ describe('Campus Event Service Layer Tests', () => {
     assert.equal(params.params.name, 'pikachu');
     assert.equal(params.params.eventId, 'evt-001');
   });
+
+  it('isEventOrganizer correctly identifies Profile 1 and Profile 2 as event hosts', () => {
+    const profile1 = { id: 'trainer-ash-101', name: 'AshKetchum' };
+    const profile2 = { id: 'trainer-misty-202', name: 'MistyWaterflower' };
+
+    const evt1 = CAMPUS_EVENTS.find((e) => e.id === 'evt-001');
+    const evt2 = CAMPUS_EVENTS.find((e) => e.id === 'evt-002');
+    const evt3 = CAMPUS_EVENTS.find((e) => e.id === 'evt-003');
+
+    assert.ok(evt1);
+    assert.ok(evt2);
+    assert.ok(evt3);
+
+    // Profile 1 owns evt-001 and evt-002
+    assert.equal(isEventOrganizer(evt1, profile1), true);
+    assert.equal(isEventOrganizer(evt2, profile1), true);
+    assert.equal(isEventOrganizer(evt3, profile1), false);
+
+    // Profile 2 owns evt-003
+    assert.equal(isEventOrganizer(evt1, profile2), false);
+    assert.equal(isEventOrganizer(evt2, profile2), false);
+    assert.equal(isEventOrganizer(evt3, profile2), true);
+
+    // Dynamic prefix/normalized match works (e.g. trainer-ash vs trainer-ash-101)
+    const profile1Short = { id: 'trainer-ash', name: 'Ash' };
+    assert.equal(isEventOrganizer(evt1, profile1Short), true);
+  });
+
+  it('Strict dynamic User ID isolation: Custom meetups are only hosted by creator', () => {
+    const userA = { id: `trainer-alice-${Date.now().toString(36)}`, name: 'Alice' };
+    const userB = { id: `trainer-bob-${Date.now().toString(36)}`, name: 'Bob' };
+    const guestUser = null;
+
+    // User A creates a meetup
+    const customEventByA = {
+      id: 'evt-custom-alice-01',
+      title: 'Alice Special Safari',
+      isCustom: true,
+      organizerId: userA.id,
+      organizer: 'Alice',
+    };
+
+    // User A is the organizer
+    assert.equal(isEventOrganizer(customEventByA, userA), true);
+
+    // User B is NOT the organizer of User A meetup
+    assert.equal(isEventOrganizer(customEventByA, userB), false);
+
+    // Guest / unauthenticated is NOT the organizer
+    assert.equal(isEventOrganizer(customEventByA, guestUser), false);
+
+    // If organizerId is missing or undefined, nobody is organizer
+    const orphanEvent = { isCustom: true, organizerId: undefined };
+    assert.equal(isEventOrganizer(orphanEvent, userA), false);
+    assert.equal(isEventOrganizer(orphanEvent, userB), false);
+  });
 });
+

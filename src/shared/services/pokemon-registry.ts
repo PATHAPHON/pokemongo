@@ -3,10 +3,11 @@ import {
   DEFAULT_POKEMON_REGISTRY_LIST,
   PokemonMeta,
   computeRarityFromBST,
+  safeParsePokemonTypes,
 } from '../constants/pokemon-registry-data';
 import type { PokemonRarity, PokemonTypeName } from '../types';
 
-export { PokemonMeta };
+export { PokemonMeta, safeParsePokemonTypes };
 
 class PokemonRegistryService {
   private static instance: PokemonRegistryService | null = null;
@@ -48,7 +49,7 @@ class PokemonRegistryService {
           this.pokemonList = rows.map((r) => ({
             id: r.id,
             name: r.name,
-            types: (JSON.parse(r.types_json) as PokemonTypeName[]) || ['normal'],
+            types: safeParsePokemonTypes(r.types_json),
             bst: r.bst,
             rarity: (r.rarity as PokemonRarity) || computeRarityFromBST(r.bst),
           }));

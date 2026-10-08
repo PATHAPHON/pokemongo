@@ -7,7 +7,7 @@ import {
   useState,
   useCallback,
 } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform, StyleProp, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import {
@@ -28,22 +28,25 @@ export interface LeafletMapViewRef {
 }
 
 
+const EMPTY_PINS: EventVenuePin[] = [];
+
 export interface LeafletMapViewProps {
   location: Coordinates;
-  wildList: WildPokemon[];
+  wildList?: WildPokemon[];
   eventPins?: EventVenuePin[];
   onCatch?: (pokemon: WildPokemon) => void;
-  onEventPress?: (eventId: string) => void;
   onExpired?: (instanceId: string) => void;
-  onSpawned?: (instanceId: string) => void;
   mode?: 'catch' | 'pick';
   pickPin?: Coordinates | null;
   onMapPick?: (coords: Coordinates) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-type Props = LeafletMapViewProps;
-
-const createMapHtml = (initialLat: number, initialLng: number) => `
+export const createMapHtml = (
+  initialLat: number,
+  initialLng: number,
+  mode: 'catch' | 'pick' = 'catch'
+) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -85,47 +88,6 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
       box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
     
-    /* PENDING SPOT */
-    .pending-spot { cursor: pointer; }
-    .pending-circle {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #FFE066 0%, #FFA900 65%, #FF8800 100%);
-      border: 2.5px solid #FFFFFF;
-      box-shadow: 0 0 14px rgba(255, 170, 0, 0.8), 0 2px 6px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .pending-glow {
-      animation: pulseGlow 1.2s infinite ease-in-out;
-    }
-    @keyframes pulseGlow {
-      0% { transform: scale(0.92); box-shadow: 0 0 8px rgba(255, 170, 0, 0.6); }
-      50% { transform: scale(1.08); box-shadow: 0 0 18px rgba(255, 200, 0, 0.95); }
-      100% { transform: scale(0.92); box-shadow: 0 0 8px rgba(255, 170, 0, 0.6); }
-    }
-    .exclamation-mark {
-      color: #FFFFFF;
-      font-size: 24px;
-      font-weight: 900;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.45);
-      line-height: 1;
-    }
-    .pending-pill {
-      background: rgba(20, 20, 20, 0.88);
-      color: #FFCC00;
-      font-size: 9px;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 10px;
-      margin-top: 3px;
-      border: 1px solid rgba(255, 204, 0, 0.6);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-      white-space: nowrap;
-    }
 
     /* ACTIVE SPOT */
     .active-spot { cursor: pointer; }
@@ -291,21 +253,26 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
       maxZoom: 19
     }).addTo(map);
 
-    // Clean Trainer Pin Marker (No Gyroscope/Compass)
-    var playerIcon = L.divIcon({
-      className: 'player-marker-wrap',
-      html: '<div class="player-pin-container">' +
-            '<div class="player-radar-wave"></div>' +
-            '<div class="player-avatar-circle"><div class="player-avatar-center"></div></div>' +
-            '</div>',
-      iconSize: [60, 60],
-      iconAnchor: [30, 30]
-    });
+    // Clean Trainer Pin Marker (No Gyroscope/Compass) - Hidden in pick mode
+    var isPickMode = ${mode === 'pick'};
+    var playerMarker = null;
 
-    var playerMarker = L.marker([playerLat, playerLng], {
-      icon: playerIcon,
-      zIndexOffset: 1000
-    }).addTo(map);
+    if (!isPickMode) {
+      var playerIcon = L.divIcon({
+        className: 'player-marker-wrap',
+        html: '<div class="player-pin-container">' +
+              '<div class="player-radar-wave"></div>' +
+              '<div class="player-avatar-circle"><div class="player-avatar-center"></div></div>' +
+              '</div>',
+        iconSize: [60, 60],
+        iconAnchor: [30, 30]
+      });
+
+      playerMarker = L.marker([playerLat, playerLng], {
+        icon: playerIcon,
+        zIndexOffset: 1000
+      }).addTo(map);
+    }
 
     window.updatePlayerLocation = function(lat, lng) {
       playerLat = lat;
@@ -416,9 +383,6 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
 
       (events || []).forEach(function(e) {
         var innerPin = '📍';
-        if (e.featuredPokemonId) {
-          innerPin = '<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/' + e.featuredPokemonId + '.png" style="width:34px;height:34px;object-fit:contain;margin-top:-2px;" />';
-        }
         var iconHtml = '<div class="event-spot">' +
           '<div class="event-pin-circle" style="background:' + (e.categoryColor || '#8B5CF6') + ';">' + innerPin + '</div>' +
           '<div class="event-pill">' + (e.title || 'กิจกรรม') + '</div>' +
@@ -474,6 +438,7 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
       }
     };
     map.on('click', function(e) {
+      if (!isPickMode) return;
       window.setPick(e.latlng.lat, e.latlng.lng);
       emitPick(e.latlng.lat, e.latlng.lng);
     });
@@ -537,19 +502,18 @@ const createMapHtml = (initialLat: number, initialLng: number) => `
 </html>
 `;
 
-export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
+export const LeafletMapView = forwardRef<LeafletMapViewRef, LeafletMapViewProps>(
   function LeafletMapView(
     {
       location,
-      wildList,
-      eventPins = [],
+      wildList = [],
+      eventPins = EMPTY_PINS,
       onCatch,
-      onEventPress,
       onExpired,
-      onSpawned,
       mode = 'catch',
       pickPin = null,
       onMapPick,
+      style,
     },
     ref
   ) {
@@ -565,10 +529,11 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       () => ({
         html: createMapHtml(
           initialLocationRef.current.latitude,
-          initialLocationRef.current.longitude
+          initialLocationRef.current.longitude,
+          mode
         ),
       }),
-      []
+      [mode]
     );
 
     // Cross-platform script execution helper
@@ -678,12 +643,8 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
               lastPickMsgTimeRef.current = now;
               onMapPick?.({ latitude: data.lat, longitude: data.lng });
             }
-          } else if (data.type === 'EVENT_CLICK' && data.eventId) {
-            onEventPress?.(data.eventId);
           } else if (data.type === 'EXPIRED') {
             onExpired?.(data.instanceId);
-          } else if (data.type === 'SPAWNED') {
-            onSpawned?.(data.instanceId);
           }
         } catch {
           // Ignore parsing errors
@@ -694,12 +655,12 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
       return () => {
         window.removeEventListener('message', handleWebMessage);
       };
-    }, [onCatch, onEventPress, onExpired, onSpawned, onMapPick, mode]);
+    }, [onCatch, onExpired, onMapPick, mode]);
 
     // Render Web Iframe
     if (Platform.OS === 'web') {
       return (
-        <View style={styles.container}>
+        <View style={[styles.container, style]}>
           <iframe
             ref={iframeRef}
             srcDoc={htmlSource.html}
@@ -712,7 +673,7 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
 
     // Render Native WebView (iOS / Android)
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, style]}>
         <WebView
           ref={webViewRef}
           originWhitelist={['*']}
@@ -742,12 +703,8 @@ export const LeafletMapView = forwardRef<LeafletMapViewRef, Props>(
                   lastPickMsgTimeRef.current = now;
                   onMapPick?.({ latitude: data.lat, longitude: data.lng });
                 }
-              } else if (data.type === 'EVENT_CLICK' && data.eventId) {
-                onEventPress?.(data.eventId);
               } else if (data.type === 'EXPIRED') {
                 onExpired?.(data.instanceId);
-              } else if (data.type === 'SPAWNED') {
-                onSpawned?.(data.instanceId);
               }
             } catch {
               // Ignore parse errors

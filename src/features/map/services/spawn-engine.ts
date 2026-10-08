@@ -129,25 +129,6 @@ export class PokemonSpawnEngine {
   }
 
   /**
-   * Generates a scattered coordinate ensuring minimum distance from player and other spawns.
-   */
-  public getScatteredCoordinate(
-    center: Coordinates,
-    existingCoords: Coordinates[] = [],
-    minSeparationMeters: number = 14
-  ): Coordinates {
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const candidate = this.getRandomNearbyCoordinate(center, 12, 80);
-      const isOverlapping = existingCoords.some(
-        (c) =>
-          this.calculateDistanceInMeters(c, candidate) < minSeparationMeters
-      );
-      if (!isOverlapping) return candidate;
-    }
-    return this.getRandomNearbyCoordinate(center, 12, 80);
-  }
-
-  /**
    * Creates an ACTIVE event-featured pokemon spot located right at the event venue.
    */
   public createEventPokemonSpot(

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -23,22 +23,12 @@ import { useEventContext } from '@/shared/context/event-context';
 import { useTrainer } from '@/shared/context/trainer-context';
 import { getArtworkUrl, capitalizePokemonName } from '@/shared/constants/kanto-pokemon';
 import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
-import { EventImagePicker } from '@/features/events';
+import { EventImagePicker, PokemonPickerModal } from '@/features/events';
 import { Routes } from '@/shared/utils/routes';
 import { consumePendingPick } from '@/shared/utils/pick-location-store';
+import { parseDateTimeInputs } from '@/shared/utils/event-helpers';
 
-const FEATURED_POKEMON_OPTIONS = [
-  { id: 25, name: 'Pikachu', rarity: 'rare' },
-  { id: 150, name: 'Mewtwo', rarity: 'ultra_rare' },
-  { id: 6, name: 'Charizard', rarity: 'ultra_rare' },
-  { id: 149, name: 'Dragonite', rarity: 'ultra_rare' },
-  { id: 94, name: 'Gengar', rarity: 'rare' },
-  { id: 133, name: 'Eevee', rarity: 'rare' },
-  { id: 143, name: 'Snorlax', rarity: 'rare' },
-  { id: 147, name: 'Dratini', rarity: 'rare' },
-  { id: 131, name: 'Lapras', rarity: 'rare' },
-  { id: 130, name: 'Gyarados', rarity: 'rare' },
-];
+
 
 export default function CreateEventScreen() {
   const router = useRouter();
@@ -53,7 +43,7 @@ export default function CreateEventScreen() {
   const borderColor = isDark ? '#3A3A3C' : '#E5E7EB';
 
   const { createEvent } = useEventContext();
-  const { trainer } = useTrainer();
+  const { trainer, caughtPokemon } = useTrainer();
 
   // Form states
   const [title, setTitle] = useState('');
@@ -63,10 +53,24 @@ export default function CreateEventScreen() {
   const [longitude, setLongitude] = useState('100.5347');
   const [capacity, setCapacity] = useState('50');
   const [featuredPokemonId, setFeaturedPokemonId] = useState<number>(25);
+  const [isPickerModalVisible, setIsPickerModalVisible] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Date & Time states (TextInputs)
+  const initialDate = useMemo(() => new Date(), []);
+  const [dayInput, setDayInput] = useState(String(initialDate.getDate()));
+  const [monthInput, setMonthInput] = useState(String(initialDate.getMonth() + 1));
+  const [yearInput, setYearInput] = useState(String(initialDate.getFullYear()));
+  const [startTimeInput, setStartTimeInput] = useState('09:00');
+  const [endTimeInput, setEndTimeInput] = useState('12:00');
+
+  const caughtPokemonIds = useMemo(
+    () => new Set(caughtPokemon.map((p) => p.pokemonId)),
+    [caughtPokemon]
+  );
 
   // Receive map pin back from events/pick-location (one-shot handoff)
   useFocusEffect(
@@ -145,13 +149,24 @@ export default function CreateEventScreen() {
       return;
     }
 
+    const parsed = parseDateTimeInputs(
+      dayInput,
+      monthInput,
+      yearInput,
+      startTimeInput,
+      endTimeInput
+    );
+
+    if (!parsed.success || !parsed.startsAt || !parsed.endsAt) {
+      setErrorMessage(parsed.error || 'กรุณาระบุวันและเวลาจัดกิจกรรมให้ถูกต้อง');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
-      const now = new Date();
-      // Starts in 1 hour by default, ends in 4 hours
-      const startsAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
-      const endsAt = new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString();
+      const startsAt = parsed.startsAt;
+      const endsAt = parsed.endsAt;
 
       const res = await createEvent({
         title: title.trim(),
@@ -177,18 +192,7 @@ export default function CreateEventScreen() {
           );
         } catch {}
 
-        Alert.alert(
-          'สร้างมีตอัปสำเร็จ 🎉',
-          `มีตอัป "${res.event.title}" ถูกบันทึกและปักหมุดบนแผนที่เรียบร้อยแล้ว`,
-          [
-            {
-              text: 'ดูรายละเอียดมีตอัป',
-              onPress: () => {
-                router.replace(`/events/${res.event!.id}` as any);
-              },
-            },
-          ]
-        );
+        router.replace('/(tabs)' as any);
       } else {
         setErrorMessage(res.error || 'เกิดข้อผิดพลาดในการสร้างมีตอัป');
       }
@@ -199,9 +203,7 @@ export default function CreateEventScreen() {
     }
   };
 
-  const selectedPokemon =
-    getPokemonMetaById(featuredPokemonId) ||
-    FEATURED_POKEMON_OPTIONS.find((p) => p.id === featuredPokemonId);
+  const selectedPokemon = getPokemonMetaById(featuredPokemonId);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]}>
@@ -309,6 +311,129 @@ export default function CreateEventScreen() {
             </View>
           </View>
 
+          {/* Form Card: Date & Time */}
+          <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="calendar" size={18} color="#EF4444" />
+              <Text style={[styles.sectionHeading, { color: textColor }]}>
+                วันและเวลาจัดกิจกรรม
+              </Text>
+            </View>
+            <Text style={[styles.sectionHint, { color: subTextColor }]}>
+              ระบุวัน เดือน ปี และเวลาจัดมีตอัป
+            </Text>
+
+            {/* Date Inputs: 3 columns (Day / Month / Year) */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: textColor }]}>
+                วันจัดกิจกรรม (วัน / เดือน / ปี) *
+              </Text>
+              <View style={styles.dateTripleRow}>
+                {/* Day Input */}
+                <View style={styles.dateFieldWrapper}>
+                  <Text style={[styles.miniFieldLabel, { color: subTextColor }]}>วัน</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.compactInput,
+                      { backgroundColor: inputBg, color: textColor, borderColor },
+                    ]}
+                    placeholder="1-31"
+                    placeholderTextColor={subTextColor}
+                    keyboardType="numeric"
+                    maxLength={2}
+                    value={dayInput}
+                    onChangeText={setDayInput}
+                    editable={!isSubmitting}
+                  />
+                </View>
+
+                {/* Month Input */}
+                <View style={styles.dateFieldWrapper}>
+                  <Text style={[styles.miniFieldLabel, { color: subTextColor }]}>เดือน</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.compactInput,
+                      { backgroundColor: inputBg, color: textColor, borderColor },
+                    ]}
+                    placeholder="1-12"
+                    placeholderTextColor={subTextColor}
+                    keyboardType="numeric"
+                    maxLength={2}
+                    value={monthInput}
+                    onChangeText={setMonthInput}
+                    editable={!isSubmitting}
+                  />
+                </View>
+
+                {/* Year Input */}
+                <View style={[styles.dateFieldWrapper, { flex: 1.3 }]}>
+                  <Text style={[styles.miniFieldLabel, { color: subTextColor }]}>ปี (ค.ศ./พ.ศ.)</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.compactInput,
+                      { backgroundColor: inputBg, color: textColor, borderColor },
+                    ]}
+                    placeholder="2026"
+                    placeholderTextColor={subTextColor}
+                    keyboardType="numeric"
+                    maxLength={4}
+                    value={yearInput}
+                    onChangeText={setYearInput}
+                    editable={!isSubmitting}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* Time Inputs: 2 columns (Start Time / End Time) */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: textColor }]}>
+                เวลาจัดกิจกรรม (เวลาเริ่ม - สิ้นสุด) *
+              </Text>
+              <View style={styles.timeDoubleRow}>
+                {/* Start Time Input */}
+                <View style={styles.timeFieldWrapper}>
+                  <Text style={[styles.miniFieldLabel, { color: subTextColor }]}>เวลาเริ่ม</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.compactInput,
+                      { backgroundColor: inputBg, color: textColor, borderColor },
+                    ]}
+                    placeholder="09:00"
+                    placeholderTextColor={subTextColor}
+                    value={startTimeInput}
+                    onChangeText={setStartTimeInput}
+                    editable={!isSubmitting}
+                  />
+                </View>
+
+                {/* Separator */}
+                <Text style={[styles.timeDash, { color: subTextColor }]}>–</Text>
+
+                {/* End Time Input */}
+                <View style={styles.timeFieldWrapper}>
+                  <Text style={[styles.miniFieldLabel, { color: subTextColor }]}>เวลาสิ้นสุด</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.compactInput,
+                      { backgroundColor: inputBg, color: textColor, borderColor },
+                    ]}
+                    placeholder="12:00"
+                    placeholderTextColor={subTextColor}
+                    value={endTimeInput}
+                    onChangeText={setEndTimeInput}
+                    editable={!isSubmitting}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+
           {/* Form Card: Featured Pokémon */}
           <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
             <View style={styles.sectionHeaderRow}>
@@ -323,7 +448,12 @@ export default function CreateEventScreen() {
 
             {/* Selected Pokémon Highlight */}
             {selectedPokemon && (
-              <View style={styles.selectedPokemonBox}>
+              <TouchableOpacity
+                style={styles.selectedPokemonBox}
+                onPress={() => setIsPickerModalVisible(true)}
+                activeOpacity={0.85}
+                accessibilityLabel="เปลี่ยนโปเกมอนพิเศษประจำกิจกรรม"
+              >
                 <Image
                   source={{ uri: getArtworkUrl(featuredPokemonId) }}
                   style={styles.selectedPokemonImg}
@@ -337,51 +467,27 @@ export default function CreateEventScreen() {
                     ระดับความหายาก: {selectedPokemon.rarity === 'ultra_rare' ? 'Ultra Rare 🌌' : 'Rare ⚡'}
                   </Text>
                 </View>
-              </View>
+                <Ionicons name="swap-horizontal" size={20} color="#FFCB05" />
+              </TouchableOpacity>
             )}
 
-            {/* Horizontal Pokémon Selection Chips */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.pokemonChipsScroll}
+            {/* Open Full Pokédex Picker Button */}
+            <TouchableOpacity
+              style={[
+                styles.openPickerButton,
+                { backgroundColor: inputBg, borderColor },
+              ]}
+              onPress={() => setIsPickerModalVisible(true)}
+              activeOpacity={0.8}
+              accessibilityLabel="เลือกจาก Pokédex ทั้งหมด 151 ตัว"
             >
-              {FEATURED_POKEMON_OPTIONS.map((pkmn) => {
-                const isSelected = featuredPokemonId === pkmn.id;
-                return (
-                  <TouchableOpacity
-                    key={pkmn.id}
-                    style={[
-                      styles.pokemonChip,
-                      {
-                        backgroundColor: isSelected
-                          ? isDark
-                            ? '#3B82F6'
-                            : '#EFF6FF'
-                          : inputBg,
-                        borderColor: isSelected ? '#3B82F6' : borderColor,
-                      },
-                    ]}
-                    onPress={() => setFeaturedPokemonId(pkmn.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Image
-                      source={{ uri: getArtworkUrl(pkmn.id) }}
-                      style={styles.chipPokemonImg}
-                      resizeMode="contain"
-                    />
-                    <Text
-                      style={[
-                        styles.chipPokemonName,
-                        { color: isSelected ? '#3B82F6' : textColor },
-                      ]}
-                    >
-                      {pkmn.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+              <Ionicons name="book-outline" size={18} color="#EF4444" />
+              <Text style={[styles.openPickerButtonText, { color: textColor }]}>
+                เลือกจาก Pokédex ทั้งหมด (151 ตัว)
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={subTextColor} />
+            </TouchableOpacity>
+
           </View>
 
           {/* Form Card: Location */}
@@ -460,39 +566,6 @@ export default function CreateEventScreen() {
               )}
             </TouchableOpacity>
 
-            <View style={styles.coordRow}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={[styles.inputLabel, { color: subTextColor }]}>
-                  Latitude
-                </Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    { backgroundColor: inputBg, color: textColor, borderColor },
-                  ]}
-                  value={latitude}
-                  onChangeText={setLatitude}
-                  keyboardType="numeric"
-                  editable={!isSubmitting}
-                />
-              </View>
-
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={[styles.inputLabel, { color: subTextColor }]}>
-                  Longitude
-                </Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    { backgroundColor: inputBg, color: textColor, borderColor },
-                  ]}
-                  value={longitude}
-                  onChangeText={setLongitude}
-                  keyboardType="numeric"
-                  editable={!isSubmitting}
-                />
-              </View>
-            </View>
           </View>
 
           {/* Form Card: Image Banner */}
@@ -532,6 +605,16 @@ export default function CreateEventScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Pokédex Selection Modal */}
+      <PokemonPickerModal
+        visible={isPickerModalVisible}
+        onClose={() => setIsPickerModalVisible(false)}
+        onSelect={(id) => setFeaturedPokemonId(id)}
+        selectedId={featuredPokemonId}
+        caughtPokemonIds={caughtPokemonIds}
+        isDark={isDark}
+      />
     </SafeAreaView>
   );
 }
@@ -663,26 +746,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  pokemonChipsScroll: {
-    gap: 8,
-    paddingVertical: 4,
-  },
-  pokemonChip: {
+  openPickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    gap: 6,
+    marginTop: 4,
   },
-  chipPokemonImg: {
-    width: 28,
-    height: 28,
-  },
-  chipPokemonName: {
-    fontSize: 12,
+  openPickerButtonText: {
+    flex: 1,
+    fontSize: 14,
     fontWeight: '700',
+    marginLeft: 8,
   },
   gpsButton: {
     flexDirection: 'row',
@@ -699,10 +777,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  coordRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
+
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -773,5 +848,36 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  dateTripleRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  dateFieldWrapper: {
+    flex: 1,
+    gap: 4,
+  },
+  timeDoubleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  timeFieldWrapper: {
+    flex: 1,
+    gap: 4,
+  },
+  timeDash: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 18,
+  },
+  miniFieldLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  compactInput: {
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,12 +18,18 @@ import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { useEventContext } from '@/shared/context/event-context';
 import { useTrainer } from '@/shared/context/trainer-context';
 import { EventImagePicker } from '@/features/events';
-import { buildCatchParams } from '@/shared/utils/event-helpers';
 import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 import {
   formatPokemonId,
   capitalizePokemonName,
 } from '@/shared/constants/kanto-pokemon';
+import {
+  EMAIL_REGEX,
+  validateRegistrationForm,
+  type RegistrationFieldErrors,
+} from '@/shared/utils/event-helpers';
+
+export { EMAIL_REGEX };
 
 export default function EventRegisterScreen() {
   const router = useRouter();
@@ -44,11 +49,24 @@ export default function EventRegisterScreen() {
 
   const event = events.find((e) => e.id === id);
 
+  const [fullName, setFullName] = useState(trainer?.name || '');
+  const [email, setEmail] = useState('');
+  const [studentId, setStudentId] = useState(trainer?.studentId || '');
   const [notes, setNotes] = useState('');
   const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   const [agreed, setAgreed] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<RegistrationFieldErrors>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (trainer?.name && !fullName) {
+      setFullName(trainer.name);
+    }
+    if (trainer?.studentId && !studentId) {
+      setStudentId(trainer.studentId);
+    }
+  }, [trainer]);
 
   if (!event) {
     return (
@@ -69,6 +87,13 @@ export default function EventRegisterScreen() {
 
   const handleSubmit = async () => {
     setErrorMessage(null);
+
+    const validation = validateRegistrationForm({ fullName, email });
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
+    setFieldErrors({});
 
     if (!agreed) {
       setErrorMessage('กรุณายอมรับเงื่อนไขการเข้าร่วมกิจกรรม');
@@ -144,31 +169,88 @@ export default function EventRegisterScreen() {
             </View>
           </View>
 
-          {/* User Info Preview */}
+          {/* User Info / Form Inputs */}
           <View style={[styles.formCard, { backgroundColor: cardBg, borderColor }]}>
             <Text style={[styles.sectionHeading, { color: textColor }]}>
               ข้อมูลผู้สมัคร
             </Text>
 
+            {/* Full Name */}
             <View style={styles.fieldGroup}>
               <Text style={[styles.fieldLabel, { color: subTextColor }]}>
-                ชื่อผู้ใช้ / เทรนเนอร์
+                ชื่อ-นามสกุล <Text style={styles.requiredAsterisk}>*</Text>
               </Text>
-              <Text style={[styles.fieldValue, { color: textColor }]}>
-                {trainer?.name || 'Guest User'}
-              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  { backgroundColor: inputBg, color: textColor, borderColor },
+                  fieldErrors.fullName ? styles.inputError : null,
+                ]}
+                placeholder="ระบุชื่อ-นามสกุล (อย่างน้อย 2 ตัวอักษร)"
+                placeholderTextColor={subTextColor}
+                value={fullName}
+                onChangeText={(text) => {
+                  setFullName(text);
+                  if (fieldErrors.fullName) {
+                    setFieldErrors((prev) => ({ ...prev, fullName: undefined }));
+                  }
+                }}
+                editable={!isSubmitting}
+                autoCorrect={false}
+              />
+              {fieldErrors.fullName ? (
+                <Text style={styles.fieldErrorText}>{fieldErrors.fullName}</Text>
+              ) : null}
             </View>
 
-            {trainer?.studentId && (
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabel, { color: subTextColor }]}>
-                  รหัสนักศึกษา
-                </Text>
-                <Text style={[styles.fieldValue, { color: textColor }]}>
-                  {trainer.studentId}
-                </Text>
-              </View>
-            )}
+            {/* Email */}
+            <View style={styles.fieldGroup}>
+              <Text style={[styles.fieldLabel, { color: subTextColor }]}>
+                อีเมล <Text style={styles.requiredAsterisk}>*</Text>
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  { backgroundColor: inputBg, color: textColor, borderColor },
+                  fieldErrors.email ? styles.inputError : null,
+                ]}
+                placeholder="example@university.ac.th"
+                placeholderTextColor={subTextColor}
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  if (fieldErrors.email) {
+                    setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                  }
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isSubmitting}
+              />
+              {fieldErrors.email ? (
+                <Text style={styles.fieldErrorText}>{fieldErrors.email}</Text>
+              ) : null}
+            </View>
+
+            {/* Student ID */}
+            <View style={styles.fieldGroup}>
+              <Text style={[styles.fieldLabel, { color: subTextColor }]}>
+                รหัสนักศึกษา (ไม่บังคับ)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  { backgroundColor: inputBg, color: textColor, borderColor },
+                ]}
+                placeholder="เช่น 65010001"
+                placeholderTextColor={subTextColor}
+                value={studentId}
+                onChangeText={setStudentId}
+                keyboardType="numeric"
+                editable={!isSubmitting}
+              />
+            </View>
 
             {trainer?.faculty && (
               <View style={styles.fieldGroup}>
@@ -214,10 +296,11 @@ export default function EventRegisterScreen() {
           {/* Agreement Checkbox */}
           <TouchableOpacity
             style={styles.agreementRow}
-            onPress={() => setAgreed(!agreed)}
+            onPress={() => !isSubmitting && setAgreed(!agreed)}
             activeOpacity={0.8}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: agreed }}
+            disabled={isSubmitting}
           >
             <Ionicons
               name={agreed ? 'checkbox' : 'square-outline'}
@@ -369,6 +452,25 @@ const styles = StyleSheet.create({
   fieldValue: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  inputError: {
+    borderColor: '#EF4444',
+  },
+  fieldErrorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  requiredAsterisk: {
+    color: '#EF4444',
   },
   textArea: {
     borderWidth: 1,

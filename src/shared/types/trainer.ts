@@ -1,5 +1,14 @@
 export type TrainerTeam = 'valor' | 'mystic' | 'instinct' | 'none';
 
+export interface StudentProfile {
+  name: string;
+  program: string;
+  interests: string[];
+  studentId?: string;
+  faculty?: string;
+  avatarUrl?: string;
+}
+
 export interface TrainerProfile {
   id: string;
   name: string;
@@ -13,6 +22,8 @@ export interface TrainerProfile {
   starterPokemonId?: number;
   studentId?: string;
   faculty?: string;
+  program?: string;
+  interests?: string[];
   createdAt: string;
 }
 

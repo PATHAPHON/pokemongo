@@ -23,12 +23,15 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   return defaultDbManager.getDatabase();
 }
 
-export async function getAllCaughtPokemon(): Promise<CaughtPokemon[]> {
-  return defaultPokemonRepository.getAll();
+export async function getAllCaughtPokemon(userId?: string): Promise<CaughtPokemon[]> {
+  return defaultPokemonRepository.getAll(userId);
 }
 
-export async function insertCaughtPokemon(pokemon: CaughtPokemon): Promise<void> {
-  return defaultPokemonRepository.insert(pokemon);
+export async function insertCaughtPokemon(
+  pokemon: CaughtPokemon,
+  userId?: string
+): Promise<void> {
+  return defaultPokemonRepository.insert(pokemon, userId);
 }
 
 export async function deleteCaughtPokemon(instanceId: string): Promise<void> {
@@ -39,8 +42,10 @@ export async function getTrainerInventory(): Promise<TrainerInventory> {
   return defaultInventoryRepository.getInventory();
 }
 
-export async function getStoredTrainerProfile(): Promise<TrainerProfile | null> {
-  return defaultTrainerRepository.getProfile();
+export async function getStoredTrainerProfile(
+  trainerId?: string
+): Promise<TrainerProfile | null> {
+  return defaultTrainerRepository.getProfile(trainerId);
 }
 
 export async function saveStoredTrainerProfile(profile: TrainerProfile): Promise<void> {

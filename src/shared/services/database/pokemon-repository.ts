@@ -1,11 +1,13 @@
 import { DatabaseManager } from './database-manager';
 import { CaughtPokemon, PokemonRarity } from '@/shared/types';
 import { getPokemonRarity } from '@/shared/constants/kanto-pokemon';
-import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
+import { getPokemonMetaById, safeParsePokemonTypes } from '@/shared/services/pokemon-registry';
+
+export { safeParsePokemonTypes };
 
 interface IPokemonRepository {
-  getAll(): Promise<CaughtPokemon[]>;
-  insert(pokemon: CaughtPokemon): Promise<void>;
+  getAll(userId?: string): Promise<CaughtPokemon[]>;
+  insert(pokemon: CaughtPokemon, userId?: string): Promise<void>;
   delete(instanceId: string): Promise<void>;
 }
 
@@ -16,11 +18,16 @@ export class PokemonRepository implements IPokemonRepository {
     this.dbManager = dbManager;
   }
 
-  public async getAll(): Promise<CaughtPokemon[]> {
+  public async getAll(userId?: string): Promise<CaughtPokemon[]> {
     const db = await this.dbManager.getDatabase();
-    const rows = await db.getAllAsync<any>(
-      'SELECT * FROM caught_pokemon ORDER BY caught_at DESC'
-    );
+    const rows = userId
+      ? await db.getAllAsync<any>(
+          'SELECT * FROM caught_pokemon WHERE user_id = ? ORDER BY caught_at DESC',
+          [userId]
+        )
+      : await db.getAllAsync<any>(
+          'SELECT * FROM caught_pokemon ORDER BY caught_at DESC'
+        );
 
     return rows.map((row) => ({
       instanceId: row.instance_id,
@@ -28,10 +35,7 @@ export class PokemonRepository implements IPokemonRepository {
       nickname: row.nickname ?? undefined,
       name: row.name,
       artwork: row.artwork,
-      types:
-        typeof row.types_json === 'string'
-          ? JSON.parse(row.types_json)
-          : ['normal'],
+      types: safeParsePokemonTypes(row.types_json),
       rarity:
         (row.rarity as PokemonRarity) ||
         getPokemonMetaById(row.pokemon_id)?.rarity ||
@@ -51,10 +55,16 @@ export class PokemonRepository implements IPokemonRepository {
     }));
   }
 
-  public async insert(pokemon: CaughtPokemon): Promise<void> {
+  public async insert(pokemon: CaughtPokemon, userId?: string): Promise<void> {
     const db = await this.dbManager.getDatabase();
+    const targetUserId =
+      userId ||
+      (pokemon.instanceId.startsWith('starter-pikachu-')
+        ? pokemon.instanceId.replace('starter-pikachu-', '')
+        : null);
     const params = [
       pokemon.instanceId,
+      targetUserId,
       pokemon.pokemonId,
       pokemon.nickname ?? null,
       pokemon.name,
@@ -73,19 +83,19 @@ export class PokemonRepository implements IPokemonRepository {
     try {
       await db.runAsync(
         `INSERT OR REPLACE INTO caught_pokemon (
-          instance_id, pokemon_id, nickname, name, artwork, types_json,
+          instance_id, user_id, pokemon_id, nickname, name, artwork, types_json,
           rarity, height, weight, caught_at, location_lat, location_lng, location_name, is_favorite
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         params
       );
     } catch (err: any) {
-      if (err?.message?.includes('NOT NULL constraint failed')) {
+      if (err?.message?.includes('NOT NULL constraint failed') || err?.message?.includes('no column named user_id')) {
         await this.dbManager.initDatabase(db);
         await db.runAsync(
           `INSERT OR REPLACE INTO caught_pokemon (
-            instance_id, pokemon_id, nickname, name, artwork, types_json,
+            instance_id, user_id, pokemon_id, nickname, name, artwork, types_json,
             rarity, height, weight, caught_at, location_lat, location_lng, location_name, is_favorite
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           params
         );
       } else {

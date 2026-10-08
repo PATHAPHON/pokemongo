@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TrainerProfile } from '@/shared/types';
 
@@ -7,12 +7,7 @@ interface TrainerHeaderCardProps {
   isDark: boolean;
 }
 
-const TEAM_META: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  valor: { label: 'Team Valor', color: '#EF4444', bg: 'rgba(239,68,68,0.15)', icon: '🔥' },
-  mystic: { label: 'Team Mystic', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)', icon: '❄️' },
-  instinct: { label: 'Team Instinct', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', icon: '⚡' },
-  none: { label: 'No Team', color: '#6B7280', bg: 'rgba(107,114,128,0.15)', icon: '◌' },
-};
+const DEFAULT_AVATAR = require('../../../../assets/images/avatar.png');
 
 export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
   const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
@@ -20,8 +15,12 @@ export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const subTextColor = isDark ? '#9BA1A6' : '#687076';
 
-  const team = TEAM_META[trainer?.team || 'none'] || TEAM_META.none;
   const level = trainer?.level ?? 1;
+  const program = trainer?.program || trainer?.faculty || 'Computer and Information Science';
+  const studentId = trainer?.studentId || '65010001';
+  const interests = trainer?.interests && trainer.interests.length > 0
+    ? trainer.interests
+    : ['Campus events', 'Mobile UX', 'Pokémon GO'];
 
   return (
     <View
@@ -45,25 +44,47 @@ export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
             },
           ]}
         >
-          <Ionicons name="person" size={44} color="#0A7EA4" />
+          <Image
+            source={trainer?.avatarUrl ? { uri: trainer.avatarUrl } : DEFAULT_AVATAR}
+            style={styles.avatarImage}
+            resizeMode="cover"
+            accessible={true}
+            accessibilityRole="image"
+            accessibilityLabel={`ภาพโปรไฟล์ของ ${trainer?.name || 'เทรนเนอร์'}`}
+          />
         </View>
         <View style={styles.nameCol}>
           <Text style={[styles.trainerName, { color: textColor }]}>
             {trainer?.name || 'Trainer'}
           </Text>
-          <Text style={[styles.levelText, { color: subTextColor }]}>
-            Level {level}
+          <Text style={[styles.programText, { color: textColor }]}>
+            {program}
           </Text>
-          <View
-            style={[
-              styles.teamBadge,
-              { backgroundColor: team.bg, borderColor: team.color },
-            ]}
-          >
-            <Text style={[styles.teamText, { color: team.color }]}>
-              {team.icon} {team.label}
-            </Text>
-          </View>
+          <Text style={[styles.studentIdText, { color: subTextColor }]}>
+            รหัสนักศึกษา: {studentId} · Level {level}
+          </Text>
+        </View>
+      </View>
+
+      {/* Interests pills */}
+      <View style={styles.interestsContainer}>
+        <Text style={[styles.interestsLabel, { color: subTextColor }]}>
+          ความสนใจ:
+        </Text>
+        <View style={styles.interestsRow}>
+          {interests.map((interest, idx) => (
+            <View
+              key={idx}
+              style={[
+                styles.interestChip,
+                { backgroundColor: isDark ? '#2C2C2E' : '#F1F3F5', borderColor },
+              ]}
+            >
+              <Text style={[styles.interestText, { color: isDark ? '#ECEDEE' : '#1F2937' }]}>
+                #{interest}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
     </View>
@@ -108,16 +129,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  teamBadge: {
-    alignSelf: 'flex-start',
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 39,
+  },
+  programText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  studentIdText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  interestsContainer: {
+    marginTop: 6,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E5E7EB',
+    gap: 6,
+  },
+  interestsLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  interestsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  interestChip: {
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginTop: 2,
+    paddingVertical: 4,
   },
-  teamText: {
+  interestText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 });

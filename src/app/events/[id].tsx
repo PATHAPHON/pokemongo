@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Platform,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,18 +16,20 @@ import {
   useEventDetail,
   EventDetailHero,
   EventDetailInfo,
-  useEventActions,
 } from '@/features/events';
 import { useTrainer } from '@/shared/context/trainer-context';
 import {
-  formatRemainingLabel,
   buildCatchParams,
+  isEventOrganizer,
 } from '@/shared/utils/event-helpers';
 import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 
 export default function EventDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const rawId = params.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const isValidId = typeof id === 'string' && id.trim().length > 0;
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { trainer } = useTrainer();
@@ -43,8 +46,6 @@ export default function EventDetailScreen() {
     error,
     isRegistered,
     registration,
-    hasCaught,
-    hasAttended,
     isFavorite,
     hasReminder,
     hasTestLoop,
@@ -52,9 +53,21 @@ export default function EventDetailScreen() {
     toggleFavorite,
     toggleReminder,
     toggleTestLoop,
-  } = useEventDetail(id || '');
+  } = useEventDetail(isValidId ? id : '');
 
-  const { handleCancelRegistration } = useEventActions();
+  const handleToggleReminder = async () => {
+    const res = await toggleReminder();
+    if (res && !res.success && res.error) {
+      Alert.alert('การแจ้งเตือน', res.error);
+    }
+  };
+
+  const handleToggleTestLoop = async () => {
+    const res = await toggleTestLoop();
+    if (res && !res.success && res.error) {
+      Alert.alert('ทดสอบแจ้งเตือน', res.error);
+    }
+  };
 
   const handleDirectCatch = () => {
     if (!id || !event?.featuredPokemonId) return;
@@ -77,7 +90,7 @@ export default function EventDetailScreen() {
     });
   };
 
-  if (!id) {
+  if (!isValidId) {
     return (
       <SafeAreaView style={[styles.centerScreen, { backgroundColor: screenBg }]}>
         <Ionicons name="alert-circle-outline" size={54} color="#EF4444" />
@@ -133,10 +146,7 @@ export default function EventDetailScreen() {
   const isFull =
     event.capacity !== undefined && event.registeredCount >= event.capacity;
 
-  const isOrganizer = Boolean(
-    event.isCustom ||
-    (event.organizerId && trainer && event.organizerId === trainer.id)
-  );
+  const isOrganizer = isEventOrganizer(event, trainer);
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
@@ -151,7 +161,7 @@ export default function EventDetailScreen() {
           hasReminder={hasReminder}
           onBack={() => router.back()}
           onToggleFavorite={toggleFavorite}
-          onToggleReminder={toggleReminder}
+          onToggleReminder={handleToggleReminder}
           isDark={isDark}
         />
 
@@ -165,7 +175,7 @@ export default function EventDetailScreen() {
           onCatchDirect={handleDirectCatch}
           isOrganizer={isOrganizer}
           hasTestLoop={hasTestLoop}
-          onToggleTestLoop={toggleTestLoop}
+          onToggleTestLoop={handleToggleTestLoop}
         />
       </ScrollView>
 
@@ -306,65 +316,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
-  },
-  registeredBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: 50,
-  },
-  registeredTextGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  registeredLabel: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#10B981',
-  },
-  cancelRegButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#EF4444',
-  },
-  cancelRegButtonText: {
-    color: '#EF4444',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  registeredActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  bottomCatchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#EE1515',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    shadowColor: '#EE1515',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  bottomCatchButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  bottomMapIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

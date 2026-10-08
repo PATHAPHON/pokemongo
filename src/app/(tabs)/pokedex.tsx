@@ -32,7 +32,6 @@ export default function PokedexScreen() {
 
   const {
     entries,
-    stats,
     isLoading,
     searchQuery,
     setSearchQuery,
@@ -114,7 +113,7 @@ export default function PokedexScreen() {
                   ไม่พบโปเกมอนที่ตรงกับเงื่อนไข
                 </Text>
                 <Text style={[styles.emptySubtitle, { color: subTextColor }]}>
-                  ลองเปลี่ยนคำค้นหา หรือเลือกตัวกรองสถานะเป็น "ทั้งหมด"
+                  ลองเปลี่ยนคำค้นหา หรือเลือกตัวกรองสถานะเป็น &quot;ทั้งหมด&quot;
                 </Text>
                 <TouchableOpacity
                   style={styles.resetButton}

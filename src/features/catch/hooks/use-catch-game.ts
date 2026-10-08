@@ -47,6 +47,11 @@ export function useCatchGame({
 
   // Floating bobbing animation
   useEffect(() => {
+    if (gameState !== 'AIMING') {
+      floatAnim.setValue(0);
+      return;
+    }
+
     const floatLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(floatAnim, {
@@ -65,7 +70,7 @@ export function useCatchGame({
     );
     floatLoop.start();
     return () => floatLoop.stop();
-  }, [floatAnim]);
+  }, [floatAnim, gameState]);
 
   // Execute catch wobble sequence - 100% Guaranteed Catch
   const startCatchWobble = useCallback(async () => {
@@ -145,7 +150,7 @@ export function useCatchGame({
           ballX.setValue(gestureState.dx * 0.4);
           ballY.setValue(Math.min(0, gestureState.dy * 0.6));
         },
-        onPanResponderRelease: async (_, gestureState) => {
+        onPanResponderRelease: (_, gestureState) => {
           if (gameState !== 'AIMING') return;
 
           if (gestureState.dy < -60) {
@@ -197,7 +202,6 @@ export function useCatchGame({
 
   return {
     gameState,
-    rarity,
     floatAnim,
     ballX,
     ballY,

@@ -5,14 +5,12 @@ import { useRouter } from 'expo-router';
 interface ProfileMenuViewProps {
   isDark: boolean;
   onEdit: () => void;
-  onAdmin?: () => void;
   onLogout: () => void;
 }
 
 export function ProfileMenuView({
   isDark,
   onEdit,
-  onAdmin,
   onLogout,
 }: ProfileMenuViewProps) {
   const router = useRouter();
@@ -26,7 +24,7 @@ export function ProfileMenuView({
       key: 'edit',
       icon: 'pencil-outline' as const,
       title: 'แก้ไขข้อมูลโปรไฟล์',
-      subtitle: 'เปลี่ยนชื่อเทรนเนอร์ / สังกัดทีม',
+      subtitle: 'เปลี่ยนชื่อเทรนเนอร์ / ข้อมูลส่วนตัว',
       onPress: onEdit,
     },
     {
@@ -41,7 +39,7 @@ export function ProfileMenuView({
       icon: 'settings-outline' as const,
       title: 'สิทธิ์การใช้งานแอป & ผู้ดูแลระบบ (Admin Console)',
       subtitle: 'GPS / แจ้งเตือน / กล้อง / ทดสอบระบบ',
-      onPress: onAdmin ?? (() => router.push('/profile/admin' as any)),
+      onPress: () => router.push('/profile/admin' as any),
     },
   ];
 

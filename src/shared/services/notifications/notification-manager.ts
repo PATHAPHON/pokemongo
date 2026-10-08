@@ -2,7 +2,6 @@ import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { isRunningInExpoGo } from 'expo';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
-import * as SecureStore from 'expo-secure-store';
 import type { CampusEvent } from '@/shared/types';
 
 export const EVENT_REMINDER_CHANNEL_ID = 'event-reminders';
@@ -15,7 +14,6 @@ const OLD_CHANNEL_IDS = [
   'pokemon-spawns',
   'pokemon-spawns-v2',
 ];
-const NOTIFICATION_PREF_KEY = 'pokemon_go_notifications_enabled';
 
 export class NotificationManager {
   private static instance: NotificationManager | null = null;
@@ -24,7 +22,6 @@ export class NotificationManager {
   public initError: string | null = null;
   private notificationsModule: typeof import('expo-notifications') | null =
     null;
-  private readonly memoryStorage = new Map<string, string>();
 
   public constructor() {
     this.isExpoGo =
@@ -51,10 +48,11 @@ export class NotificationManager {
     try {
       this.notificationsModule.setNotificationHandler({
         handleNotification: async () => ({
-          shouldPlaySound: true,
-          shouldSetBadge: false,
           shouldShowBanner: true,
           shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+          priority: 'max' as any,
         }),
       });
     } catch (err) {
@@ -70,22 +68,6 @@ export class NotificationManager {
       NotificationManager.instance = new NotificationManager();
     }
     return NotificationManager.instance;
-  }
-
-  private async getStoredPref(key: string): Promise<string | null> {
-    try {
-      return await SecureStore.getItemAsync(key);
-    } catch {
-      return this.memoryStorage.get(key) ?? null;
-    }
-  }
-
-  private async setStoredPref(key: string, value: string): Promise<void> {
-    try {
-      await SecureStore.setItemAsync(key, value);
-    } catch {
-      this.memoryStorage.set(key, value);
-    }
   }
 
   public async setupChannels(): Promise<void> {
@@ -113,17 +95,41 @@ export class NotificationManager {
         }
       }
 
+      const importance =
+        this.notificationsModule.AndroidImportance?.MAX ??
+        this.notificationsModule.AndroidImportance?.HIGH ??
+        5;
+      const visibility =
+        this.notificationsModule.AndroidNotificationVisibility?.PUBLIC ?? 1;
+
       await this.notificationsModule.setNotificationChannelAsync(
         EVENT_REMINDER_CHANNEL_ID,
         {
           name: 'การแจ้งเตือนกิจกรรม',
-          importance: this.notificationsModule.AndroidImportance.HIGH,
-          lockscreenVisibility:
-            this.notificationsModule.AndroidNotificationVisibility.PUBLIC,
+          importance,
+          lockscreenVisibility: visibility,
+          sound: 'default',
           enableLights: true,
           lightColor: '#8B5CF6',
           enableVibrate: true,
           vibrationPattern: [0, 400, 200, 400],
+          showBadge: true,
+        }
+      );
+
+      // Also ensure Expo's fallback channel has MAX importance so no notifications are silenced
+      await this.notificationsModule.setNotificationChannelAsync(
+        'expo_notifications_fallback_notification_channel',
+        {
+          name: 'การแจ้งเตือนทั่วไป',
+          importance,
+          lockscreenVisibility: visibility,
+          sound: 'default',
+          enableLights: true,
+          lightColor: '#8B5CF6',
+          enableVibrate: true,
+          vibrationPattern: [0, 400, 200, 400],
+          showBadge: true,
         }
       );
     } catch {
@@ -133,7 +139,7 @@ export class NotificationManager {
 
   public async ensurePermission(): Promise<boolean> {
     if (!this.notificationsModule) {
-      return true;
+      return false;
     }
 
     try {
@@ -151,7 +157,7 @@ export class NotificationManager {
       return finalStatus === 'granted';
     } catch (error) {
       console.warn('[NotificationManager] Failed to ensure permission:', error);
-      return true;
+      return false;
     }
   }
 
@@ -184,11 +190,7 @@ export class NotificationManager {
   }
 
   public async resetPreferences(): Promise<void> {
-    try {
-      await SecureStore.deleteItemAsync(NOTIFICATION_PREF_KEY);
-    } catch {
-      this.memoryStorage.delete(NOTIFICATION_PREF_KEY);
-    }
+    // No-op: permissions are managed at OS level
   }
 
   private buildReminderContent(event: Pick<CampusEvent, 'id' | 'title' | 'location'>, minutesBefore: number, isTest = false) {
@@ -230,15 +232,18 @@ export class NotificationManager {
         return { success: false, error: 'reminder-time-has-passed' };
       }
 
+      const dateTriggerType =
+        this.notificationsModule.SchedulableTriggerInputTypes?.DATE || 'date';
+
       const trigger: any =
         Platform.OS === 'android'
           ? {
-              type: this.notificationsModule.SchedulableTriggerInputTypes.DATE,
+              type: dateTriggerType,
               date: triggerDate,
               channelId: EVENT_REMINDER_CHANNEL_ID,
             }
           : {
-              type: this.notificationsModule.SchedulableTriggerInputTypes.DATE,
+              type: dateTriggerType,
               date: triggerDate,
             };
 
@@ -275,9 +280,11 @@ export class NotificationManager {
 
     try {
       await this.setupChannels();
+      const intervalType =
+        this.notificationsModule.SchedulableTriggerInputTypes?.TIME_INTERVAL ||
+        'timeInterval';
       const trigger: any = {
-        type: this.notificationsModule.SchedulableTriggerInputTypes
-          .TIME_INTERVAL,
+        type: intervalType,
         seconds: EVENT_TEST_LOOP_SECONDS,
         repeats: true,
         ...(Platform.OS === 'android'
@@ -315,8 +322,61 @@ export class NotificationManager {
     return this.cancelEventReminder(notificationId);
   }
 
+  /**
+   * Cancels all scheduled notifications and dismisses delivered notifications.
+   * Clears OS notification state on logout or session reset.
+   */
+  public async cancelAllNotifications(): Promise<void> {
+    if (!this.notificationsModule) return;
+    try {
+      if (
+        typeof this.notificationsModule.cancelAllScheduledNotificationsAsync ===
+        'function'
+      ) {
+        await this.notificationsModule.cancelAllScheduledNotificationsAsync();
+      }
+      if (
+        typeof this.notificationsModule.dismissAllNotificationsAsync ===
+        'function'
+      ) {
+        await this.notificationsModule.dismissAllNotificationsAsync();
+      }
+    } catch (err) {
+      console.warn('[NotificationManager] cancelAllNotifications failed:', err);
+    }
+  }
+
+  /**
+   * Recovers scheduled notification IDs from the OS notification queue.
+   * Maps eventId -> notificationId for both fixed reminders and test loops.
+   */
+  public async getScheduledReminders(): Promise<{
+    reminders: Record<string, string>;
+    testReminders: Record<string, string>;
+  }> {
+    if (
+      !this.notificationsModule ||
+      typeof this.notificationsModule.getAllScheduledNotificationsAsync !==
+        'function'
+    ) {
+      return { reminders: {}, testReminders: {} };
+    }
+
+    try {
+      const scheduled =
+        await this.notificationsModule.getAllScheduledNotificationsAsync();
+      return parseScheduledReminders(scheduled);
+    } catch (err) {
+      console.warn(
+        '[NotificationManager] Failed to recover scheduled reminders:',
+        err
+      );
+      return { reminders: {}, testReminders: {} };
+    }
+  }
+
   /** Generic channel check without any event payload (permission screen). */
-  public async sendChannelTestNotification(now = false): Promise<{
+  public async sendChannelTestNotification(): Promise<{
     success: boolean;
     message: string;
     id?: string;
@@ -366,7 +426,6 @@ export class NotificationManager {
         trigger,
       });
 
-      void now;
       return {
         success: true,
         message: 'ส่งการแจ้งเตือนทดสอบไปยังแถบแจ้งเตือนของเครื่องเรียบร้อยแล้ว!',
@@ -417,8 +476,9 @@ export class NotificationManager {
           data: { type: 'event-channel-test' },
         },
         trigger: {
-          type: this.notificationsModule.SchedulableTriggerInputTypes
-            .TIME_INTERVAL,
+          type:
+            this.notificationsModule.SchedulableTriggerInputTypes
+              ?.TIME_INTERVAL || 'timeInterval',
           seconds: Math.max(1, delaySeconds),
           repeats: false,
           ...(Platform.OS === 'android'
@@ -486,10 +546,42 @@ export class NotificationManager {
     }
   }
 
-  /** Keep for legacy callers: no-op wrapper (do NOT wipe event reminders). */
-  public async cancelScheduledNotifications(): Promise<void> {
-    return;
-  }
 }
 
 export const defaultNotificationManager = NotificationManager.getInstance();
+
+export function parseScheduledReminders(scheduled: unknown[]): {
+  reminders: Record<string, string>;
+  testReminders: Record<string, string>;
+} {
+  const reminders: Record<string, string> = {};
+  const testReminders: Record<string, string> = {};
+
+  if (!Array.isArray(scheduled)) {
+    return { reminders, testReminders };
+  }
+
+  for (const item of scheduled) {
+    const notifId = (item as any)?.identifier ?? (item as any)?.id;
+    const data =
+      (item as any)?.content?.data ??
+      (item as any)?.request?.content?.data;
+    const eventId =
+      data?.eventId != null ? String(data.eventId).trim() : '';
+    const type = data?.type;
+
+    if (
+      eventId.length > 0 &&
+      typeof notifId === 'string' &&
+      notifId.length > 0
+    ) {
+      if (type === 'event-reminder-test') {
+        testReminders[eventId] = notifId;
+      } else if (type === 'event-reminder') {
+        reminders[eventId] = notifId;
+      }
+    }
+  }
+
+  return { reminders, testReminders };
+}

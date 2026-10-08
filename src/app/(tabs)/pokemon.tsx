@@ -12,11 +12,13 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEventContext } from '@/shared/context/event-context';
+import { useTrainer } from '@/shared/context/trainer-context';
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { EventCard, EventEmptyState } from '@/features/events';
 import { CampusEvent } from '@/shared/types';
+import { isEventOrganizer } from '@/shared/utils/event-helpers';
 
-type MyEventsTab = 'registered' | 'favorites';
+type MyEventsTab = 'registered' | 'favorites' | 'hosting';
 
 export default function MyEventsScreen() {
   const router = useRouter();
@@ -24,18 +26,15 @@ export default function MyEventsScreen() {
   const isDark = colorScheme === 'dark';
 
   const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
   const textColor = isDark ? '#ECEDEE' : '#11181C';
   const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
 
   const { width } = useWindowDimensions();
   const numColumns = width >= 768 ? 2 : 1;
 
+  const { trainer } = useTrainer();
   const { events, registrations, favorites, isLoading, toggleFavorite } =
     useEventContext();
-
-
 
   const [activeTab, setActiveTab] = useState<MyEventsTab>('registered');
 
@@ -58,6 +57,10 @@ export default function MyEventsScreen() {
     const favSet = new Set(favorites);
     return events.filter((e) => favSet.has(e.id));
   }, [events, favorites]);
+
+  const hostedEvents = useMemo(() => {
+    return events.filter((e) => isEventOrganizer(e, trainer));
+  }, [events, trainer]);
 
   const activeRegistrationsSet = useMemo(() => {
     return new Set(
@@ -102,7 +105,7 @@ export default function MyEventsScreen() {
           >
             <Ionicons
               name="checkmark-circle-outline"
-              size={16}
+              size={15}
               color={activeTab === 'registered' ? '#FFFFFF' : subTextColor}
             />
             <Text
@@ -112,8 +115,9 @@ export default function MyEventsScreen() {
                   ? styles.activeTabText
                   : { color: subTextColor },
               ]}
+              numberOfLines={1}
             >
-              ลงทะเบียนแล้ว ({registeredEvents.length})
+              ลงทะเบียน ({registeredEvents.length})
             </Text>
           </TouchableOpacity>
 
@@ -130,7 +134,7 @@ export default function MyEventsScreen() {
           >
             <Ionicons
               name="heart-outline"
-              size={16}
+              size={15}
               color={activeTab === 'favorites' ? '#FFFFFF' : subTextColor}
             />
             <Text
@@ -140,8 +144,38 @@ export default function MyEventsScreen() {
                   ? styles.activeTabText
                   : { color: subTextColor },
               ]}
+              numberOfLines={1}
             >
               รายการโปรด ({favoriteEvents.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === 'hosting' && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab('hosting')}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeTab === 'hosting' }}
+            accessibilityLabel={`ฉันเป็นผู้จัด (${hostedEvents.length} รายการ)`}
+          >
+            <Ionicons
+              name="ribbon-outline"
+              size={15}
+              color={activeTab === 'hosting' ? '#FFFFFF' : subTextColor}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'hosting'
+                  ? styles.activeTabText
+                  : { color: subTextColor },
+              ]}
+              numberOfLines={1}
+            >
+              ผู้จัด ({hostedEvents.length})
             </Text>
           </TouchableOpacity>
         </View>
@@ -166,15 +200,15 @@ export default function MyEventsScreen() {
               <View
                 style={[styles.cardItemWrap, numColumns > 1 && styles.gridCol]}
               >
-              <EventCard
+                <EventCard
                   event={item.event}
                   isFavorite={favoritesSet.has(item.event.id)}
                   isRegistered={true}
+                  isOrganizer={isEventOrganizer(item.event, trainer)}
                   isDark={isDark}
                   onPress={() => router.push(`/events/${item.event.id}` as any)}
                   onToggleFavorite={() => toggleFavorite(item.event.id)}
                 />
-
               </View>
             )}
             contentContainerStyle={
@@ -194,7 +228,7 @@ export default function MyEventsScreen() {
               />
             }
           />
-        ) : (
+        ) : activeTab === 'favorites' ? (
           <FlatList
             key={`my-favorites-${numColumns}`}
             data={favoriteEvents}
@@ -206,6 +240,7 @@ export default function MyEventsScreen() {
                   event={item}
                   isFavorite={true}
                   isRegistered={activeRegistrationsSet.has(item.id)}
+                  isOrganizer={isEventOrganizer(item, trainer)}
                   isDark={isDark}
                   onPress={() => router.push(`/events/${item.id}` as any)}
                   onToggleFavorite={() => toggleFavorite(item.id)}
@@ -225,6 +260,42 @@ export default function MyEventsScreen() {
                 buttonText="สำรวจมีตอัปทั้งหมด"
                 iconName="heart-outline"
                 onAction={() => router.push('/(tabs)' as any)}
+                isDark={isDark}
+              />
+            }
+          />
+        ) : (
+          <FlatList
+            key={`my-hosting-${numColumns}`}
+            data={hostedEvents}
+            keyExtractor={(item: CampusEvent) => `host-${item.id}`}
+            numColumns={numColumns}
+            renderItem={({ item }: { item: CampusEvent }) => (
+              <View style={numColumns > 1 ? styles.gridCol : undefined}>
+                <EventCard
+                  event={item}
+                  isFavorite={favoritesSet.has(item.id)}
+                  isRegistered={activeRegistrationsSet.has(item.id)}
+                  isOrganizer={true}
+                  isDark={isDark}
+                  onPress={() => router.push(`/events/${item.id}` as any)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
+                />
+              </View>
+            )}
+            contentContainerStyle={
+              hostedEvents.length === 0
+                ? styles.emptyListContainer
+                : styles.listContent
+            }
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <EventEmptyState
+                title="คุณยังไม่ได้เป็นผู้จัดมีตอัป"
+                subtitle="สามารถสร้างมีตอัปใหม่เพื่อเป็นโฮสต์จัดกิจกรรม และระดมเพื่อนๆ เทรนเนอร์มาร่วมสนุกได้!"
+                buttonText="สร้างมีตอัปใหม่"
+                iconName="add-circle-outline"
+                onAction={() => router.push('/events/create' as any)}
                 isDark={isDark}
               />
             }
@@ -255,10 +326,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: -0.5,
     textAlign: 'center',
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '500',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -315,39 +382,6 @@ const styles = StyleSheet.create({
   gridCol: {
     flex: 1,
     marginHorizontal: 6,
-  },
-  regActionBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginTop: -8,
-    marginBottom: 14,
-  },
-  regInfo: {
-    flex: 1,
-  },
-  regLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    gap: 4,
-  },
-  cancelButtonText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#EF4444',
   },
   emptyListContainer: {
     flexGrow: 1,

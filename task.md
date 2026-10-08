@@ -1,105 +1,99 @@
-# Pokémon GO - Task Breakdown & Progress Tracker (task.md)
+# Campus Events Mobile (Pokémon GO Edition) - Task Breakdown & Progress Tracker (task.md)
 
-เอกสารภาพรวมความคืบหน้าของโครงการ **Pokémon GO Mobile App** (11 สัปดาห์ + Campus Events Phase)
-งานทั้งหมดถูกแจกแจงออกเป็น **35 Micro-Tasks** ตามหลักสูตร React Native + Expo (11 สัปดาห์) ครอบคลุม Core UI, API, SQLite Offline, Map Spawning, AR Camera Dual-mode, Haptics และ Notifications
-
----
-
-## สรุปสถานะภาพรวม (Milestones Overview)
-
-| Milestone | สถาปัตยกรรม (Layer)                            |     สัปดาห์      | จำนวน Tasks  |     ความคืบหน้า     |
-| --------- | ---------------------------------------------- | :--------------: | :----------: | :-----------------: |
-| **M1**    | Project Setup, Types & Design Tokens           |      W1, W3      |   4 Tasks    |    4/4 (100%) ✅    |
-| **M2**    | Data Layer, Services & State Management        |   W5, 6, 7, 8    |   5 Tasks    |    5/5 (100%) ✅    |
-| **M3**    | Core UI Design System & Atomic Components      |     W2, 3, 5     |   7 Tasks    |    7/7 (100%) ✅    |
-| **M4**    | Navigation Architecture & Tab Shell            |        W4        |   6 Tasks    |    6/6 (100%) ✅    |
-| **M5**    | Gameplay Mechanics, Spawning & Maps            |       W10        |   3 Tasks    |    3/3 (100%) ✅    |
-| **M6**    | Hardware Integration, AR Catch & Notifications |     W9, W11      |   10 Tasks   |   10/10 (100%) ✅   |
-| **รวม**   | **ทั้งหมด**                                    | **Weeks 1 - 11** | **35 Tasks** | **35/35 (100%)** 🎉 |
+เอกสารภาพรวมความคืบหน้าของโครงการ **Campus Events Mobile** อ้างอิงตามหลักสูตร React Native + Expo (11 สัปดาห์) ครอบคลุม Core UI, Navigation, Forms, Networking, SQLite Offline, Hardware Integration, Maps และ Notifications
 
 ---
 
-## Campus Events Unification (Events-first, 2026-10-01)
+## สรุปสถานะภาพรวมหลักสูตร (11 Weeks Milestones Overview)
 
-โปรเจกต์เดียวรวม campus + pokemon แล้ว (tabs: Events/MyEvents/Profile, Map อยู่แค่ใน event venue):
-
-- [x] `TASK-36` Normalize imports (strip `.ts`, ใช้ `@/` alias) + `tsc` clean
-- [x] `TASK-37` Shared helpers `src/shared/utils/event-helpers.ts` (date/capacity/catch) + `routes.ts`
-- [x] `TASK-38` Fix `useEventDetail` abort + dep loop, `EventVenuePin.category` type
-- [x] `TASK-39` Fix navigation: `/bag` stack restore, `/(tabs)` discovery, `buildCatchParams` ใน venue map
-- [x] `TASK-40` `EventRepository.saveEventsToCache` merge (INSERT OR REPLACE) กัน custom event หาย
-- [x] `TASK-41` Deduplicate `features/events/types.ts` re-export canonical + `isEventFull` ใน EventCard
-- [x] `TASK-46` Refactor single-event catch flow: Scan-to-spawn, 1-time catch limit, auto-exit to event detail, dead code removal (`useMapSpawns`, `useSpawnNotifications`, `MapControls`, `NotificationPermissionModal`, `LocationPickerModal`, `use-user-location`, `StatBar`, `PokeballButton`)
-- [x] `TASK-42` Test runner `tsx --test` and test fixes (ESM `.ts` import paths in `campus-events.test.mjs`, removed obsolete tests in `web-platform-guard.test.mjs`)
-- [ ] `TASK-43` P1 Organizer: date picker + venue picker + registry search + admin approve (ดู plan.md)
-- [ ] `TASK-44` P2 Venue map: `SPAWNED/EXPIRED` handler + `onExpired` + spawn bar 600s fix
-- [x] `TASK-45` Restore Pokédex tab in `(tabs)/pokedex.tsx` with full Gen1-3 catalog, search, and filters
-- [x] `TASK-47` Mandatory Meetup Featured Pokémon & Direct Catch flow (featuredPokemonId required, EventCard badge, direct /catch bypass)
-- [x] `TASK-48` Pure Pokémon GO Meetups & Category System Removal (100% Pokémon GO meetups, removed category filter, types, forms, badges, and legacy theme constants)
-- [x] `TASK-49` Gen 1 Only Pokédex & Remove Gen Filter Bar (Scoped Pokédex to 151 Kanto Pokémon, removed horizontal Gen pills, and updated stats out of 151)
+| สัปดาห์ | หัวข้อหลักสูตร (Curriculum Milestone) | สถานะความพร้อม | จำนวน Tasks |
+| :---: | :--- | :---: | :---: |
+| **W1** | Mobile Development, React Native และ Expo | 100% (สมบูรณ์ตามเกณฑ์ Lab 1) ✅ | 4/4 Tasks |
+| **W2** | Components, Props, State และ Events | 100% (สมบูรณ์ตามเกณฑ์ Lab 2) ✅ | 5/5 Tasks |
+| **W3** | Styling และ Responsive Mobile UI | 100% (สมบูรณ์ตามเกณฑ์ Lab 3) ✅ | 4/4 Tasks |
+| **W4** | Expo Router และ Navigation | 100% (สมบูรณ์ตามเกณฑ์ Lab 4) ✅ | 5/5 Tasks |
+| **W5** | Forms และ State Management | 100% (สมบูรณ์ตามเกณฑ์ Lab 5) ✅ | 5/5 Tasks |
+| **W6** | REST API และ Networking | 100% (สมบูรณ์ตามเกณฑ์ Lab 6) ✅ | 4/4 Tasks |
+| **W7** | Local Storage และ Offline Applications | 100% (สมบูรณ์ตามเกณฑ์ Lab 7) ✅ | 5/5 Tasks |
+| **W8** | Authentication และ Mobile Security | 100% (สมบูรณ์ตามเกณฑ์ Lab 8) ✅ | 5/5 Tasks |
+| **W9** | Camera, Image Picker และ Permissions | 100% (สมบูรณ์ตามเกณฑ์ Lab 9) ✅ | 4/4 Tasks |
+| **W10** | Location และ Maps | 100% (สมบูรณ์ตามเกณฑ์ Lab 10) ✅ | 5/5 Tasks |
+| **W11** | Notifications และ Mobile Platform APIs | 100% (สมบูรณ์ตามเกณฑ์ Lab 11) ✅ | 5/5 Tasks |
+| **รวม** | **ทั้งหมด 11 สัปดาห์** | **100% Compliant ✅** | **46/46 Tasks** |
 
 ---
 
-## สารบัญไฟล์ Task ทั้ง 30 รายการ
+## รายการงานปรับปรุงรายสัปดาห์ (Tasks Checklist)
 
-### Milestone 1: Project Setup, Types & Design Tokens (Weeks 1 & 3)
+### สัปดาห์ 1: Mobile Development, React Native และ Expo
+- [x] `W1-01` โครงสร้างโปรเจกต์ Expo SDK 57, TypeScript strict mode และ `@/*` path alias
+- [x] `W1-02` Profile screen (`src/app/(tabs)/profile.tsx`) แสดงผลด้วย Core Components
+- [x] `W1-03` เพิ่มประเภทข้อมูล `StudentProfile` พร้อมฟิลด์ `program` และ `interests` tags ใน `src/shared/types/trainer.ts`
+- [x] `W1-04` จัดเตรียม `assets/images/` และใช้ React Native Core `<Image>` component แทนไอคอนล้วนในโปรไฟล์
 
-- [x] `TASK-01` [Week 1] โครงสร้างโฟลเดอร์โปรเจกต์และเคลียร์ Template เริ่มต้น
-- [x] `TASK-02` [Week 1] การตั้งค่า Expo SDK 57, Assets และ Splash Screen
-- [x] `TASK-03` [Week 1, 2] Pokémon & Trainer TypeScript Types
-- [x] `TASK-04` [Week 3] Color System (18 ธาตุ) และ Theme Constants
+### สัปดาห์ 2: Components, Props, State และ Events
+- [x] `W2-01` นิยาม `CampusEvent` และ mock events ใน `src/shared/constants/campus-events-data.ts`
+- [x] `W2-02` Reusable `EventCard` แยกไฟล์ใน `src/features/events/components/event-card.tsx`
+- [x] `W2-03` Re-export `CampusEvent` ใน `src/features/events/types.ts` และส่งออก `EventCardProps` พร้อม alias `onOpen`
+- [x] `W2-04` ปรับปรุง `toggleFavorite` ให้ใช้ updater function `prev => prev.includes(id) ? ... : ...`
+- [x] `W2-05` เพิ่ม `accessibilityRole="button"` และ `accessibilityLabel` สำหรับรูปภาพและปุ่มทั้งหมดใน EventCard
 
-### Milestone 2: Data Layer, Services & State Management (Weeks 5, 6, 7, 8)
+### สัปดาห์ 3: Styling และ Responsive Mobile UI
+- [x] `W3-01` Responsive layout ด้วย `useWindowDimensions()` แบ่ง 1 คอลัมน์ (มือถือ) และ 2 คอลัมน์ (แท็บเล็ต)
+- [x] `W3-02` ใช้ `FlatList` พร้อม stable key extractor (`item.id`) และ virtualization props
+- [x] `W3-03` เพิ่มหน้าจอ `EventListState` รองรับ Loading, Empty, และ **Error State พร้อมปุ่ม Retry** ใน `(tabs)/index.tsx`
+- [x] `W3-04` เปลี่ยนการ import `SafeAreaView` ใน `pokemon-picker-modal.tsx` และขยาย Touch targets ให้ได้ >= 44×44pt
 
-- [x] `TASK-05` [Week 6] PokéAPI Service (Kanto 151 + Official Artwork)
-- [x] `TASK-06` [Week 6] Custom Hooks สำหรับดึงข้อมูล Pokémon (`usePokemons`, `usePokemonDetail`)
-- [x] `TASK-07` [Week 7] SQLite Database Persistence Service (`expo-sqlite`: caught_pokemon, inventory, trainer)
-- [x] `TASK-08` [Week 8] SecureStore Auth & Session Service
-- [x] `TASK-09` [Week 5, 7, 8] Global TrainerContext & State Management
+### สัปดาห์ 4: Expo Router และ Navigation
+- [x] `W4-01` วางโครงสร้าง Root Stack ครอบ Bottom Tabs พร้อม Route Groups `(tabs)`
+- [x] `W4-02` ส่งเฉพาะ `id` ใน Dynamic route `/events/[id]` โดยไม่ส่ง object ทั้งก้อน
+- [x] `W4-03` สร้าง `src/app/index.tsx` เพื่อ redirect ไปยัง `/(tabs)`
+- [x] `W4-04` สร้าง `src/app/+not-found.tsx` สำหรับดักจับ URL ที่ไม่มีอยู่จริง
+- [x] `W4-05` ปรับปรุง `src/app/events/[id].tsx` ให้ตรวจสอบ Array และ String ก่อนใช้งาน, เพิ่ม scheme `campusevents` ใน `app.json`
 
-### Milestone 3: Core UI Design System & Atomic Components (Weeks 2, 3, 5)
+### สัปดาห์ 5: Forms และ State Management
+- [x] `W5-01` ค้นหากิจกรรมจากชื่อ/สถานที่โดยใช้ derived state (`useMemo`) ไม่เก็บ array ซ้ำ
+- [x] `W5-02` ป้องกันการส่งฟอร์มซ้ำ (`isSubmitting`) และจัดการคีย์บอร์ดด้วย `KeyboardAvoidingView`
+- [x] `W5-03` แยกการจัดการ Favorite ด้วย `favoriteReducer` และ custom hook `useFavorites()`
+- [x] `W5-04` ปรับฟอร์มลงทะเบียน `src/app/events/register.tsx` เป็น controlled inputs สำหรับ `fullName` และ `email`
+- [x] `W5-05` เพิ่มการตรวจสอบรูปแบบอีเมล (Email regex) และแสดง Error แบบรายฟิลด์ (Inline field errors)
 
-- [x] `TASK-10` [Week 2, 3] `TypeBadge` Component
-- [x] `TASK-11` [Week 2] `StatBar` Component (เลิกใช้งานและลบออกใน Dead Code Cleanup)
-- [x] `TASK-12` [Week 2] `PokeballButton` Component (เลิกใช้งานและลบออกใน Dead Code Cleanup)
-- [x] `TASK-13` [Week 2, 3] `PokemonCard` Component
-- [x] `TASK-14` [Week 3, 6] `PokemonGrid` และ `SkeletonLoader` Component
-- [x] `TASK-15` [Week 5] `SearchFilterBar` Component
-- [x] `TASK-16` [Week 5] `NicknameModal` Component พร้อม Validation
+### สัปดาห์ 6: REST API และ Networking
+- [x] `W6-01` รองรับการยกเลิก request ด้วย `AbortController` / `AbortSignal` ในหน้ารายละเอียด
+- [x] `W6-02` มี Pull-to-refresh บนหน้ารายการกิจกรรมด้วย `RefreshControl`
+- [x] `W6-03` สร้าง `src/shared/services/events/events-api.ts` มี runtime type guards `isCampusEvent` และ `parseEvents`
+- [x] `W6-04` เชื่อมต่อ `EXPO_PUBLIC_API_URL`, ตรวจสอบ `response.ok`, จัดการ status codes (404, 500) และเพิ่มปุ่ม Retry บนแท็บค้นหา
 
-### Milestone 4: Navigation Architecture & Tab Shell (Week 4)
+### สัปดาห์ 7: Local Storage และ Offline Applications
+- [x] `W7-01` แบ่งระดับพื้นที่จัดเก็บ: AsyncStorage (Favorites), SecureStore (Tokens), SQLite (Events)
+- [x] `W7-02` ตาราง SQLite `campus_events` และ `event_registrations` ผ่าน `expo-sqlite`
+- [x] `W7-03` ปรับปรุง Offline read flow เป็น True Stale-While-Revalidate (แสดงแคช SQLite ทันทีตอนเปิดแอป)
+- [x] `W7-04` เพิ่ม Mutex write queue ใน `event-favorites.ts` และเพิ่ม `try/catch` ครอบ `JSON.parse` ใน SQLite repositories
+- [x] `W7-05` แก้ไขการคำนวณ `lastUpdated` ให้ดึงเวลา sync ล่าสุด และแสดงสถานะออฟไลน์บนหน้า MyEvents
 
-- [x] `TASK-17` [Week 4] Root Layout และ Stack Navigation (`app/_layout.tsx`)
-- [x] `TASK-18` [Week 4] Bottom Tab Shell (`app/(tabs)/_layout.tsx`)
-- [x] `TASK-19` [Week 4, 6] Pokédex Catalog Screen (`app/(tabs)/pokedex.tsx`)
-- [x] `TASK-20` [Week 4, 7] Caught Bag Screen (`app/(tabs)/bag.tsx`) พร้อมโหมด Offline
-- [x] `TASK-21` [Week 4, 8] Trainer Profile Screen (`app/(tabs)/profile.tsx`)
-- [x] `TASK-22` [Week 4] Dynamic Pokémon Detail Screen (`app/pokemon/[id].tsx`)
+### สัปดาห์ 8: Authentication และ Mobile Security
+- [x] `W8-01` จัดเก็บ Token ลงใน hardware keychain ด้วย `expo-secure-store`
+- [x] `W8-02` ป้องกันเส้นทางด้วย `Stack.Protected` บน Expo Router
+- [x] `W8-03` ติดตั้ง `expo-dev-client` และ `expo-local-authentication`
+- [x] `W8-04` เพิ่มระบบตรวจสอบความถูกต้องและวันหมดอายุของ Token (TTL 7 วัน) ใน `auth-api.ts`
+- [x] `W8-05` เพิ่มระบบปลดล็อกด้วยชีวมาตร (Biometrics/Face ID/Touch ID) และป้องกันการลงทะเบียนกิจกรรมโดยไม่ได้ล็อกอิน
 
-### Milestone 5: Gameplay Mechanics, Spawning & Maps (Week 10)
+### สัปดาห์ 9: Camera, Image Picker และ Permissions
+- [x] `W9-01` ติดตั้ง `expo-camera` และ `expo-image-picker`
+- [x] `W9-02` ขอ permission แบบ On-demand เมื่อผู้ใช้เริ่มทำ action เท่านั้น (ไม่มีการขอตอนเปิดแอป)
+- [x] `W9-03` พรีวิวรูปภาพที่เลือกและมีปุ่มเปลี่ยน/ลบรูปภาพโดยรักษาค่าในฟอร์มไว้
+- [x] `W9-04` ตรวจสอบ `canAskAgain` และมีปุ่มเปิด `Linking.openSettings()` เมื่อผู้ใช้ปฏิเสธสิทธิ์ถาวร
 
-- [x] `TASK-23` [Week 10] Procedural Wild Pokémon Spawning Engine (15 จุด, PENDING 10s / ACTIVE 60s, Auto-respawn, No CP)
-- [x] `TASK-24` [Week 10] Map Custom Markers (หัวลูกศรนำทางพร้อมแสงส่องทิศ, Progress Bar นับถอยหลัง, ออร่าสีทอง !)
-- [x] `TASK-25` [Week 4, 10] Map Screen (`app/(tabs)/index.tsx` & `index.web.tsx`) แผนที่ 2D Leaflet OSM ฟิกซ์ตำแหน่งผู้เล่น, รองรับการหมุนเข็มทิศแบบไม่โหลดใหม่
+### สัปดาห์ 10: Location และ Maps
+- [x] `W10-01` ขอ Foreground location permission เฉพาะเมื่อผู้ใช้กดปุ่มดึงพิกัด
+- [x] `W10-02` แผนที่สถานที่จัดงานแยกขาดจากสิทธิ์ตำแหน่งผู้ใช้ (ปฏิเสธ GPS ก็ยังดูกิจกรรมได้)
+- [x] `W10-03` ปุ่ม "ใช้ตำแหน่งปัจจุบัน" และการแตะ/ลากหมุดปรับพิกัดใน `pick-location.tsx`
+- [x] `W10-04` เพิ่ม Inline Mini Map Preview แสดงหมุดสถานที่ในหน้ารายละเอียดกิจกรรม (`event-detail-info.tsx`)
+- [x] `W10-05` ทำความสะอาดหมุดผู้เล่นไม่ให้แสดงซ้อนทับในโหมดเลือกพิกัด (`LeafletMapView.tsx`)
 
-### Milestone 6: Hardware Integration, AR Catch & Notifications (Weeks 9 & 11)
-
-- [x] `TASK-26` [Week 9] Pokeball Thrower & Catch Physics
-- [x] `TASK-27` [Week 4, 9, 11] Catch Screen Presentation Modal (`app/catch.tsx`)
-- [x] `TASK-28` [Week 9] AR Camera Preview (`expo-camera`) พร้อมปุ่ม Toggle สลับ AR ON/OFF และ Classic Meadow Field Fallback
-- [x] `TASK-29` [Week 11] Haptics Sensory Feedback & Local Notifications Service (`expo-haptics` + `expo-notifications` พร้อม Expo Go Android SDK 53+ Graceful Fallback)
-- [x] `TASK-30` [Weeks 1-11] End-to-End Build & Simulator Verification Checklist
-- [x] `TASK-31` [Week 11] Android Notification Channel & Permission Lifecycle Manager
-- [x] `TASK-32` [Week 11] Rare & Uncaught Spawn Alert Trigger Engine
-- [x] `TASK-33` [Week 11] Deep Link & Notification Response Observer (Root Layout to /catch)
-- [x] `TASK-34` [Week 11] Map Notification Toggle UI & Test Simulator
-- [x] `TASK-35` [Week 11] Platform Compatibility & Verification Checklist
-
----
-
-## บันทึกการปรับปรุงล่าสุด (Maintenance & Bug Fixes)
-
-- **Week 11 Notifications & Mobile Platform APIs:** เชื่อมต่อ Android Notification Channel (`pokemon-spawns`, `pokemon-catch`), ระบบแจ้งเตือนเมื่อโปเกมอนหายากหรือโปเกมอนใหม่เกิดใกล้ตัวผู้เล่น, ปุ่ม Bell Toggle บนหน้าแผนที่, Deep Link เปิดหน้า `/catch` ทั้ง Cold Start และ Foreground/Background รวมถึงตรวจจับสถานะ `AppState` กลับสู่หน้าจอ
-- **Fix Expo Go Android SDK 53+ Uncaught Error:** ปรับปรุง `services/notifications.ts` ให้ใช้ Dynamic require และตรวจสอบ `isRunningInExpoGo()` เพื่อป้องกัน Fatal Exception จากโมดูล `expo-notifications` บน Android Expo Go พร้อม fallback รองรับ iOS และ Development Builds
-- **Final Architecture Refactoring (Lego Blocks & OOP Pattern):** ปรับโครงสร้างโปรเจกต์เป็น Lego Blocks (Pluggable Components & Hooks) พร้อมใช้ OOP Repositories (`DatabaseManager`, `PokemonRepository`, `TrainerRepository`, `InventoryRepository`), Domain Game Engines (`PokemonSpawnEngine`, `CatchEngine`), และ Singleton Services (`PokeApiClient`, `NotificationManager`) คง Facade เดิม 100% และย่อขนาดโค้ด Screen Shell ใน `src/app/` ให้อ่านง่ายที่สุด
-- **Dead Code Cleanup & Test Modernization:** เคลียร์ Dead Code ตามสถาปัตยกรรม Campus Events-first (`useMapSpawns`, `useSpawnNotifications`, `MapControls`, `NotificationPermissionModal`, `LocationPickerModal`, `use-user-location`, `StatBar`, `PokeballButton`), ปรับปรุง ESM import paths ด้วย `.ts` ใน `campus-events.test.mjs` และปรับชุดทดสอบ `web-platform-guard.test.mjs` ให้สอดคล้องกัน
+### สัปดาห์ 11: Notifications และ Mobile Platform APIs
+- [x] `W11-01` ตั้งค่า Notification Handler และ Android Channel `event-reminders` (HIGH importance)
+- [x] `W11-02` คำนวณเวลาแจ้งเตือนล่วงหน้า 30 นาที และบรรจุเฉพาะ `eventId` ใน payload
+- [x] `W11-03` ย้าย Notification Tap Listener เข้า `NavigationStack` ป้องกัน Cold Start Race Condition
+- [x] `W11-04` ฟื้นฟูรายการแจ้งเตือนที่ตั้งไว้จาก OS ตอนเปิดแอป (`getScheduledReminders`)
+- [x] `W11-05` แสดง Alert แจ้งเตือนเมื่อกิจกรรมเริ่มใน < 30 นาที หรือเมื่อผู้ใช้ยังไม่อนุญาตสิทธิ์

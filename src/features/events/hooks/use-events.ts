@@ -1,9 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useEventContext } from '@/shared/context/event-context';
-import {
-  EventStatusFilter,
-  EventStats,
-} from '../types';
+import { EventStatusFilter } from '../types';
 import { CampusEvent } from '@/shared/types';
 
 export function useEvents() {
@@ -31,34 +28,20 @@ export function useEvents() {
 
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
 
-  // Overall statistics
-  const stats: EventStats = useMemo(() => {
-    const total = events.length;
-    const nowMs = Date.now();
-    const upcoming = events.filter(
-      (e) => new Date(e.startsAt).getTime() >= nowMs
-    ).length;
-    const registered = registeredEventIds.size;
-    const favCount = favorites.length;
-
-    return {
-      total,
-      upcoming,
-      registered,
-      favorites: favCount,
-    };
-  }, [events, registeredEventIds, favorites]);
+  const [nowMs] = useState(() => Date.now());
 
   // Filtered event list
   const filteredEvents: CampusEvent[] = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const nowMs = Date.now();
 
     return events.filter((event) => {
+      // Hide registered events from Meetups list (they live in 'ของฉัน' tab)
+      if (registeredEventIds.has(event.id)) {
+        return false;
+      }
+
       // 1. Status filter
-      if (statusFilter === 'registered') {
-        if (!registeredEventIds.has(event.id)) return false;
-      } else if (statusFilter === 'favorites') {
+      if (statusFilter === 'favorites') {
         if (!favoritesSet.has(event.id)) return false;
       } else if (statusFilter === 'upcoming') {
         if (new Date(event.startsAt).getTime() < nowMs) return false;
@@ -84,12 +67,11 @@ export function useEvents() {
     searchQuery,
     registeredEventIds,
     favoritesSet,
+    nowMs,
   ]);
 
   return {
     events: filteredEvents,
-    allEvents: events,
-    stats,
     isLoading,
     isOffline,
     lastUpdated,

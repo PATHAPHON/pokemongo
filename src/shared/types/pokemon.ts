@@ -38,13 +38,6 @@ export interface Pokemon {
   description?: string;
 }
 
-export interface PokemonListItem {
-  id: number;
-  name: string;
-  url: string;
-  artwork: string;
-}
-
 export type PokemonRarity = 'common' | 'rare' | 'ultra_rare';
 
 export interface CaughtPokemon {

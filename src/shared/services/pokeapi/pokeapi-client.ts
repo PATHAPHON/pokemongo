@@ -1,6 +1,5 @@
 import {
   Pokemon,
-  PokemonListItem,
   PokemonStat,
   PokemonStatName,
   PokemonTypeName,
@@ -10,40 +9,8 @@ import {
   getSpriteUrl,
   getKantoArtworkUrl,
   getKantoSpriteUrl,
-  getKantoPokemonById,
 } from '@/shared/constants/kanto-pokemon';
-import {
-  getPokemonMetaById,
-  getAllPokemonMeta,
-} from '@/shared/services/pokemon-registry';
-
-interface RawPokeApiListItem {
-  name: string;
-  url: string;
-}
-
-interface RawPokeApiListResponse {
-  count: number;
-  results: RawPokeApiListItem[];
-}
-
-function isPokeApiListResponse(
-  value: unknown
-): value is RawPokeApiListResponse {
-  if (typeof value !== 'object' || value === null) return false;
-  const obj = value as Record<string, unknown>;
-  return (
-    typeof obj.count === 'number' &&
-    Array.isArray(obj.results) &&
-    obj.results.every(
-      (item) =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof item.name === 'string' &&
-        typeof item.url === 'string'
-    )
-  );
-}
+import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 
 function isPokeApiDetailResponse(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
@@ -63,7 +30,6 @@ export class PokeApiClient {
   private static instance: PokeApiClient | null = null;
   private readonly baseUrl: string;
   private readonly defaultTimeoutMs: number;
-  private listCache: PokemonListItem[] | null = null;
   private readonly detailCache = new Map<string | number, Pokemon>();
 
   public constructor(
@@ -105,16 +71,6 @@ export class PokeApiClient {
       clearTimeout(id);
       signal?.removeEventListener('abort', onExternalAbort);
     }
-  }
-
-  private getKantoFallbackList(): PokemonListItem[] {
-    const list = getAllPokemonMeta();
-    return list.map((meta) => ({
-      id: meta.id,
-      name: meta.name,
-      url: `${this.baseUrl}/pokemon/${meta.id}/`,
-      artwork: getArtworkUrl(meta.id),
-    }));
   }
 
   private parsePokeApiStats(rawStats: any[]): PokemonStat[] {
@@ -166,68 +122,6 @@ export class PokeApiClient {
         throw err;
       }
       return undefined;
-    }
-  }
-
-  public async getPokemonList(
-    limit = 386,
-    offset = 0,
-    signal?: AbortSignal
-  ): Promise<PokemonListItem[]> {
-    if (this.listCache && limit === 386 && offset === 0) {
-      return this.listCache;
-    }
-
-    try {
-      const response = await this.fetchWithTimeout(
-        `${this.baseUrl}/pokemon?limit=${limit}&offset=${offset}`,
-        this.defaultTimeoutMs,
-        signal
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `PokéAPI HTTP error: ${response.status} (${response.statusText || 'Failed to fetch'})`
-        );
-      }
-
-      const data: unknown = await response.json();
-      if (!isPokeApiListResponse(data)) {
-        throw new Error('รูปแบบข้อมูลรายการโปเกมอนจาก API ไม่ถูกต้อง (Malformed JSON)');
-      }
-
-      const items: PokemonListItem[] = data.results.map(
-        (item: { name: string; url: string }, index: number) => {
-          const parts = item.url.split('/').filter(Boolean);
-          const id =
-            parseInt(parts[parts.length - 1], 10) || offset + index + 1;
-          return {
-            id,
-            name: item.name,
-            url: item.url,
-            artwork: getArtworkUrl(id),
-          };
-        }
-      );
-
-      if (limit === 386 && offset === 0) {
-        this.listCache = items;
-      }
-
-      return items;
-    } catch (error: any) {
-      if (error?.name === 'AbortError' || signal?.aborted) {
-        throw error;
-      }
-      console.warn(
-        '[PokéAPI] Failed to fetch live list, using offline fallback:',
-        error
-      );
-      const fallback = this.getKantoFallbackList().slice(offset, offset + limit);
-      if (limit === 386 && offset === 0) {
-        this.listCache = fallback;
-      }
-      return fallback;
     }
   }
 
@@ -295,7 +189,7 @@ export class PokeApiClient {
       const numId =
         typeof idOrName === 'number' ? idOrName : parseInt(idOrName, 10);
       const meta = !isNaN(numId)
-        ? getPokemonMetaById(numId) || getKantoPokemonById(numId)
+        ? getPokemonMetaById(numId)
         : undefined;
 
       const fallbackId = meta ? meta.id : !isNaN(numId) ? numId : 1;

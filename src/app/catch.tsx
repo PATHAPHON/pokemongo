@@ -58,48 +58,20 @@ export default function CatchScreen() {
     () => (eventId ? registrations.find((r) => r.eventId === eventId) : undefined),
     [eventId, registrations]
   );
-  const alreadyCaught = Boolean(registration?.hasCaught);
-
-  // Entry guard: if already caught, show alert and redirect back without entering encounter
-  useEffect(() => {
-    if (eventId && alreadyCaught) {
-      Alert.alert(
-        'คุณได้จับโปเกมอนแล้ว',
-        'คุณได้จับโปเกมอนประจำกิจกรรมนี้ไปแล้ว',
-        [
-          {
-            text: 'ตกลง',
-            onPress: () => {
-              router.replace({
-                pathname: '/events/[id]' as any,
-                params: { id: eventId },
-              });
-            },
-          },
-        ],
-        {
-          cancelable: false,
-          onDismiss: () => {
-            router.replace({
-              pathname: '/events/[id]' as any,
-              params: { id: eventId },
-            });
-          },
-        }
-      );
-    }
-  }, [eventId, alreadyCaught, router]);
+  const [isAlreadyCaught] = useState(() => Boolean(registration?.hasCaught));
 
   const [spriteLoadFailed, setSpriteLoadFailed] = useState<boolean>(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const hasExitedRef = useRef(false);
+  const attemptMarkedRef = useRef(false);
 
   // Consume catch attempt upon entering encounter (Single Catch Rule)
   useEffect(() => {
-    if (eventId && !alreadyCaught) {
+    if (eventId && !isAlreadyCaught && !attemptMarkedRef.current) {
+      attemptMarkedRef.current = true;
       markCatchAttempt(eventId, false);
     }
-  }, [eventId, alreadyCaught, markCatchAttempt]);
+  }, [eventId, isAlreadyCaught, markCatchAttempt]);
 
   // Request camera permission on mount if needed
   useEffect(() => {
@@ -157,6 +129,36 @@ export default function CatchScreen() {
     pokemonTypes,
   });
 
+  // Entry guard: if already caught prior to entering encounter, show alert and redirect back
+  useEffect(() => {
+    if (eventId && isAlreadyCaught) {
+      Alert.alert(
+        'คุณได้จับโปเกมอนแล้ว',
+        'คุณได้จับโปเกมอนประจำกิจกรรมนี้ไปแล้ว',
+        [
+          {
+            text: 'ตกลง',
+            onPress: () => {
+              router.replace({
+                pathname: '/events/[id]' as any,
+                params: { id: eventId },
+              });
+            },
+          },
+        ],
+        {
+          cancelable: false,
+          onDismiss: () => {
+            router.replace({
+              pathname: '/events/[id]' as any,
+              params: { id: eventId },
+            });
+          },
+        }
+      );
+    }
+  }, [eventId, isAlreadyCaught, router]);
+
   // Auto-dismiss Gotcha feedback after 1.8s and return directly to Event Detail
   useEffect(() => {
     if (gameState === 'CAUGHT') {
@@ -174,20 +176,6 @@ export default function CatchScreen() {
     ? getKantoArtworkUrl(pokemonId)
     : getKantoAnimatedSpriteUrl(pokemonId);
 
-  if (eventId && alreadyCaught) {
-    return (
-      <View style={styles.container}>
-        <Stack.Screen
-          options={{
-            presentation: 'fullScreenModal',
-            headerShown: false,
-            animation: 'fade',
-          }}
-        />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -198,61 +186,65 @@ export default function CatchScreen() {
         }}
       />
 
-      {/* 1. Camera Feed Layer (full screen without occlusion on Native) */}
-      {Platform.OS !== 'web' && cameraPermission?.granted && (
-        <CameraView style={StyleSheet.absoluteFill} facing="back" />
-      )}
+      {eventId && isAlreadyCaught ? null : (
+        <>
+          {/* 1. Camera Feed Layer (full screen without occlusion on Native) */}
+          {Platform.OS !== 'web' && cameraPermission?.granted && (
+            <CameraView style={StyleSheet.absoluteFill} facing="back" />
+          )}
 
-      {/* 2. Interactive UI Layer (Safe Area, transparent background) */}
-      <SafeAreaView
-        style={StyleSheet.absoluteFill}
-        edges={['top', 'bottom']}
-        pointerEvents="box-none"
-      >
-        <CatchHeader
-          pokemonName={pokemonName}
-          rarity={rarity}
-          onRunPress={returnToEvent}
-        />
-
-        {Platform.OS !== 'web' && !cameraPermission?.granted ? (
-          <CameraPermissionGate
-            pokemonId={pokemonId}
-            pokemonName={pokemonName}
-            canAskAgain={cameraPermission?.canAskAgain}
-            onRequestPermission={() => requestCameraPermission().catch(() => {})}
-            onRunPress={returnToEvent}
-          />
-        ) : (
-          <>
-            <WildPokemonStage
-              floatAnim={floatAnim}
-              pokemonOpacity={pokemonOpacity}
-              spriteUrl={spriteUrl}
-              fallbackArtworkUrl={getKantoArtworkUrl(pokemonId)}
-              onError={() => setSpriteLoadFailed(true)}
+          {/* 2. Interactive UI Layer (Safe Area, transparent background) */}
+          <SafeAreaView
+            style={StyleSheet.absoluteFill}
+            edges={['top', 'bottom']}
+            pointerEvents="box-none"
+          >
+            <CatchHeader
+              pokemonName={pokemonName}
+              rarity={rarity}
+              onRunPress={returnToEvent}
             />
 
-            <PokeballArena
-              isAiming={gameState === 'AIMING'}
-              panHandlers={panResponder.panHandlers}
-              ballX={ballX}
-              ballY={ballY}
-              ballScale={ballScale}
-              ballRotation={ballRotation}
-            />
-          </>
-        )}
-      </SafeAreaView>
+            {Platform.OS !== 'web' && !cameraPermission?.granted ? (
+              <CameraPermissionGate
+                pokemonId={pokemonId}
+                pokemonName={pokemonName}
+                canAskAgain={cameraPermission?.canAskAgain}
+                onRequestPermission={() => requestCameraPermission().catch(() => {})}
+                onRunPress={returnToEvent}
+              />
+            ) : (
+              <>
+                <WildPokemonStage
+                  floatAnim={floatAnim}
+                  pokemonOpacity={pokemonOpacity}
+                  spriteUrl={spriteUrl}
+                  fallbackArtworkUrl={getKantoArtworkUrl(pokemonId)}
+                  onError={() => setSpriteLoadFailed(true)}
+                />
 
-      {/* 3. Catch Success Overlay Modal */}
-      {gameState === 'CAUGHT' && (
-        <GotchaModal
-          pokemonId={pokemonId}
-          pokemonName={pokemonName}
-          rarity={rarity}
-          onDone={returnToEvent}
-        />
+                <PokeballArena
+                  isAiming={gameState === 'AIMING'}
+                  panHandlers={panResponder.panHandlers}
+                  ballX={ballX}
+                  ballY={ballY}
+                  ballScale={ballScale}
+                  ballRotation={ballRotation}
+                />
+              </>
+            )}
+          </SafeAreaView>
+
+          {/* 3. Catch Success Overlay Modal */}
+          {gameState === 'CAUGHT' && (
+            <GotchaModal
+              pokemonId={pokemonId}
+              pokemonName={pokemonName}
+              rarity={rarity}
+              onDone={returnToEvent}
+            />
+          )}
+        </>
       )}
     </View>
   );

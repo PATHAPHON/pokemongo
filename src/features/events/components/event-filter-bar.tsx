@@ -19,8 +19,6 @@ interface EventFilterBarProps {
 
 const STATUSES: { key: EventStatusFilter; label: string; icon: string }[] = [
   { key: 'all', label: 'ทั้งหมด', icon: 'apps-outline' },
-  { key: 'upcoming', label: 'เร็วๆ นี้', icon: 'time-outline' },
-  { key: 'registered', label: 'ลงทะเบียนแล้ว', icon: 'checkmark-circle-outline' },
   { key: 'favorites', label: 'รายการโปรด', icon: 'heart-outline' },
 ];
 

@@ -5,6 +5,7 @@ import {
   Image,
   StyleSheet,
   Alert,
+  Linking,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,10 +32,21 @@ export function EventImagePicker({
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permissionResult.granted) {
-        Alert.alert(
-          'ต้องการสิทธิ์เข้าถึงรูปภาพ',
-          'กรุณาอนุญาตการเข้าถึงรูปภาพในการตั้งค่าเพื่อเลือกรูปประกอบการลงทะเบียน'
-        );
+        if (!permissionResult.canAskAgain) {
+          Alert.alert(
+            'ต้องการสิทธิ์เข้าถึงรูปภาพ',
+            'กรุณาเปิดการอนุญาตเข้าถึงรูปภาพในการตั้งค่าเพื่อเลือกรูปประกอบการลงทะเบียน',
+            [
+              { text: 'ยกเลิก', style: 'cancel' },
+              { text: 'เปิดการตั้งค่า', onPress: () => Linking.openSettings() },
+            ]
+          );
+        } else {
+          Alert.alert(
+            'ต้องการสิทธิ์เข้าถึงรูปภาพ',
+            'กรุณาอนุญาตการเข้าถึงรูปภาพในการตั้งค่าเพื่อเลือกรูปประกอบการลงทะเบียน'
+          );
+        }
         return;
       }
 
@@ -60,10 +72,21 @@ export function EventImagePicker({
         await ImagePicker.requestCameraPermissionsAsync();
 
       if (!permissionResult.granted) {
-        Alert.alert(
-          'ต้องการสิทธิ์เข้าถึงกล้อง',
-          'กรุณาอนุญาตการเข้าถึงกล้องในการตั้งค่าเพื่อถ่ายรูปหลักฐาน'
-        );
+        if (!permissionResult.canAskAgain) {
+          Alert.alert(
+            'ต้องการสิทธิ์เข้าถึงกล้อง',
+            'กรุณาเปิดการอนุญาตเข้าถึงกล้องในการตั้งค่าเพื่อถ่ายรูปหลักฐาน',
+            [
+              { text: 'ยกเลิก', style: 'cancel' },
+              { text: 'เปิดการตั้งค่า', onPress: () => Linking.openSettings() },
+            ]
+          );
+        } else {
+          Alert.alert(
+            'ต้องการสิทธิ์เข้าถึงกล้อง',
+            'กรุณาอนุญาตการเข้าถึงกล้องในการตั้งค่าเพื่อถ่ายรูปหลักฐาน'
+          );
+        }
         return;
       }
 
@@ -84,7 +107,7 @@ export function EventImagePicker({
 
   const handleSelectOptions = () => {
     Alert.alert(
-      'แนบรูปภาพ / บัตรนักศึกษา',
+      'แนบรูปภาพประกอบ',
       'เลือกวิธีการแนบรูปภาพสำหรับกิจกรรม',
       [
         { text: 'ถ่ายรูปใหม่ด้วยกล้อง', onPress: takePhotoWithCamera },
@@ -97,7 +120,7 @@ export function EventImagePicker({
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: textColor }]}>
-        รูปภาพประกอบ / บัตรนักศึกษา (ไม่บังคับ)
+        รูปภาพประกอบ (ไม่บังคับ)
       </Text>
 
       {photoUri ? (
@@ -140,7 +163,7 @@ export function EventImagePicker({
             แตะเพื่อถ่ายรูปหรือเลือกจากเครื่อง
           </Text>
           <Text style={[styles.emptySubtitle, { color: subTextColor }]}>
-            รองรับ JPG, PNG • บัตรนักศึกษาหรือหลักฐานการสมัคร
+            รองรับ JPG, PNG • รูปภาพกิจกรรมหรือหลักฐานการสมัคร
           </Text>
         </TouchableOpacity>
       )}

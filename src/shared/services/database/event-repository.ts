@@ -4,6 +4,9 @@ import {
   EventRegistration,
   EventRegistrationStatus,
 } from '@/shared/types';
+import { findLatestCachedAt } from '@/shared/utils/event-helpers';
+
+export { findLatestCachedAt };
 
 export class EventRepository {
   private readonly dbManager: DatabaseManager;
@@ -47,7 +50,7 @@ export class EventRepository {
       isCustom: Boolean(r.is_custom),
     }));
 
-    const lastUpdated = rows[0]?.cached_at ?? null;
+    const lastUpdated = findLatestCachedAt(rows);
 
     return { events, lastUpdated };
   }
@@ -124,11 +127,16 @@ export class EventRepository {
     );
   }
 
-  public async getAllRegistrations(): Promise<EventRegistration[]> {
+  public async getAllRegistrations(userId?: string): Promise<EventRegistration[]> {
     const db = await this.dbManager.getDatabase();
-    const rows = await db.getAllAsync<any>(
-      'SELECT * FROM event_registrations ORDER BY registered_at DESC'
-    );
+    const rows = userId
+      ? await db.getAllAsync<any>(
+          'SELECT * FROM event_registrations WHERE user_id = ? ORDER BY registered_at DESC',
+          [userId]
+        )
+      : await db.getAllAsync<any>(
+          'SELECT * FROM event_registrations ORDER BY registered_at DESC'
+        );
 
     return rows.map((r) => ({
       id: r.id,

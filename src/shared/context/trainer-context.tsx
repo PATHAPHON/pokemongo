@@ -8,7 +8,6 @@ import {
 } from 'react';
 import {
   CaughtPokemon,
-  TrainerInventory,
   TrainerProfile,
 } from '@/shared/types';
 import {
@@ -16,21 +15,25 @@ import {
   getAllCaughtPokemon,
   insertCaughtPokemon,
   deleteCaughtPokemon,
-  getTrainerInventory,
   getStoredTrainerProfile,
   saveStoredTrainerProfile,
 } from '@/shared/services/database/index';
 import { initPokemonRegistry } from '@/shared/services/pokemon-registry';
 import {
+  restoreSession,
   restoreSessionState,
   loginWithCredentials,
   registerAccount,
   clearAuthSession,
+  loginWithBiometrics,
+  SessionState,
+  User,
 } from '@/shared/services/auth';
+import { cancelAllNotifications } from '@/shared/services/notifications';
 
 interface TrainerContextValue {
+  session: SessionState;
   trainer: TrainerProfile | null;
-  inventory: TrainerInventory;
   caughtPokemon: CaughtPokemon[];
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -47,29 +50,19 @@ interface TrainerContextValue {
     studentId?: string,
     faculty?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  loginBiometrics: (
+    targetUsername?: string
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
-
-const DEFAULT_INVENTORY_FALLBACK: TrainerInventory = {
-  pokeballs: 50,
-  greatballs: 20,
-  ultraballs: 10,
-  razzberries: 15,
-  nanabberries: 10,
-  pinapberries: 10,
-  potions: 20,
-  revives: 10,
-};
 
 const TrainerContext = createContext<TrainerContextValue | undefined>(
   undefined
 );
 
 export function TrainerProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<SessionState>({ status: 'loading' });
   const [trainer, setTrainer] = useState<TrainerProfile | null>(null);
-  const [inventory, setInventory] = useState<TrainerInventory>(
-    DEFAULT_INVENTORY_FALLBACK
-  );
   const [caughtPokemon, setCaughtPokemon] = useState<CaughtPokemon[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -84,27 +77,48 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
       await initPokemonRegistry();
 
       const session = await restoreSessionState();
+      setSession(session);
 
       if (session.status === 'authenticated') {
-        let currentProfile = await getStoredTrainerProfile();
-        let pokemonList = await getAllCaughtPokemon();
-        const inv = await getTrainerInventory();
+        let currentProfile = await getStoredTrainerProfile(session.trainerId);
+        if (!currentProfile && session.user) {
+          currentProfile = {
+            id: session.user.id,
+            name: session.user.name,
+            team: session.user.team || 'valor',
+            level: session.user.level || 1,
+            experience: 0,
+            nextLevelExperience: 1000,
+            stardust: 1000,
+            pokeCoins: 100,
+            starterPokemonId: 25,
+            studentId: session.user.studentId || '65010001',
+            faculty: session.user.faculty || 'Computer and Information Science',
+            program: session.user.program || session.user.faculty || 'Computer and Information Science',
+            interests: ['Campus events', 'Mobile UX', 'Pokémon GO'],
+            createdAt: new Date().toISOString(),
+          };
+          await saveStoredTrainerProfile(currentProfile);
+        }
+        let pokemonList = await getAllCaughtPokemon(session.trainerId);
 
         if (currentProfile) {
           setTrainer(currentProfile);
-          setInventory(inv);
           setCaughtPokemon(pokemonList);
           setIsAuthenticated(true);
         } else {
           // If token exists but no profile, clear stale session
           await clearAuthSession();
+          setSession({ status: 'anonymous' });
           setIsAuthenticated(false);
         }
       } else {
+        setTrainer(null);
         setIsAuthenticated(false);
       }
     } catch (error) {
       console.error('[TrainerContext] Failed to initialize state:', error);
+      setSession({ status: 'anonymous' });
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
@@ -116,18 +130,81 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
   }, [loadData]);
 
   /**
+   * Directly synchronize trainer profile upon successful auth without keychain round-trip delay
+   */
+  const applyAuthenticatedUser = useCallback(
+    async (userId: string, authUser?: User, token?: string) => {
+      try {
+        setIsLoading(true);
+        let currentProfile = await getStoredTrainerProfile(userId);
+        if (!currentProfile && authUser) {
+          currentProfile = {
+            id: authUser.id,
+            name: authUser.name,
+            team: authUser.team || 'valor',
+            level: authUser.level || 1,
+            experience: 0,
+            nextLevelExperience: 1000,
+            stardust: 1000,
+            pokeCoins: 100,
+            starterPokemonId: 25,
+            studentId: authUser.studentId || '65010001',
+            faculty: authUser.faculty || 'Computer and Information Science',
+            program: authUser.program || authUser.faculty || 'Computer and Information Science',
+            interests: ['Campus events', 'Mobile UX', 'Pokémon GO'],
+            createdAt: new Date().toISOString(),
+          };
+          await saveStoredTrainerProfile(currentProfile);
+        }
+        const pokemonList = await getAllCaughtPokemon(userId);
+
+        if (currentProfile) {
+          setTrainer(currentProfile);
+          setCaughtPokemon(pokemonList);
+          setIsAuthenticated(true);
+          setSession({
+            status: 'authenticated',
+            accessToken: token || '',
+            token: token || '',
+            trainerId: currentProfile.id,
+            user: {
+              id: currentProfile.id,
+              username: currentProfile.name,
+              name: currentProfile.name,
+              studentId: currentProfile.studentId,
+              faculty: currentProfile.faculty,
+              program: currentProfile.program,
+              team: currentProfile.team,
+              level: currentProfile.level,
+              avatarUrl: currentProfile.avatarUrl,
+            },
+          });
+        } else {
+          await loadData();
+        }
+      } catch (err) {
+        console.error('[TrainerContext] Failed to apply user profile:', err);
+        await loadData();
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loadData]
+  );
+
+  /**
    * Login handler
    */
   const login = useCallback(
     async (username: string, password: string) => {
       const res = await loginWithCredentials(username, password);
       if (res.success && res.user) {
-        await loadData();
+        await applyAuthenticatedUser(res.user.id, res.user, res.token);
         return { success: true };
       }
       return { success: false, error: res.error || 'เข้าสู่ระบบไม่สำเร็จ' };
     },
-    [loadData]
+    [applyAuthenticatedUser]
   );
 
   /**
@@ -147,22 +224,52 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
         faculty
       );
       if (res.success && res.user) {
-        await loadData();
+        await applyAuthenticatedUser(res.user.id, res.user, res.token);
         return { success: true };
       }
       return { success: false, error: res.error || 'ลงทะเบียนไม่สำเร็จ' };
     },
-    [loadData]
+    [applyAuthenticatedUser]
+  );
+
+  /**
+   * Biometric login handler
+   */
+  const loginBiometrics = useCallback(
+    async (targetUsername?: string) => {
+      const res = await loginWithBiometrics(targetUsername);
+      if (res.success && res.user) {
+        await applyAuthenticatedUser(res.user.id, res.user, res.token);
+        return { success: true };
+      }
+      return {
+        success: false,
+        error: res.error || 'เข้าสู่ระบบด้วยชีวมิติไม่สำเร็จ',
+      };
+    },
+    [applyAuthenticatedUser]
   );
 
   /**
    * Logout handler
    */
   const logout = useCallback(async () => {
+    // 1. Immediately clear authentication session and local trainer state
     await clearAuthSession();
+    setSession({ status: 'anonymous' });
     setTrainer(null);
     setCaughtPokemon([]);
     setIsAuthenticated(false);
+
+    // 2. Cancel OS notifications with timeout protection so native calls never hang logout
+    try {
+      await Promise.race([
+        cancelAllNotifications(),
+        new Promise((resolve) => setTimeout(resolve, 1500)),
+      ]);
+    } catch (err) {
+      console.warn('[TrainerContext] Failed to cancel notifications on logout:', err);
+    }
   }, []);
 
   /**
@@ -170,10 +277,13 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
    */
   const catchPokemon = useCallback(
     async (pokemon: CaughtPokemon): Promise<void> => {
-      await insertCaughtPokemon(pokemon);
+      const activeUserId =
+        trainer?.id ||
+        (session.status === 'authenticated' ? session.trainerId : undefined);
+      await insertCaughtPokemon(pokemon, activeUserId);
       setCaughtPokemon((prev) => [pokemon, ...prev]);
     },
-    []
+    [trainer?.id, session]
   );
 
   /**
@@ -207,8 +317,8 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
   );
 
   const value: TrainerContextValue = {
+    session,
     trainer,
-    inventory,
     caughtPokemon,
     isLoading,
     isAuthenticated,
@@ -217,6 +327,7 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
     updateTrainer,
     login,
     register,
+    loginBiometrics,
     logout,
   };
 
@@ -231,4 +342,18 @@ export function useTrainer(): TrainerContextValue {
     throw new Error('useTrainer must be used within a TrainerProvider');
   }
   return context;
+}
+
+export function useSession() {
+  const context = useTrainer();
+  return {
+    session: context.session,
+    isAuthenticated: context.isAuthenticated,
+    isLoading: context.isLoading,
+    user: context.session.status === 'authenticated' ? context.session.user : null,
+    login: context.login,
+    register: context.register,
+    logout: context.logout,
+    loginBiometrics: context.loginBiometrics,
+  };
 }

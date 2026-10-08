@@ -11,6 +11,8 @@ import {
   sendDelayedTestNotification,
 } from '@/shared/services/notifications/index';
 
+const { getCameraPermissionsAsync, requestCameraPermissionsAsync } = Camera;
+
 export interface PermissionDetail {
   granted: boolean;
   status: string;
@@ -28,7 +30,6 @@ interface AppPermissionsState {
   testNotification: () => Promise<boolean>;
   testDelayNotification: (delaySeconds?: number) => Promise<boolean>;
   openAppSettings: () => Promise<void>;
-  refreshAll: () => Promise<void>;
   resetAndRecheckPermissions: () => Promise<void>;
 }
 
@@ -57,9 +58,7 @@ export function useAppPermissions(): AppPermissionsState {
           status: loc.status,
           canAskAgain: loc.canAskAgain,
         });
-      } catch {
-        setLocation((prev) => ({ ...prev }));
-      }
+      } catch {}
 
       // 2. Notifications
       try {
@@ -69,23 +68,17 @@ export function useAppPermissions(): AppPermissionsState {
           status: notif.status,
           canAskAgain: notif.canAskAgain,
         });
-      } catch {
-        setNotifications((prev) => ({ ...prev }));
-      }
+      } catch {}
 
       // 3. Camera
       try {
-        if (Camera && typeof Camera.getCameraPermissionsAsync === 'function') {
-          const cam = await Camera.getCameraPermissionsAsync();
-          setCamera({
-            granted: cam.granted,
-            status: cam.status,
-            canAskAgain: cam.canAskAgain,
-          });
-        }
-      } catch {
-        setCamera((prev) => ({ ...prev }));
-      }
+        const cam = await getCameraPermissionsAsync();
+        setCamera({
+          granted: cam.granted,
+          status: cam.status,
+          canAskAgain: cam.canAskAgain,
+        });
+      } catch {}
     } finally {
       setIsLoading(false);
     }
@@ -215,19 +208,7 @@ export function useAppPermissions(): AppPermissionsState {
 
   const requestCamera = useCallback(async (): Promise<boolean> => {
     try {
-      if (
-        !Camera ||
-        typeof Camera.getCameraPermissionsAsync !== 'function' ||
-        typeof Camera.requestCameraPermissionsAsync !== 'function'
-      ) {
-        promptOpenSettings(
-          'ต้องการสิทธิ์การเข้าถึงกล้อง (Camera)',
-          'กรุณาเปิดสิทธิ์กล้องในการตั้งค่าระบบของอุปกรณ์'
-        );
-        return false;
-      }
-
-      const current = await Camera.getCameraPermissionsAsync();
+      const current = await getCameraPermissionsAsync();
       if (current.granted) {
         setCamera({
           granted: true,
@@ -245,7 +226,7 @@ export function useAppPermissions(): AppPermissionsState {
         return false;
       }
 
-      const res = await Camera.requestCameraPermissionsAsync();
+      const res = await requestCameraPermissionsAsync();
       const detail: PermissionDetail = {
         granted: res.granted,
         status: res.status,
@@ -337,7 +318,6 @@ export function useAppPermissions(): AppPermissionsState {
     testNotification,
     testDelayNotification,
     openAppSettings,
-    refreshAll,
     resetAndRecheckPermissions,
   };
 }

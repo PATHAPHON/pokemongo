@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CampusEvent, EventRegistration } from '@/shared/types';
@@ -11,6 +12,7 @@ import {
   formatEventDateThai,
   formatEventTimeThai,
 } from '@/shared/utils/event-helpers';
+import { LeafletMapView, EventVenuePin } from '@/features/map';
 
 interface EventDetailInfoProps {
   event: CampusEvent;
@@ -50,6 +52,29 @@ export function EventDetailInfo({
   const pokemonMeta = event.featuredPokemonId
     ? getPokemonMetaById(event.featuredPokemonId)
     : undefined;
+
+  const venueLocation = useMemo(
+    () => ({
+      latitude: event.location.latitude,
+      longitude: event.location.longitude,
+    }),
+    [event.location.latitude, event.location.longitude]
+  );
+
+  const venuePins: EventVenuePin[] = useMemo(
+    () => [
+      {
+        id: event.id,
+        title: event.title,
+        categoryColor: '#8B5CF6',
+        latitude: event.location.latitude,
+        longitude: event.location.longitude,
+        venueName: event.location.name,
+        featuredPokemonId: event.featuredPokemonId,
+      },
+    ],
+    [event.id, event.title, event.location, event.featuredPokemonId]
+  );
 
   return (
     <View style={styles.container}>
@@ -111,6 +136,32 @@ export function EventDetailInfo({
               </TouchableOpacity>
             ) : null}
           </View>
+        </View>
+
+        {/* Inline Mini Leaflet Venue Map Preview */}
+        <View style={[styles.miniMapContainer, { borderColor }]}>
+          <LeafletMapView
+            location={venueLocation}
+            wildList={[]}
+            eventPins={venuePins}
+          />
+          {onViewOnMap ? (
+            <TouchableOpacity
+              style={styles.miniMapBadge}
+              onPress={onViewOnMap}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="แตะเพื่อเปิดแผนที่ขนาดใหญ่"
+            >
+              <Ionicons name="map-outline" size={13} color="#FFFFFF" />
+              <Text style={styles.miniMapBadgeText}>แตะเพื่อเปิดแผนที่ขนาดใหญ่</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.miniMapBadge}>
+              <Ionicons name="map-outline" size={13} color="#FFFFFF" />
+              <Text style={styles.miniMapBadgeText}>แตะเพื่อเปิดแผนที่ขนาดใหญ่</Text>
+            </View>
+          )}
         </View>
 
         <View style={[styles.divider, { backgroundColor: borderColor }]} />
@@ -219,7 +270,7 @@ export function EventDetailInfo({
               <Text
                 style={[styles.featuredDescription, { color: subTextColor }]}
               >
-                ไปยังสถานที่จัดงานเพื่อจับโปเกมอนพิเศษประจำงานผ่านแผนที่จัดงาน!
+                ลงทะเบียนเข้าร่วมกิจกรรมเพื่อรับสิทธิ์จับโปเกมอนพิเศษประจำงาน!
               </Text>
               {registration?.hasCaught ? (
                 <View
@@ -240,43 +291,20 @@ export function EventDetailInfo({
                     จับสำเร็จแล้ว (1 ครั้ง)
                   </Text>
                 </View>
-              ) : (onCatchDirect || onViewOnMap) && registration != null && registration.status !== 'cancelled' ? (
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-                  {onCatchDirect ? (
-                    <TouchableOpacity
-                      style={[styles.catchEventButton, { flex: 1 }]}
-                      onPress={onCatchDirect}
-                      activeOpacity={0.85}
-                      accessibilityRole="button"
-                      accessibilityLabel="จับโปเกมอนประจำงานทันที"
-                    >
-                      <Ionicons name="sparkles" size={16} color="#FFFFFF" />
-                      <Text style={styles.catchEventButtonText}>
-                        จับ {capitalizePokemonName(pokemonMeta?.name || 'Pokemon')} ทันที ⚡
-                      </Text>
-                    </TouchableOpacity>
-                  ) : null}
-                  {onViewOnMap ? (
-                    <TouchableOpacity
-                      style={[
-                        styles.catchEventButton,
-                        {
-                          backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                          paddingHorizontal: 12,
-                        },
-                      ]}
-                      onPress={onViewOnMap}
-                      activeOpacity={0.85}
-                      accessibilityRole="button"
-                      accessibilityLabel="ดูแผนที่จัดงาน"
-                    >
-                      <Ionicons
-                        name="map-outline"
-                        size={16}
-                        color={isDark ? '#F3F4F6' : '#374151'}
-                      />
-                    </TouchableOpacity>
-                  ) : null}
+              ) : onCatchDirect && registration != null && registration.status !== 'cancelled' ? (
+                <View style={{ marginTop: 8 }}>
+                  <TouchableOpacity
+                    style={styles.catchEventButton}
+                    onPress={onCatchDirect}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel="จับโปเกมอนประจำงานทันที"
+                  >
+                    <Ionicons name="sparkles" size={16} color="#FFFFFF" />
+                    <Text style={styles.catchEventButtonText}>
+                      จับ {capitalizePokemonName(pokemonMeta?.name || 'Pokemon')} ทันที ⚡
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               ) : null}
             </View>
@@ -294,49 +322,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 24,
     gap: 16,
-  },
-  statusBanner: {
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    borderRadius: 14,
-    padding: 14,
-    gap: 4,
-  },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  statusTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#065F46',
-  },
-  statusDetail: {
-    fontSize: 12,
-    color: '#047857',
-    fontWeight: '500',
-  },
-  statusNotes: {
-    fontSize: 12,
-    color: '#065F46',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  ticketPhotoWrap: {
-    marginTop: 8,
-  },
-  ticketPhotoLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#047857',
-    marginBottom: 4,
-  },
-  ticketPhoto: {
-    width: '100%',
-    height: 120,
-    borderRadius: 8,
   },
   unifiedCard: {
     borderRadius: 20,
@@ -417,22 +402,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  descSection: {
-    padding: 18,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 8,
-  },
-
-  descHeading: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  descText: {
-    fontSize: 14,
-    lineHeight: 22,
-    fontWeight: '400',
-  },
   organizerBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -448,17 +417,6 @@ const styles = StyleSheet.create({
     color: '#6D28D9',
     fontSize: 13,
     fontWeight: '800',
-  },
-  mapLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 6,
-  },
-  mapLinkText: {
-    color: '#3B82F6',
-    fontSize: 12,
-    fontWeight: '700',
   },
   featuredCard: {
     borderRadius: 16,
@@ -544,5 +502,33 @@ const styles = StyleSheet.create({
   testLoopSub: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  miniMapContainer: {
+    height: 140,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 1,
+    backgroundColor: '#E5E3DF',
+  },
+  miniMapBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(17, 24, 28, 0.82)',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  miniMapBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

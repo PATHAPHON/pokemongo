@@ -1,7 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import {
-  AppState,
-  AppStateStatus,
   View,
   ActivityIndicator,
   Platform,
@@ -18,7 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
-import { TrainerProvider, useTrainer } from '@/shared/context/trainer-context';
+import { TrainerProvider, useTrainer, useSession } from '@/shared/context/trainer-context';
 import { EventProvider } from '@/shared/context/event-context';
 
 import {
@@ -28,18 +26,39 @@ import {
 } from '@/shared/services/notifications/index';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: 'index',
 };
 
 // Expected in Expo Go: push disabled, local notifications still work.
 // Silence the library's informational notes, keep real errors visible.
 LogBox.ignoreLogs([
   '`expo-notifications` functionality is not fully supported in Expo Go',
+  'expo-notifications functionality is not fully supported in Expo Go',
   'Push notifications are disabled in Expo Go',
 ]);
 
 function NavigationStack() {
-  const { isAuthenticated, isLoading } = useTrainer();
+  const { session } = useSession();
+  const isLoading = session.status === 'loading';
+  const isAuthenticated = session.status === 'authenticated';
+
+  useEffect(() => {
+    if (Platform.OS === 'web' || isLoading || !isAuthenticated) return;
+
+    // Observe notification taps once session is restored and authenticated
+    const unsubscribeNotifications = registerNotificationTapListener(
+      (eventId) => {
+        router.push({
+          pathname: '/events/[id]' as any,
+          params: { id: eventId },
+        });
+      }
+    );
+
+    return () => {
+      unsubscribeNotifications();
+    };
+  }, [isLoading, isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -58,6 +77,8 @@ function NavigationStack() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen
           name="login"
@@ -135,13 +156,20 @@ function NavigationStack() {
           }}
         />
       </Stack.Protected>
+
+      <Stack.Screen
+        name="+not-found"
+        options={{
+          headerShown: false,
+          title: 'Oops!',
+        }}
+      />
     </Stack>
   );
 }
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const appState = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -149,32 +177,6 @@ export default function RootLayout() {
     // 0. Initialize notification channel & handler
     configureNotificationHandler();
     setupNotificationChannels().catch(() => {});
-
-    // 1. Observe notification taps (both Cold Start and Foreground/Background)
-    // Event-only: validate eventId then open /events/[id].
-    const unsubscribeNotifications = registerNotificationTapListener(
-      (eventId) => {
-        router.push({
-          pathname: '/events/[id]' as any,
-          params: { id: eventId },
-        });
-      }
-    );
-
-    // 2. Observe AppState transitions (e.g. returning from System Settings).
-    // NOTE: do NOT cancel scheduled notifications here — that would wipe
-    // the 30-min event reminder and the 10s test loop.
-    const subscriptionAppState = AppState.addEventListener(
-      'change',
-      (nextAppState) => {
-        appState.current = nextAppState;
-      }
-    );
-
-    return () => {
-      unsubscribeNotifications();
-      subscriptionAppState.remove();
-    };
   }, []);
 
   return (
