@@ -33,17 +33,16 @@ function formatEventTimeRange(startIso: string, endIso?: string): string {
 export function EventDetailInfo({
   event,
   registration,
-  isDark = false,
   onViewOnMap,
   onCatchDirect,
   isOrganizer = false,
   hasTestLoop = false,
   onToggleTestLoop,
 }: EventDetailInfoProps) {
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
+  const cardBg = '#FFFFFF';
+  const borderColor = '#E5E7EB';
 
   const capacity = event.capacity ?? 50;
   const registered = event.registeredCount;
@@ -66,7 +65,7 @@ export function EventDetailInfo({
       {
         id: event.id,
         title: event.title,
-        categoryColor: '#8B5CF6',
+        categoryColor: '#EE1515',
         latitude: event.location.latitude,
         longitude: event.location.longitude,
         venueName: event.location.name,
@@ -81,7 +80,7 @@ export function EventDetailInfo({
       {/* Organizer Banner */}
       {isOrganizer && (
         <View style={styles.organizerBanner}>
-          <Ionicons name="ribbon" size={20} color="#8B5CF6" />
+          <Ionicons name="ribbon" size={20} color="#B45309" />
           <Text style={styles.organizerText}>
             ⭐ คุณเป็นผู้จัดมีตอัปนี้ (Meetup Host)
           </Text>
@@ -96,8 +95,8 @@ export function EventDetailInfo({
 
         {/* Date & Time Row */}
         <View style={styles.unifiedRow}>
-          <View style={[styles.unifiedIconWrap, { backgroundColor: '#F3E8FF' }]}>
-            <Ionicons name="calendar-outline" size={20} color="#8B5CF6" />
+          <View style={[styles.unifiedIconWrap, { backgroundColor: '#FEE2E2' }]}>
+            <Ionicons name="calendar-outline" size={20} color="#EE1515" />
           </View>
           <View style={styles.unifiedContent}>
             <Text style={[styles.unifiedLabel, { color: subTextColor }]}>วันและเวลา</Text>
@@ -131,7 +130,7 @@ export function EventDetailInfo({
                 onPress={onViewOnMap}
                 activeOpacity={0.7}
               >
-                <Ionicons name="map-outline" size={13} color="#3B82F6" />
+                <Ionicons name="map-outline" size={13} color="#EE1515" />
                 <Text style={styles.mapChipText}>เปิดแผนที่ & สำรวจสถานที่</Text>
               </TouchableOpacity>
             ) : null}
@@ -207,7 +206,7 @@ export function EventDetailInfo({
           style={[
             styles.testLoopCard,
             {
-              backgroundColor: isDark ? '#1E1E1E' : '#FFFBEB',
+              backgroundColor: '#FFFBEB',
               borderColor: hasTestLoop ? '#F59E0B' : borderColor,
             },
           ]}
@@ -239,8 +238,8 @@ export function EventDetailInfo({
           style={[
             styles.featuredCard,
             {
-              backgroundColor: isDark ? '#261F35' : '#F5F3FF',
-              borderColor: '#8B5CF6',
+              backgroundColor: '#FFFDF0',
+              borderColor: '#FFCB05',
             },
           ]}
         >
@@ -398,7 +397,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   mapChipText: {
-    color: '#3B82F6',
+    color: '#EE1515',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -406,15 +405,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#FFFBEB',
     borderWidth: 1,
-    borderColor: '#C4B5FD',
+    borderColor: '#FDE68A',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
   },
   organizerText: {
-    color: '#6D28D9',
+    color: '#B45309',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -430,7 +429,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   featuredBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -441,7 +440,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   featuredRarityText: {
-    color: '#8B5CF6',
+    color: '#B45309',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -520,7 +519,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(17, 24, 28, 0.82)',
+    backgroundColor: '#EE1515',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 8,

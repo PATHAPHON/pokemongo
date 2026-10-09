@@ -35,17 +35,16 @@ export function PokemonPickerModal({
   onSelect,
   selectedId,
   caughtPokemonIds,
-  isDark = false,
 }: PokemonPickerModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
 
-  const bgColor = isDark ? '#121212' : '#F4F6F8';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
-  const inputBg = isDark ? '#262626' : '#F3F4F6';
+  const bgColor = '#F8FAFC';
+  const cardBg = '#FFFFFF';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
+  const borderColor = '#E5E7EB';
+  const inputBg = '#F3F4F6';
 
   const gen1List = useMemo(() => {
     return DEFAULT_POKEMON_REGISTRY_LIST.filter(

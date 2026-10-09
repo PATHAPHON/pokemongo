@@ -20,7 +20,6 @@ import {
   RarityFilterType,
   usePokemonActions,
 } from '@/features/pokemon';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import {
   getPokemonRarity,
   getRarityLabel,
@@ -60,11 +59,10 @@ function PokemonEmptyState({
 
 export default function BagScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const isDark = false;
+  const screenBg = '#F8FAFC';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
 
   const { width } = useWindowDimensions();
   const numColumns = width >= 720 ? 4 : 2;
@@ -142,7 +140,7 @@ export default function BagScreen() {
         <View style={styles.flex1}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#0A7EA4" />
+              <ActivityIndicator size="large" color="#EE1515" />
               <Text style={styles.loadingText}>Loading caught Pokémon...</Text>
             </View>
           ) : (
@@ -278,7 +276,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   clearFilterButton: {
-    backgroundColor: '#0A7EA4',
+    backgroundColor: '#EE1515',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -311,7 +309,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0A7EA4',
+    backgroundColor: '#EE1515',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,

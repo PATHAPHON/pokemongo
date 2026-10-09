@@ -1,26 +1,53 @@
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TrainerProfile } from '@/shared/types';
 
 interface TrainerHeaderCardProps {
   trainer: TrainerProfile | null;
-  isDark: boolean;
+  isDark?: boolean;
+  onEdit?: () => void;
 }
 
 const DEFAULT_AVATAR = require('../../../../assets/images/avatar.png');
 
-export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+/**
+ * Diagonal hatch pattern component for progress bar unfilled state
+ */
+function DiagonalStripesPattern({ isDark: _isDark }: { isDark?: boolean }) {
+  const stripeColor = 'rgba(238, 21, 21, 0.15)';
+  const bgColor = '#FEF2F2';
 
-  const level = trainer?.level ?? 1;
-  const program = trainer?.program || trainer?.faculty || 'Computer and Information Science';
-  const studentId = trainer?.studentId || '65010001';
-  const interests = trainer?.interests && trainer.interests.length > 0
-    ? trainer.interests
-    : ['Campus events', 'Mobile UX', 'Pokémon GO'];
+  return (
+    <View style={[styles.stripesContainer, { backgroundColor: bgColor }]}>
+      {Array.from({ length: 28 }).map((_, index) => (
+        <View
+          key={index}
+          style={[
+            styles.stripeLine,
+            {
+              backgroundColor: stripeColor,
+              left: index * 7 - 10,
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+export function TrainerHeaderCard({ trainer, onEdit }: TrainerHeaderCardProps) {
+  const cardBg = '#FFFFFF';
+  const borderColor = '#FEE2E2';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
+
+  const name = trainer?.name || 'Alex Morgan';
+  const program = trainer?.program || trainer?.faculty || 'Product Designer';
+  const email = `${name.toLowerCase().replace(/\s+/g, '.')}@email.com`;
+  const location = 'San Francisco, CA';
+
+  // Calculate or default progress percentage matching mockup's 85%
+  const progressPercent = 85;
 
   return (
     <View
@@ -29,20 +56,19 @@ export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
         {
           backgroundColor: cardBg,
           borderColor,
-          shadowOpacity: isDark ? 0.25 : 0.06,
+          shadowOpacity: 0.05,
         },
       ]}
     >
+      {/* Top Profile Section */}
       <View style={styles.topRow}>
-        <View
-          style={[
-            styles.avatarContainer,
-            {
-              backgroundColor: isDark
-                ? 'rgba(10, 126, 164, 0.25)'
-                : 'rgba(10, 126, 164, 0.12)',
-            },
-          ]}
+        {/* Squircle Avatar */}
+        <TouchableOpacity
+          style={[styles.avatarWrapper, { backgroundColor: '#FEF2F2' }]}
+          onPress={onEdit}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="แก้ไขรูปโปรไฟล์"
         >
           <Image
             source={trainer?.avatarUrl ? { uri: trainer.avatarUrl } : DEFAULT_AVATAR}
@@ -50,41 +76,75 @@ export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
             resizeMode="cover"
             accessible={true}
             accessibilityRole="image"
-            accessibilityLabel={`ภาพโปรไฟล์ของ ${trainer?.name || 'เทรนเนอร์'}`}
+            accessibilityLabel={`ภาพโปรไฟล์ของ ${name}`}
           />
-        </View>
-        <View style={styles.nameCol}>
-          <Text style={[styles.trainerName, { color: textColor }]}>
-            {trainer?.name || 'Trainer'}
-          </Text>
-          <Text style={[styles.programText, { color: textColor }]}>
+        </TouchableOpacity>
+
+        {/* Profile Info */}
+        <View style={styles.infoCol}>
+          <View style={styles.nameHeaderRow}>
+            <Text style={[styles.nameText, { color: textColor }]} numberOfLines={1}>
+              {name}
+            </Text>
+            {onEdit && (
+              <TouchableOpacity
+                onPress={onEdit}
+                style={styles.editIconButton}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="แก้ไขโปรไฟล์"
+              >
+                <Ionicons name="pencil-outline" size={16} color={subTextColor} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={[styles.programText, { color: subTextColor }]} numberOfLines={1}>
             {program}
           </Text>
-          <Text style={[styles.studentIdText, { color: subTextColor }]}>
-            รหัสนักศึกษา: {studentId} · Level {level}
-          </Text>
+
+          {/* Email & Location Meta */}
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons name="mail-outline" size={13} color={subTextColor} />
+              <Text style={[styles.metaText, { color: subTextColor }]} numberOfLines={1}>
+                {email}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="location-outline" size={13} color={subTextColor} />
+              <Text style={[styles.metaText, { color: subTextColor }]} numberOfLines={1}>
+                {location}
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      {/* Interests pills */}
-      <View style={styles.interestsContainer}>
-        <Text style={[styles.interestsLabel, { color: subTextColor }]}>
-          ความสนใจ:
-        </Text>
-        <View style={styles.interestsRow}>
-          {interests.map((interest, idx) => (
-            <View
-              key={idx}
-              style={[
-                styles.interestChip,
-                { backgroundColor: isDark ? '#2C2C2E' : '#F1F3F5', borderColor },
-              ]}
-            >
-              <Text style={[styles.interestText, { color: isDark ? '#ECEDEE' : '#1F2937' }]}>
-                #{interest}
-              </Text>
-            </View>
-          ))}
+      {/* Progress Section */}
+      <View style={styles.progressSection}>
+        <View style={styles.progressLabelRow}>
+          <Text style={[styles.progressTitle, { color: textColor }]}>
+            Resume Completion
+          </Text>
+          <Text style={[styles.progressPercent, { color: '#EE1515' }]}>
+            {progressPercent}%
+          </Text>
+        </View>
+
+        {/* Striped Progress Bar */}
+        <View style={[styles.progressBarTrack, { backgroundColor: '#FEF2F2' }]}>
+          {/* Filled portion */}
+          <View
+            style={[
+              styles.progressBarFill,
+              { width: `${progressPercent}%`, backgroundColor: '#EE1515' },
+            ]}
+          />
+          {/* Unfilled striped portion */}
+          <View style={styles.progressBarUnfilled}>
+            <DiagonalStripesPattern isDark={false} />
+          </View>
         </View>
       </View>
     </View>
@@ -94,78 +154,110 @@ export function TrainerHeaderCard({ trainer, isDark }: TrainerHeaderCardProps) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
     elevation: 3,
-    gap: 12,
+    gap: 16,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
-  avatarContainer: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#0A7EA4',
-  },
-  nameCol: {
-    flex: 1,
-    gap: 4,
-  },
-  trainerName: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  levelText: {
-    fontSize: 13,
-    fontWeight: '600',
+  avatarWrapper: {
+    width: 78,
+    height: 78,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 39,
+  },
+  infoCol: {
+    flex: 1,
+    gap: 3,
+  },
+  nameHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  nameText: {
+    fontSize: 20,
+    fontWeight: '800',
+    flex: 1,
+  },
+  editIconButton: {
+    padding: 4,
   },
   programText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '500',
   },
-  studentIdText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  interestsContainer: {
-    marginTop: 6,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E7EB',
-    gap: 6,
-  },
-  interestsLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  interestsRow: {
+  metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
   },
-  interestChip: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  interestText: {
-    fontSize: 12,
-    fontWeight: '600',
+  metaText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  progressSection: {
+    gap: 8,
+  },
+  progressLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  progressPercent: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  progressBarTrack: {
+    height: 18,
+    borderRadius: 9999,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    position: 'relative',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderTopLeftRadius: 9999,
+    borderBottomLeftRadius: 9999,
+  },
+  progressBarUnfilled: {
+    flex: 1,
+    height: '100%',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  stripesContainer: {
+    ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
+  },
+  stripeLine: {
+    position: 'absolute',
+    top: -10,
+    width: 2,
+    height: 40,
+    transform: [{ rotate: '45deg' }],
   },
 });

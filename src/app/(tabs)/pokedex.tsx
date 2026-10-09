@@ -6,11 +6,11 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import {
   usePokedex,
   PokedexCard,
@@ -20,18 +20,21 @@ import {
 
 export default function PokedexScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const screenBg = '#F8FAFC';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
 
   const { width } = useWindowDimensions();
   const numColumns = width >= 768 ? 6 : width >= 480 ? 4 : 3;
 
+  const insets = useSafeAreaInsets();
+  const floatingTabBottom =
+    (insets.bottom > 0 ? insets.bottom + 12 : 24) + 60 + 12;
+
   const {
     entries,
+    stats,
     isLoading,
     searchQuery,
     setSearchQuery,
@@ -53,27 +56,18 @@ export default function PokedexScreen() {
       style={[styles.container, { backgroundColor: screenBg }]}
       edges={['top']}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: textColor }]}>
-          Pokédex
-        </Text>
-      </View>
-
-      {/* Search & Filters */}
+      {/* Search */}
       <PokedexFilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        isDark={isDark}
+        isDark={false}
       />
 
       {/* Grid Content */}
       <View style={styles.content}>
         {isLoading ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#EF4444" />
+            <ActivityIndicator size="large" color="#EE1515" />
             <Text style={[styles.loadingText, { color: subTextColor }]}>
               กำลังโหลดข้อมูลสมุดภาพ Pokédex...
             </Text>
@@ -88,7 +82,6 @@ export default function PokedexScreen() {
               <PokedexCard
                 entry={item}
                 numColumns={numColumns}
-                isDark={isDark}
                 onPress={handleCardPress}
               />
             )}
@@ -127,6 +120,80 @@ export default function PokedexScreen() {
           />
         )}
       </View>
+
+      {/* Floating 3-Icon Switcher above TabBar */}
+      <View
+        style={[
+          styles.floatingTabContainer,
+          {
+            bottom: floatingTabBottom,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderColor: 'rgba(238, 21, 21, 0.15)',
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            statusFilter === 'all' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setStatusFilter('all')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: statusFilter === 'all' }}
+          accessibilityLabel={`ทั้งหมด (${stats.total} ตัว)`}
+        >
+          <Ionicons
+            name={statusFilter === 'all' ? 'apps' : 'apps-outline'}
+            size={22}
+            color={statusFilter === 'all' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            statusFilter === 'caught' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setStatusFilter('caught')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: statusFilter === 'caught' }}
+          accessibilityLabel={`จับแล้ว (${stats.caught} ตัว)`}
+        >
+          <Ionicons
+            name={
+              statusFilter === 'caught'
+                ? 'checkmark-circle'
+                : 'checkmark-circle-outline'
+            }
+            size={22}
+            color={statusFilter === 'caught' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            statusFilter === 'uncaught' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setStatusFilter('uncaught')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: statusFilter === 'uncaught' }}
+          accessibilityLabel={`ยังไม่จับ (${stats.uncaught} ตัว)`}
+        >
+          <Ionicons
+            name={
+              statusFilter === 'uncaught'
+                ? 'help-circle'
+                : 'help-circle-outline'
+            }
+            size={22}
+            color={statusFilter === 'uncaught' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -134,19 +201,6 @@ export default function PokedexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -163,7 +217,7 @@ const styles = StyleSheet.create({
   },
   gridContent: {
     paddingHorizontal: 6,
-    paddingBottom: 24,
+    paddingBottom: 180,
   },
   emptyListContainer: {
     flexGrow: 1,
@@ -198,5 +252,44 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 13,
+  },
+  floatingTabContainer: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 28,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    padding: 4,
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 10,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(25px)',
+        WebkitBackdropFilter: 'blur(25px)',
+      },
+    }),
+  },
+  tabIconButton: {
+    width: 48,
+    height: 40,
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTabIconButton: {
+    backgroundColor: '#8B5CF6',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
   },
 });

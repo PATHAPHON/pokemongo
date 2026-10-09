@@ -12,7 +12,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { useEventDetail } from '@/features/events';
 import {
   LeafletMapView,
@@ -27,8 +26,6 @@ import {
 export default function EventVenueMapScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
   const mapRef = useRef<LeafletMapViewRef>(null);
 
@@ -52,7 +49,7 @@ export default function EventVenueMapScreen() {
       {
         id: event.id,
         title: event.title,
-        categoryColor: '#8B5CF6',
+        categoryColor: '#EE1515',
         latitude: event.location.latitude,
         longitude: event.location.longitude,
         venueName: event.location.name,
@@ -85,11 +82,11 @@ export default function EventVenueMapScreen() {
       <SafeAreaView
         style={[
           styles.loadingContainer,
-          { backgroundColor: isDark ? '#121212' : '#F4F6F8' },
+          { backgroundColor: '#F8FAFC' },
         ]}
       >
-        <ActivityIndicator size="large" color="#8B5CF6" />
-        <Text style={[styles.loadingText, { color: isDark ? '#ECEDEE' : '#11181C' }]}>
+        <ActivityIndicator size="large" color="#EE1515" />
+        <Text style={[styles.loadingText, { color: '#11181C' }]}>
           กำลังเปิดแผนที่สถานที่จัดงาน...
         </Text>
       </SafeAreaView>
@@ -101,11 +98,11 @@ export default function EventVenueMapScreen() {
       <SafeAreaView
         style={[
           styles.loadingContainer,
-          { backgroundColor: isDark ? '#121212' : '#F4F6F8' },
+          { backgroundColor: '#F8FAFC' },
         ]}
       >
         <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
-        <Text style={[styles.errorText, { color: isDark ? '#ECEDEE' : '#11181C' }]}>
+        <Text style={[styles.errorText, { color: '#11181C' }]}>
           {error}
         </Text>
         <TouchableOpacity
@@ -118,10 +115,10 @@ export default function EventVenueMapScreen() {
     );
   }
 
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
+  const cardBg = '#FFFFFF';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
+  const borderColor = '#E5E7EB';
 
   return (
     <View style={styles.container}>
@@ -138,7 +135,7 @@ export default function EventVenueMapScreen() {
         <View
           style={[
             styles.headerBar,
-            { backgroundColor: isDark ? 'rgba(30,30,30,0.92)' : 'rgba(255,255,255,0.94)' },
+            { backgroundColor: 'rgba(255, 255, 255, 0.95)' },
           ]}
         >
           <TouchableOpacity
@@ -173,7 +170,7 @@ export default function EventVenueMapScreen() {
             accessibilityRole="button"
             accessibilityLabel="ซูมกลับมายังสถานที่จัดงาน"
           >
-            <Ionicons name="navigate" size={20} color="#8B5CF6" />
+            <Ionicons name="navigate" size={20} color="#EE1515" />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -197,8 +194,8 @@ export default function EventVenueMapScreen() {
           </View>
 
           {/* Event Date & Time details */}
-          <View style={[styles.dateBadgeRow, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}>
-            <Ionicons name="calendar-outline" size={15} color="#8B5CF6" />
+          <View style={[styles.dateBadgeRow, { backgroundColor: '#FEF2F2' }]}>
+            <Ionicons name="calendar-outline" size={15} color="#EE1515" />
             <Text style={[styles.dateBadgeText, { color: textColor }]}>
               {formatEventDateThai(event.startsAt)} ({formatEventTimeThai(event.startsAt)})
             </Text>
@@ -226,7 +223,7 @@ export default function EventVenueMapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
@@ -246,7 +243,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   backButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -362,7 +359,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   directionsButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

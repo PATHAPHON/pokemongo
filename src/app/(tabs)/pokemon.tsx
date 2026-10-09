@@ -7,13 +7,13 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEventContext } from '@/shared/context/event-context';
 import { useTrainer } from '@/shared/context/trainer-context';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { EventCard, EventEmptyState } from '@/features/events';
 import { CampusEvent } from '@/shared/types';
 import { isEventOrganizer } from '@/shared/utils/event-helpers';
@@ -22,15 +22,16 @@ type MyEventsTab = 'registered' | 'favorites' | 'hosting';
 
 export default function MyEventsScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const screenBg = '#F8FAFC';
+  const subTextColor = '#687076';
 
   const { width } = useWindowDimensions();
   const numColumns = width >= 768 ? 2 : 1;
+
+  const insets = useSafeAreaInsets();
+  const floatingTabBottom =
+    (insets.bottom > 0 ? insets.bottom + 12 : 24) + 60 + 12;
 
   const { trainer } = useTrainer();
   const { events, registrations, favorites, isLoading, toggleFavorite } =
@@ -77,115 +78,11 @@ export default function MyEventsScreen() {
       style={[styles.container, { backgroundColor: screenBg }]}
       edges={['top']}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.headerTitle, { color: textColor }]}>
-            มีตอัปของฉัน
-          </Text>
-        </View>
-
-        {/* Tab Switcher */}
-        <View
-          style={[
-            styles.tabContainer,
-            { backgroundColor: isDark ? '#1E1E1E' : '#E5E7EB' },
-          ]}
-        >
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 'registered' && styles.activeTabButton,
-            ]}
-            onPress={() => setActiveTab('registered')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activeTab === 'registered' }}
-            accessibilityLabel={`ลงทะเบียนแล้ว (${registeredEvents.length} รายการ)`}
-          >
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={15}
-              color={activeTab === 'registered' ? '#FFFFFF' : subTextColor}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'registered'
-                  ? styles.activeTabText
-                  : { color: subTextColor },
-              ]}
-              numberOfLines={1}
-            >
-              ลงทะเบียน ({registeredEvents.length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 'favorites' && styles.activeTabButton,
-            ]}
-            onPress={() => setActiveTab('favorites')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activeTab === 'favorites' }}
-            accessibilityLabel={`รายการโปรด (${favoriteEvents.length} รายการ)`}
-          >
-            <Ionicons
-              name="heart-outline"
-              size={15}
-              color={activeTab === 'favorites' ? '#FFFFFF' : subTextColor}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'favorites'
-                  ? styles.activeTabText
-                  : { color: subTextColor },
-              ]}
-              numberOfLines={1}
-            >
-              รายการโปรด ({favoriteEvents.length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 'hosting' && styles.activeTabButton,
-            ]}
-            onPress={() => setActiveTab('hosting')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activeTab === 'hosting' }}
-            accessibilityLabel={`ฉันเป็นผู้จัด (${hostedEvents.length} รายการ)`}
-          >
-            <Ionicons
-              name="ribbon-outline"
-              size={15}
-              color={activeTab === 'hosting' ? '#FFFFFF' : subTextColor}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'hosting'
-                  ? styles.activeTabText
-                  : { color: subTextColor },
-              ]}
-              numberOfLines={1}
-            >
-              ผู้จัด ({hostedEvents.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       {/* Content */}
       <View style={styles.content}>
         {isLoading ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#8B5CF6" />
+            <ActivityIndicator size="large" color="#EE1515" />
             <Text style={[styles.loadingText, { color: subTextColor }]}>
               กำลังโหลดข้อมูลของคุณ...
             </Text>
@@ -205,7 +102,7 @@ export default function MyEventsScreen() {
                   isFavorite={favoritesSet.has(item.event.id)}
                   isRegistered={true}
                   isOrganizer={isEventOrganizer(item.event, trainer)}
-                  isDark={isDark}
+                  isDark={false}
                   onPress={() => router.push(`/events/${item.event.id}` as any)}
                   onToggleFavorite={() => toggleFavorite(item.event.id)}
                 />
@@ -224,7 +121,7 @@ export default function MyEventsScreen() {
                 buttonText="ไปค้นหามีตอัป"
                 iconName="ticket-outline"
                 onAction={() => router.push('/(tabs)' as any)}
-                isDark={isDark}
+                isDark={false}
               />
             }
           />
@@ -241,7 +138,7 @@ export default function MyEventsScreen() {
                   isFavorite={true}
                   isRegistered={activeRegistrationsSet.has(item.id)}
                   isOrganizer={isEventOrganizer(item, trainer)}
-                  isDark={isDark}
+                  isDark={false}
                   onPress={() => router.push(`/events/${item.id}` as any)}
                   onToggleFavorite={() => toggleFavorite(item.id)}
                 />
@@ -260,7 +157,7 @@ export default function MyEventsScreen() {
                 buttonText="สำรวจมีตอัปทั้งหมด"
                 iconName="heart-outline"
                 onAction={() => router.push('/(tabs)' as any)}
-                isDark={isDark}
+                isDark={false}
               />
             }
           />
@@ -277,7 +174,7 @@ export default function MyEventsScreen() {
                   isFavorite={favoritesSet.has(item.id)}
                   isRegistered={activeRegistrationsSet.has(item.id)}
                   isOrganizer={true}
-                  isDark={isDark}
+                  isDark={false}
                   onPress={() => router.push(`/events/${item.id}` as any)}
                   onToggleFavorite={() => toggleFavorite(item.id)}
                 />
@@ -296,11 +193,81 @@ export default function MyEventsScreen() {
                 buttonText="สร้างมีตอัปใหม่"
                 iconName="add-circle-outline"
                 onAction={() => router.push('/events/create' as any)}
-                isDark={isDark}
+                isDark={false}
               />
             }
           />
         )}
+      </View>
+
+      {/* Floating 3-Icon Switcher above TabBar */}
+      <View
+        style={[
+          styles.floatingTabContainer,
+          {
+            bottom: floatingTabBottom,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderColor: 'rgba(238, 21, 21, 0.15)',
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            activeTab === 'registered' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setActiveTab('registered')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeTab === 'registered' }}
+          accessibilityLabel={`ลงทะเบียนแล้ว (${registeredEvents.length} รายการ)`}
+        >
+          <Ionicons
+            name={
+              activeTab === 'registered'
+                ? 'checkmark-circle'
+                : 'checkmark-circle-outline'
+            }
+            size={22}
+            color={activeTab === 'registered' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            activeTab === 'favorites' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setActiveTab('favorites')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeTab === 'favorites' }}
+          accessibilityLabel={`รายการโปรด (${favoriteEvents.length} รายการ)`}
+        >
+          <Ionicons
+            name={activeTab === 'favorites' ? 'heart' : 'heart-outline'}
+            size={22}
+            color={activeTab === 'favorites' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            activeTab === 'hosting' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setActiveTab('hosting')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeTab === 'hosting' }}
+          accessibilityLabel={`ฉันเป็นผู้จัด (${hostedEvents.length} รายการ)`}
+        >
+          <Ionicons
+            name={activeTab === 'hosting' ? 'ribbon' : 'ribbon-outline'}
+            size={22}
+            color={activeTab === 'hosting' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -310,53 +277,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
-    gap: 6,
-  },
-  titleRow: {
+  floatingTabContainer: {
+    position: 'absolute',
+    alignSelf: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 28,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    padding: 4,
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 10,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(25px)',
+        WebkitBackdropFilter: 'blur(25px)',
+      },
+    }),
+  },
+  tabIconButton: {
+    width: 48,
+    height: 40,
+    borderRadius: 20,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    textAlign: 'center',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: 3,
-    marginTop: 6,
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 10,
-    gap: 6,
-  },
-  activeTabButton: {
-    backgroundColor: '#8B5CF6',
-    shadowColor: '#8B5CF6',
+  activeTabIconButton: {
+    backgroundColor: '#EE1515',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  activeTabText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
   },
   content: {
     flex: 1,
@@ -374,7 +332,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 28,
+    paddingBottom: 180,
   },
   cardItemWrap: {
     marginBottom: 6,
@@ -386,5 +344,6 @@ const styles = StyleSheet.create({
   emptyListContainer: {
     flexGrow: 1,
     justifyContent: 'center',
+    paddingBottom: 80,
   },
 });

@@ -11,7 +11,6 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import {
   useEventDetail,
   EventDetailHero,
@@ -30,15 +29,13 @@ export default function EventDetailScreen() {
   const rawId = params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const isValidId = typeof id === 'string' && id.trim().length > 0;
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const { trainer } = useTrainer();
 
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
+  const screenBg = '#F8FAFC';
+  const cardBg = '#FFFFFF';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
+  const borderColor = '#E5E7EB';
 
   const {
     event,
@@ -162,7 +159,6 @@ export default function EventDetailScreen() {
           onBack={() => router.back()}
           onToggleFavorite={toggleFavorite}
           onToggleReminder={handleToggleReminder}
-          isDark={isDark}
         />
 
 
@@ -170,7 +166,6 @@ export default function EventDetailScreen() {
         <EventDetailInfo
           event={event}
           registration={registration}
-          isDark={isDark}
           onViewOnMap={handleViewOnMap}
           onCatchDirect={handleDirectCatch}
           isOrganizer={isOrganizer}
@@ -268,7 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -294,14 +289,14 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   primaryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     height: 50,
     borderRadius: 14,
     gap: 8,
-    shadowColor: '#8B5CF6',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,

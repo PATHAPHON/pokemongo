@@ -1,12 +1,6 @@
 import { useEffect } from 'react';
+import { View, ActivityIndicator, Platform, LogBox } from 'react-native';
 import {
-  View,
-  ActivityIndicator,
-  Platform,
-  LogBox,
-} from 'react-native';
-import {
-  DarkTheme,
   DefaultTheme,
   ThemeProvider,
   Stack,
@@ -16,7 +10,11 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/shared/hooks/use-color-scheme';
-import { TrainerProvider, useTrainer, useSession } from '@/shared/context/trainer-context';
+import {
+  TrainerProvider,
+  useTrainer,
+  useSession,
+} from '@/shared/context/trainer-context';
 import { EventProvider } from '@/shared/context/event-context';
 
 import {
@@ -24,6 +22,26 @@ import {
   setupNotificationChannels,
   configureNotificationHandler,
 } from '@/shared/services/notifications/index';
+
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Prompt_300Light,
+  Prompt_400Regular,
+  Prompt_500Medium,
+  Prompt_600SemiBold,
+  Prompt_700Bold,
+  Prompt_800ExtraBold,
+  Prompt_900Black,
+} from '@expo-google-fonts/prompt';
+import * as SplashScreen from 'expo-splash-screen';
+import { applyGlobalFont } from '@/shared/utils/apply-global-font';
+
+// Apply Prompt font globally across Text and TextInput components
+applyGlobalFont();
+
+// Prevent splash screen from auto-hiding while fonts load
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export const unstable_settings = {
   anchor: 'index',
@@ -171,6 +189,31 @@ function NavigationStack() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
+  const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
+    Prompt_300Light,
+    Prompt_400Regular,
+    Prompt_500Medium,
+    Prompt_600SemiBold,
+    Prompt_700Bold,
+    Prompt_800ExtraBold,
+    Prompt_900Black,
+    Prompt: Prompt_400Regular,
+    'Prompt-Light': Prompt_300Light,
+    'Prompt-Regular': Prompt_400Regular,
+    'Prompt-Medium': Prompt_500Medium,
+    'Prompt-SemiBold': Prompt_600SemiBold,
+    'Prompt-Bold': Prompt_700Bold,
+    'Prompt-ExtraBold': Prompt_800ExtraBold,
+    'Prompt-Black': Prompt_900Black,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError]);
+
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
@@ -179,12 +222,27 @@ export default function RootLayout() {
     setupNotificationChannels().catch(() => {});
   }, []);
 
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#FFFFFF',
+        }}
+      >
+        <ActivityIndicator size="large" color="#EE1515" />
+      </View>
+    );
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DefaultTheme}>
       <TrainerProvider>
         <EventProvider>
           <NavigationStack />
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
         </EventProvider>
       </TrainerProvider>
     </ThemeProvider>

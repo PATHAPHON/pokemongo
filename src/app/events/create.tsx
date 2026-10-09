@@ -18,7 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { useEventContext } from '@/shared/context/event-context';
 import { useTrainer } from '@/shared/context/trainer-context';
 import { getArtworkUrl, capitalizePokemonName } from '@/shared/constants/kanto-pokemon';
@@ -32,15 +31,13 @@ import { parseDateTimeInputs } from '@/shared/utils/event-helpers';
 
 export default function CreateEventScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const inputBg = isDark ? '#2A2A2A' : '#F1F3F5';
-  const borderColor = isDark ? '#3A3A3C' : '#E5E7EB';
+  const screenBg = '#F8FAFC';
+  const cardBg = '#FFFFFF';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
+  const inputBg = '#F1F3F5';
+  const borderColor = '#E5E7EB';
 
   const { createEvent } = useEventContext();
   const { trainer, caughtPokemon } = useTrainer();
@@ -573,7 +570,7 @@ export default function CreateEventScreen() {
             <EventImagePicker
               photoUri={photoUri}
               onPhotoSelected={setPhotoUri}
-              isDark={isDark}
+              isDark={false}
             />
           </View>
 
@@ -613,7 +610,6 @@ export default function CreateEventScreen() {
         onSelect={(id) => setFeaturedPokemonId(id)}
         selectedId={featuredPokemonId}
         caughtPokemonIds={caughtPokemonIds}
-        isDark={isDark}
       />
     </SafeAreaView>
   );
@@ -793,13 +789,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   submitButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     height: 52,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#8B5CF6',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
     shadowRadius: 6,
@@ -838,7 +834,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     height: 46,
     borderRadius: 12,
     gap: 6,

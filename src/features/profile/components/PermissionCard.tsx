@@ -9,7 +9,7 @@ interface PermissionCardProps {
   subtitle: string;
   permission: PermissionDetail;
   onPress: () => void;
-  isDark: boolean;
+  isDark?: boolean;
 }
 
 export function PermissionCard({
@@ -19,13 +19,12 @@ export function PermissionCard({
   subtitle,
   permission,
   onPress,
-  isDark,
 }: PermissionCardProps) {
   const isGranted = permission.granted;
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const borderColor = isDark ? '#2C2C2E' : '#E5E7EB';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const cardBg = '#FFFFFF';
+  const borderColor = '#FEE2E2';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
 
   return (
     <View
@@ -34,7 +33,7 @@ export function PermissionCard({
         {
           backgroundColor: cardBg,
           borderColor,
-          shadowOpacity: isDark ? 0.2 : 0.05,
+          shadowOpacity: 0.04,
         },
       ]}
     >
@@ -52,14 +51,14 @@ export function PermissionCard({
                 {
                   backgroundColor: isGranted
                     ? 'rgba(52, 199, 89, 0.15)'
-                    : 'rgba(255, 59, 48, 0.12)',
+                    : 'rgba(238, 21, 21, 0.12)',
                 },
               ]}
             >
               <Text
                 style={[
                   styles.statusText,
-                  { color: isGranted ? '#34C759' : '#FF3B30' },
+                  { color: isGranted ? '#16A34A' : '#EE1515' },
                 ]}
               >
                 {isGranted ? 'อนุญาตแล้ว' : 'ยังไม่อนุญาต'}
@@ -81,11 +80,7 @@ export function PermissionCard({
           style={[
             styles.actionButton,
             {
-              backgroundColor: isGranted
-                ? isDark
-                  ? '#2C2C2E'
-                  : '#F2F4F7'
-                : '#007AFF',
+              backgroundColor: isGranted ? '#F1F5F9' : '#EE1515',
             },
           ]}
         >
@@ -93,7 +88,7 @@ export function PermissionCard({
             style={[
               styles.actionButtonText,
               {
-                color: isGranted ? (isDark ? '#9BA1A6' : '#687076') : '#FFFFFF',
+                color: isGranted ? '#64748B' : '#FFFFFF',
               },
             ]}
           >

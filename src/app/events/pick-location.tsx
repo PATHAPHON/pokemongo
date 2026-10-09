@@ -13,7 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import {
   LeafletMapView,
   LeafletMapViewRef,
@@ -30,8 +29,6 @@ function parseCoord(value: string | string[] | undefined, fallback: number): num
 export default function PickLocationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ lat?: string; lng?: string }>();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
   const mapRef = useRef<LeafletMapViewRef>(null);
 
@@ -48,9 +45,9 @@ export default function PickLocationScreen() {
   const [isResolving, setIsResolving] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const cardBg = '#FFFFFF';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
 
   const handleUseGps = async () => {
     try {
@@ -118,7 +115,7 @@ export default function PickLocationScreen() {
         <View
           style={[
             styles.headerBar,
-            { backgroundColor: isDark ? 'rgba(30,30,30,0.92)' : 'rgba(255,255,255,0.94)' },
+            { backgroundColor: 'rgba(255,255,255,0.96)' },
           ]}
         >
           <TouchableOpacity
@@ -147,9 +144,9 @@ export default function PickLocationScreen() {
             accessibilityLabel="ใช้พิกัด GPS ปัจจุบัน"
           >
             {isLocating ? (
-              <ActivityIndicator size="small" color="#8B5CF6" />
+              <ActivityIndicator size="small" color="#EE1515" />
             ) : (
-              <Ionicons name="navigate" size={20} color="#8B5CF6" />
+              <Ionicons name="navigate" size={20} color="#EE1515" />
             )}
           </TouchableOpacity>
         </View>
@@ -158,7 +155,7 @@ export default function PickLocationScreen() {
       <SafeAreaView edges={['bottom']} style={styles.bottomCardWrap}>
         <View style={[styles.bottomCard, { backgroundColor: cardBg }]}>
           <View style={styles.pinRow}>
-            <Ionicons name="location-sharp" size={20} color="#EF4444" />
+            <Ionicons name="location-sharp" size={20} color="#EE1515" />
             <Text style={[styles.pinText, { color: textColor }]}>
               {pin.latitude.toFixed(4)}, {pin.longitude.toFixed(4)}
             </Text>
@@ -189,7 +186,7 @@ export default function PickLocationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   safeHeaderArea: {
     position: 'absolute',
@@ -206,10 +203,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    shadowColor: '#000',
+    borderColor: '#FEE2E2',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 6,
     gap: 10,
@@ -218,7 +215,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(128,128,128,0.15)',
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -247,10 +244,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: '#FEE2E2',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 8,
     gap: 12,
@@ -269,10 +266,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     paddingVertical: 12,
     borderRadius: 14,
-    shadowColor: '#8B5CF6',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
     shadowRadius: 6,

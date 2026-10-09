@@ -14,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTrainer } from '@/shared/context/trainer-context';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import {
   authenticateWithBiometrics,
   checkBiometricsAvailable,
@@ -22,8 +21,6 @@ import {
 
 export default function LoginScreen() {
   const { login, register, loginBiometrics, isAuthenticated } = useTrainer();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
@@ -59,12 +56,12 @@ export default function LoginScreen() {
     }
   }, [isAuthenticated]);
 
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const inputBg = isDark ? '#2A2A2A' : '#F1F3F5';
-  const borderColor = isDark ? '#3E3E3E' : '#E2E8F0';
+  const screenBg = '#F8FAFC';
+  const cardBg = '#FFFFFF';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
+  const inputBg = '#F8FAFC';
+  const borderColor = '#E2E8F0';
 
   const handleSubmit = async () => {
     setErrorMessage(null);
@@ -394,21 +391,21 @@ export default function LoginScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.demoButton, { backgroundColor: '#0A84FF' }]}
+                  style={[styles.demoButton, { backgroundColor: '#F59E0B' }]}
                   onPress={() => handleQuickLogin('MistyWaterflower', '1234')}
                   disabled={isSubmitting}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.demoButtonText}>🔵 Misty (จัด 1 งาน)</Text>
+                  <Text style={styles.demoButtonText}>⚡ Misty (จัด 1 งาน)</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.demoButton, { backgroundColor: '#34C759' }]}
+                  style={[styles.demoButton, { backgroundColor: '#475569' }]}
                   onPress={() => handleQuickLogin('TrainerNew', '1234')}
                   disabled={isSubmitting}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.demoButtonText}>🟢 User ใหม่ (ทั่วไป)</Text>
+                  <Text style={styles.demoButtonText}>⚪ User ใหม่ (ทั่วไป)</Text>
                 </TouchableOpacity>
               </View>
             </View>

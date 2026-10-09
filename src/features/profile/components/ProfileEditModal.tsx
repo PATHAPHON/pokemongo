@@ -18,14 +18,14 @@ import { TrainerProfile } from '@/shared/types';
 interface ProfileEditModalProps {
   visible: boolean;
   trainer: TrainerProfile | null;
-  isDark: boolean;
+  isDark?: boolean;
   onClose: () => void;
   onSave: (partial: Partial<TrainerProfile>) => Promise<void>;
 }
 
 const DEFAULT_AVATAR = require('../../../../assets/images/avatar.png');
 
-export function ProfileEditModal({ visible, trainer, isDark, onClose, onSave }: ProfileEditModalProps) {
+export function ProfileEditModal({ visible, trainer, onClose, onSave }: ProfileEditModalProps) {
   const [name, setName] = useState(trainer?.name || '');
   const [studentId, setStudentId] = useState(trainer?.studentId || '');
   const [program, setProgram] = useState(trainer?.program || trainer?.faculty || '');
@@ -43,10 +43,10 @@ export function ProfileEditModal({ visible, trainer, isDark, onClose, onSave }: 
     }
   }, [visible, trainer]);
 
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const inputBg = isDark ? '#2A2A2A' : '#F1F3F5';
+  const cardBg = '#FFFFFF';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
+  const inputBg = '#F8FAFC';
 
   const pickImageFromGallery = async () => {
     try {
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     position: 'relative',
     borderWidth: 2.5,
-    borderColor: '#0A7EA4',
+    borderColor: '#EE1515',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -2,
     right: -2,
-    backgroundColor: '#0A7EA4',
+    backgroundColor: '#EE1515',
     width: 26,
     height: 26,
     borderRadius: 13,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   changePhotoText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0A7EA4',
+    color: '#EE1515',
   },
   label: {
     fontSize: 13,
@@ -336,13 +336,15 @@ const styles = StyleSheet.create({
   },
   input: {
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
     fontWeight: '600',
   },
   saveButton: {
-    backgroundColor: '#0A7EA4',
+    backgroundColor: '#EE1515',
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',

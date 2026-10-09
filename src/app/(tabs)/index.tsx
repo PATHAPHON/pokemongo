@@ -7,10 +7,11 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import {
   useEvents,
   EventCard,
@@ -24,14 +25,17 @@ import { isEventOrganizer } from '@/shared/utils/event-helpers';
 
 export default function EventsScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const screenBg = '#F8FAFC';
+  const subTextColor = '#687076';
 
   const { width } = useWindowDimensions();
   const numColumns = width >= 768 ? 2 : 1;
+
+  const insets = useSafeAreaInsets();
+  const fabBottom = (insets.bottom > 0 ? insets.bottom + 12 : 24) + 60 + 14;
+  const floatingTabBottom =
+    (insets.bottom > 0 ? insets.bottom + 12 : 24) + 60 + 12;
 
   const { trainer } = useTrainer();
   const {
@@ -67,7 +71,6 @@ export default function EventsScreen() {
       <EventStatsHeader
         isOffline={isOffline}
         lastUpdated={lastUpdated}
-        isDark={isDark}
       />
 
       {/* Search Input and Status Tabs */}
@@ -76,14 +79,14 @@ export default function EventsScreen() {
         onSearchChange={setSearchQuery}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
-        isDark={isDark}
+        isDark={false}
       />
 
       {/* Main Events List */}
       <View style={styles.content}>
         {isLoading && events.length === 0 ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#8B5CF6" />
+            <ActivityIndicator size="large" color="#EE1515" />
             <Text style={[styles.loadingText, { color: subTextColor }]}>
               กำลังโหลดมีตอัปโปเกมอน...
             </Text>
@@ -101,7 +104,7 @@ export default function EventsScreen() {
                   isFavorite={favoritesSet.has(item.id)}
                   isRegistered={registeredEventIds.has(item.id)}
                   isOrganizer={isEventOrganizer(item, trainer)}
-                  isDark={isDark}
+                  isDark={false}
                   onPress={() => handleCardPress(item)}
                   onToggleFavorite={() => toggleFavorite(item.id)}
                 />
@@ -121,8 +124,8 @@ export default function EventsScreen() {
               <RefreshControl
                 refreshing={isLoading}
                 onRefresh={refreshEvents}
-                tintColor="#8B5CF6"
-                colors={['#8B5CF6']}
+                tintColor="#EE1515"
+                colors={['#EE1515']}
               />
             }
             ListEmptyComponent={
@@ -131,23 +134,70 @@ export default function EventsScreen() {
                 subtitle="ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่นเพื่อค้นหามีตอัปทั้งหมด"
                 buttonText="ล้างตัวกรองทั้งหมด"
                 onAction={handleResetFilters}
-                isDark={isDark}
+                isDark={false}
               />
             }
           />
         )}
       </View>
 
+      {/* Floating 2-Icon Switcher above TabBar */}
+      <View
+        style={[
+          styles.floatingTabContainer,
+          {
+            bottom: floatingTabBottom,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderColor: 'rgba(238, 21, 21, 0.15)',
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            statusFilter === 'all' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setStatusFilter('all')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: statusFilter === 'all' }}
+          accessibilityLabel="มีตอัปทั้งหมด"
+        >
+          <Ionicons
+            name={statusFilter === 'all' ? 'apps' : 'apps-outline'}
+            size={22}
+            color={statusFilter === 'all' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabIconButton,
+            statusFilter === 'favorites' && styles.activeTabIconButton,
+          ]}
+          onPress={() => setStatusFilter('favorites')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: statusFilter === 'favorites' }}
+          accessibilityLabel="รายการโปรด"
+        >
+          <Ionicons
+            name={statusFilter === 'favorites' ? 'heart' : 'heart-outline'}
+            size={22}
+            color={statusFilter === 'favorites' ? '#FFFFFF' : subTextColor}
+          />
+        </TouchableOpacity>
+      </View>
+
       {/* Floating Action Button for Organizers */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { bottom: fabBottom }]}
         onPress={() => router.push('/events/create' as any)}
         accessibilityRole="button"
         accessibilityLabel="สร้างมีตอัปใหม่"
         activeOpacity={0.85}
       >
-        <Text style={styles.fabIcon}>➕</Text>
-        <Text style={styles.fabText}>สร้างมีตอัป</Text>
+        <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -173,7 +223,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 28,
+    paddingBottom: 180,
   },
   gridCol: {
     flex: 1,
@@ -183,30 +233,59 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
   },
-  fab: {
+  floatingTabContainer: {
     position: 'absolute',
-    bottom: 24,
-    right: 20,
-    backgroundColor: '#8B5CF6',
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 30,
-    gap: 6,
-    shadowColor: '#8B5CF6',
+    borderRadius: 28,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    padding: 4,
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 10,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(25px)',
+        WebkitBackdropFilter: 'blur(25px)',
+      },
+    }),
+  },
+  tabIconButton: {
+    width: 48,
+    height: 40,
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTabIconButton: {
+    backgroundColor: '#EE1515',
+    shadowColor: '#EE1515',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#EE1515',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 6,
-  },
-  fabIcon: {
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  fabText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
+    zIndex: 10,
   },
 });

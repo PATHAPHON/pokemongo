@@ -97,3 +97,12 @@
 - [x] `W11-03` ย้าย Notification Tap Listener เข้า `NavigationStack` ป้องกัน Cold Start Race Condition
 - [x] `W11-04` ฟื้นฟูรายการแจ้งเตือนที่ตั้งไว้จาก OS ตอนเปิดแอป (`getScheduledReminders`)
 - [x] `W11-05` แสดง Alert แจ้งเตือนเมื่อกิจกรรมเริ่มใน < 30 นาที หรือเมื่อผู้ใช้ยังไม่อนุญาตสิทธิ์
+
+---
+
+## ส่วนปรับปรุงเพิ่มเติม: White & Red Theme Migration (Poké Ball Aesthetic)
+- [x] `THEME-01` ลบ Dark Mode ทั้งระบบ ล็อค `useColorScheme` คืนค่า `'light'` เท่านั้น และลบ Dark Mode switch ในหน้าโปรไฟล์
+- [x] `THEME-02` ปรับโทนสีหลักเป็นสีขาว-แดง (`#EE1515` / `#DC2626`) แซมสีเหลืองพิกะจู (`#FFCB05` / `#F59E0B`)
+- [x] `THEME-03` ปรับแต่ง Event Card และ Venue Map จากการ์ดสีดำมืดเป็น White Card ขอบแดงนวล
+- [x] `THEME-04` ปรับปรุง Bag, Detail Screens, Login, Register, Create, Admin Console, Permissions และ Catch UI เข้าสู่ธีมสีขาวแดง
+

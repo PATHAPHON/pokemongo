@@ -14,7 +14,7 @@ interface PermissionSettingsSectionProps {
   notifications: PermissionDetail;
   camera: PermissionDetail;
   isLoading: boolean;
-  isDark: boolean;
+  isDark?: boolean;
   onRequestLocation: () => void;
   onRequestNotifications: () => void;
   onRequestCamera: () => void;
@@ -29,7 +29,6 @@ export function PermissionSettingsSection({
   notifications,
   camera,
   isLoading,
-  isDark,
   onRequestLocation,
   onRequestNotifications,
   onRequestCamera,
@@ -38,8 +37,8 @@ export function PermissionSettingsSection({
   onResetAndRecheck,
   onOpenAppSettings,
 }: PermissionSettingsSectionProps) {
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
 
   return (
     <View>
@@ -54,28 +53,26 @@ export function PermissionSettingsSection({
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#007AFF" />
+          <ActivityIndicator size="small" color="#EE1515" />
         </View>
       ) : (
         <>
           <PermissionCard
             icon="location-sharp"
-            iconBg="#007AFF"
+            iconBg="#EE1515"
             title="ตำแหน่ง GPS (Location)"
             subtitle="ใช้ค้นหาพิกัดสถานที่จัดมีตอัปและคำนวณระยะทาง"
             permission={location}
             onPress={onRequestLocation}
-            isDark={isDark}
           />
 
           <PermissionCard
             icon="notifications-sharp"
-            iconBg="#FF9500"
+            iconBg="#F59E0B"
             title="การแจ้งเตือนกิจกรรม (Notifications)"
             subtitle="แจ้งเตือนกิจกรรมมีตอัปล่วงหน้า 30 นาที"
             permission={notifications}
             onPress={onRequestNotifications}
-            isDark={isDark}
           />
 
           {/* Test Notification Action Card */}
@@ -83,10 +80,8 @@ export function PermissionSettingsSection({
             style={[
               styles.testNotificationCard,
               {
-                backgroundColor: isDark
-                  ? 'rgba(245, 158, 11, 0.12)'
-                  : '#FFFBEB',
-                borderColor: isDark ? '#B45309' : '#FCD34D',
+                backgroundColor: '#FFFDF0',
+                borderColor: '#FDE68A',
               },
             ]}
           >
@@ -94,7 +89,7 @@ export function PermissionSettingsSection({
               <View
                 style={[
                   styles.testNotificationIconWrap,
-                  { backgroundColor: isDark ? '#78350F' : '#FEF3C7' },
+                  { backgroundColor: '#FEF3C7' },
                 ]}
               >
                 <Ionicons
@@ -107,7 +102,7 @@ export function PermissionSettingsSection({
                 <Text
                   style={[
                     styles.testNotificationTitle,
-                    { color: isDark ? '#FBBF24' : '#B45309' },
+                    { color: '#B45309' },
                   ]}
                 >
                   ทดสอบการแจ้งเตือนกิจกรรม (Event Alerts)
@@ -115,7 +110,7 @@ export function PermissionSettingsSection({
                 <Text
                   style={[
                     styles.testNotificationSubtitle,
-                    { color: isDark ? '#D1D5DB' : '#78350F' },
+                    { color: '#78350F' },
                   ]}
                 >
                   ทดสอบส่งแจ้งเตือนกิจกรรมมีตอัป (Heads-up Banner)
@@ -129,7 +124,7 @@ export function PermissionSettingsSection({
                 activeOpacity={0.8}
                 style={[
                   styles.testActionBtn,
-                  { backgroundColor: isDark ? '#D97706' : '#F59E0B' },
+                  { backgroundColor: '#F59E0B' },
                 ]}
               >
                 <Ionicons name="flash" size={14} color="#FFFFFF" />
@@ -145,21 +140,21 @@ export function PermissionSettingsSection({
                   style={[
                     styles.testActionBtn,
                     {
-                      backgroundColor: isDark ? '#78350F' : '#FEF3C7',
+                      backgroundColor: '#FEF3C7',
                       borderWidth: 1,
-                      borderColor: isDark ? '#B45309' : '#F59E0B',
+                      borderColor: '#F59E0B',
                     },
                   ]}
                 >
                   <Ionicons
                     name="timer-outline"
                     size={14}
-                    color={isDark ? '#FBBF24' : '#B45309'}
+                    color="#B45309"
                   />
                   <Text
                     style={[
                       styles.testActionBtnText,
-                      { color: isDark ? '#FBBF24' : '#B45309' },
+                      { color: '#B45309' },
                     ]}
                   >
                     ⏱️ เตือนกิจกรรมใน 5 วิ (สลับไปแอปอื่น / ล็อคหน้าจอ)
@@ -171,12 +166,11 @@ export function PermissionSettingsSection({
 
           <PermissionCard
             icon="camera-sharp"
-            iconBg="#5856D6"
+            iconBg="#EE1515"
             title="กล้องถ่ายรูป (Camera AR)"
             subtitle="ใช้เปิดโหมด AR จับโปเกมอนในโลกความเป็นจริง"
             permission={camera}
             onPress={onRequestCamera}
-            isDark={isDark}
           />
 
           {/* Android OEM Guide: Heads-up + Lock screen */}
@@ -184,10 +178,8 @@ export function PermissionSettingsSection({
             style={[
               styles.oemGuideCard,
               {
-                backgroundColor: isDark
-                  ? 'rgba(59, 130, 246, 0.12)'
-                  : '#EFF6FF',
-                borderColor: isDark ? '#1D4ED8' : '#BFDBFE',
+                backgroundColor: '#FEF2F2',
+                borderColor: '#FEE2E2',
               },
             ]}
           >
@@ -195,20 +187,20 @@ export function PermissionSettingsSection({
               <View
                 style={[
                   styles.testNotificationIconWrap,
-                  { backgroundColor: isDark ? '#1E3A8A' : '#DBEAFE' },
+                  { backgroundColor: '#FEE2E2' },
                 ]}
               >
                 <Ionicons
                   name="phone-portrait-outline"
                   size={24}
-                  color="#3B82F6"
+                  color="#EE1515"
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <Text
                   style={[
                     styles.testNotificationTitle,
-                    { color: isDark ? '#93C5FD' : '#1D4ED8' },
+                    { color: '#991B1B' },
                   ]}
                 >
                   แบนเนอร์ไม่เด้งทับแอปอื่น?
@@ -216,7 +208,7 @@ export function PermissionSettingsSection({
                 <Text
                   style={[
                     styles.testNotificationSubtitle,
-                    { color: isDark ? '#D1D5DB' : '#1E40AF' },
+                    { color: '#7F1D1D' },
                   ]}
                 >
                   Xiaomi / Samsung / Oppo / Vivo อาจปิด &quot;ป๊อปอัปขณะอยู่เบื้องหลัง&quot;
@@ -231,7 +223,7 @@ export function PermissionSettingsSection({
               style={[
                 styles.testActionBtn,
                 styles.oemGuideBtn,
-                { backgroundColor: isDark ? '#1D4ED8' : '#3B82F6' },
+                { backgroundColor: '#EE1515' },
               ]}
             >
               <Ionicons name="settings-outline" size={14} color="#FFFFFF" />
@@ -246,18 +238,18 @@ export function PermissionSettingsSection({
               activeOpacity={0.8}
               style={[
                 styles.resetButton,
-                { backgroundColor: isDark ? '#2A2A2E' : '#E5E7EB' },
+                { backgroundColor: '#F1F5F9' },
               ]}
             >
               <Ionicons
                 name="refresh-outline"
                 size={18}
-                color={isDark ? '#ECEDEE' : '#11181C'}
+                color="#0F172A"
               />
               <Text
                 style={[
                   styles.resetButtonText,
-                  { color: isDark ? '#ECEDEE' : '#11181C' },
+                  { color: '#0F172A' },
                 ]}
               >
                 รีเซ็ต/รีเฟรชสิทธิ์
@@ -279,22 +271,20 @@ export function PermissionSettingsSection({
             style={[
               styles.infoCard,
               {
-                backgroundColor: isDark
-                  ? 'rgba(255, 204, 0, 0.1)'
-                  : 'rgba(255, 149, 0, 0.08)',
+                backgroundColor: '#FFFDF0',
               },
             ]}
           >
             <Ionicons
               name="information-circle-outline"
               size={18}
-              color="#FF9500"
+              color="#F59E0B"
               style={{ marginTop: 1 }}
             />
             <Text
               style={[
                 styles.infoText,
-                { color: isDark ? '#E5E7EB' : '#4B5563' },
+                { color: '#78350F' },
               ]}
             >
               หากคุณเคยกด &quot;ไม่อนุญาต&quot; ในหน้าต่างเด้งครั้งแรก
@@ -351,7 +341,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#EE1515',
     paddingVertical: 14,
     borderRadius: 14,
     gap: 6,

@@ -2,15 +2,12 @@ import { ScrollView, StyleSheet, TouchableOpacity, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { AdminConsoleView } from '@/features/profile';
 
 export default function AdminScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
+  const screenBg = '#F8FAFC';
+  const textColor = '#0F172A';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
@@ -22,7 +19,7 @@ export default function AdminScreen() {
         <View style={{ width: 24 }} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <AdminConsoleView isDark={isDark} />
+        <AdminConsoleView isDark={false} />
       </ScrollView>
     </SafeAreaView>
   );

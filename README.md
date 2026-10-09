@@ -11,7 +11,7 @@
 <p align="center">
   <b>Production-Grade Pokémon GO Simulation built with React Native & Expo SDK 57</b>
   <br />
-  <i>Campus Events-First Architecture • Gen 1-3 Pokédex (386 Species) • AR Catch & Physics • Leaflet Venue Map • Offline SQLite WAL • Profile Avatar Upload</i>
+  <i>Campus Events-First Architecture • Gen 1 Pokédex (151 Kanto Species) • AR Catch & Physics • Leaflet Venue Map & Location Picker • Offline SQLite WAL • Profile Avatar Upload</i>
 </p>
 
 <p align="center">
@@ -45,12 +45,18 @@
 >    หากเปิดด้วย `npx expo start` แล้วขึ้นสถานะ `Using development build` ให้กดคีย์ลัดบนคีย์บอร์ด:
 >    👉 **กดปุ่ม `Shift + S` (หรือกด `s`)** ในหน้าต่าง Terminal เพื่อสลับ Bundler ไปยัง **Expo Go Mode** ทันที จากนั้นสแกน QR Code ด้วยกล้อง (iOS) หรือแอป Expo Go (Android)
 
-### 🔑 บัญชีและทางลัดสำหรับทดสอบระบบ (Test Accounts)
+### 🔑 บัญชีและทางลัดสำหรับทดสอบระบบ (Test Accounts & Shortcuts)
 ในหน้าจอเข้าสู่ระบบ (`/login`) ได้จัดเตรียมปุ่ม **Quick Profile Switcher** ด้านล่างฟอร์ม เพื่อให้อาจารย์กดเข้าทดสอบระบบได้ทันทีโดยไม่ต้องพิมพ์:
-- 🔴 **`Ash (จัด 2 งาน)`**: สิทธิ์ Organizer ดูแลกิจกรรม 2 งาน พร้อมโปเกมอนในกระเป๋า
-- 🔵 **`Misty (จัด 1 งาน)`**: สิทธิ์ Organizer มีตอัปโปเกมอนน้ำ
-- 🟢 **`User ใหม่ (ทั่วไป)`**: เทรนเนอร์ใหม่พร้อม Starter Pikachu ประจำตัว
+- 🔴 **`Ash (จัด 2 งาน)`** (`AshKetchum` / `1234`): สิทธิ์ Organizer ดูแลกิจกรรม 2 งาน พร้อมโปเกมอนในกระเป๋า
+- 🔵 **`Misty (จัด 1 งาน)`** (`MistyWaterflower` / `1234`): สิทธิ์ Organizer มีตอัปโปเกมอนน้ำ
+- 🟢 **`User ใหม่ (ทั่วไป)`** (`TrainerNew` / `1234`): เทรนเนอร์ใหม่พร้อม Starter Pikachu ประจำตัว
 - หรือทดสอบ **สมัครสมาชิกใหม่** ด้วยรหัสนักศึกษาและคณะได้ทันที
+
+### ⏱️ การทดสอบ Local Notification แบบทันที (10-Second Test Loop)
+เพื่อความสะดวกในการประเมินระบบแจ้งเตือน Week 11 โดยไม่ต้องรอนานถึง 30 นาที:
+- เข้าหน้ารายละเอียดมีตอัป (`/events/[id]`) ใดก็ได้
+- แตะปุ่ม **`⏱️ ทดสอบทุก 10 วิ`** เพื่อเปิดลูปจำลองการแจ้งเตือน
+- ระบบจะส่ง Local Notification เด้งเตือนทุก 10 วินาที เมื่ออาจารย์แตะที่ Notification จะ Deep Link พามายังหน้ารายละเอียดกิจกรรมนั้นทันที (ทดสอบ Cold Start & Tap Listener ได้สมบูรณ์)
 
 ### 🧪 คำสั่งรันชุดทดสอบอัตโนมัติ (Automated Tests)
 โปรเจกต์มีชุดทดสอบครอบคลุมหลักสูตร 11 สัปดาห์ครบถ้วน รันผ่าน Node.js Test Runner:
@@ -71,24 +77,24 @@ npx tsc --noEmit
     <td align="center" width="33%">
       <b>1. ค้นหามีตอัป (Meetups Home)</b><br/><br/>
       <img src="docs/screenshots/01-meetups.png" width="240" alt="Meetups Screen" /><br/>
-      <sub>กรองกิจกรรม, ค้นหาเรียลไทม์, บันทึกการ์ดโปรด</sub>
+      <sub>ค้นหาเรียลไทม์, กรองทั้งหมด/รายการโปรด, โควตาที่นั่ง</sub>
     </td>
     <td align="center" width="33%">
-      <b>2. รายละเอียด & แผนที่ (Event Detail)</b><br/><br/>
+      <b>2. รายละเอียด & จับโปเกมอน (Event Detail)</b><br/><br/>
       <img src="docs/screenshots/03-event-detail.png" width="240" alt="Event Detail Screen" /><br/>
-      <sub>Mini Map หมุดพิกัดสถานที่จัดงาน, ลงทะเบียน</sub>
+      <sub>Mini Map หมุดสถานที่, ปุ่มจับทันที ⚡, ลูปทดสอบ 10 วิ</sub>
     </td>
     <td align="center" width="33%">
-      <b>3. สารานุกรม (Pokédex Gen 1-3)</b><br/><br/>
+      <b>3. สารานุกรม (Pokédex Gen 1)</b><br/><br/>
       <img src="docs/screenshots/02-pokedex.png" width="240" alt="Pokédex Screen" /><br/>
-      <sub>สารานุกรม 386 ตัว พร้อม Official Artwork</sub>
+      <sub>สารานุกรม 151 ตัวแรก, กรองสถานะ จับแล้ว/ยังไม่จับ</sub>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
       <b>4. โปรไฟล์เทรนเนอร์ (Trainer Profile)</b><br/><br/>
       <img src="docs/screenshots/04-profile.png" width="240" alt="Profile Screen" /><br/>
-      <sub>ข้อมูลนักศึกษา, ระดับเลเวล, เมนูกระเป๋า & Admin</sub>
+      <sub>ข้อมูลนักศึกษา, ระดับเลเวล, เมนูแก้ไข & Admin</sub>
     </td>
     <td align="center" width="33%">
       <b>5. อัปโหลดรูปโปรไฟล์ (Avatar Upload)</b><br/><br/>
@@ -118,9 +124,9 @@ npx tsc --noEmit
 | **W7** | Local Storage และ Offline Persistence | 100% ✅ | 5/5 | SQLite WAL Mode, Stale-While-Revalidate, Mutex queue, Offline badges |
 | **W8** | Authentication และ Mobile Security | 100% ✅ | 5/5 | SecureStore hardware keychain, Token TTL 7 วัน, Biometrics (Face/Touch ID) |
 | **W9** | Camera, Image Picker และ Permissions | 100% ✅ | 4/4 | `expo-camera`, `expo-image-picker`, On-demand permissions, Avatar upload 1:1 |
-| **W10** | Location และ Maps Integration | 100% ✅ | 5/5 | Leaflet OSM Map, Location Picker, Inline Mini Map Preview, Distance engine |
-| **W11** | Notifications และ Mobile Platform APIs | 100% ✅ | 5/5 | Android Channel `event-reminders`, Scheduled reminders 30 นาที, Cold start guard |
-| **รวม** | **ครบถ้วน 11 สัปดาห์** | **100% ✅** | **46/46 Tasks** | **234 Automated Tests Passed** |
+| **W10** | Location และ Maps Integration | 100% ✅ | 5/5 | Leaflet OSM Map, Location Picker (`/events/pick-location`), Inline Mini Map, Distance engine |
+| **W11** | Notifications และ Mobile Platform APIs | 100% ✅ | 5/5 | Android Channel `event-reminders`, Scheduled reminders 30 นาที, 10s Test Loop, Cold start guard |
+| **รวม** | **ครบถ้วน 11 สัปดาห์** | **100% ✅** | **46/46 Tasks** | **234 Automated Tests Passed (63 Suites)** |
 
 ---
 
@@ -132,14 +138,14 @@ npx tsc --noEmit
       <h3 align="center">📅 Campus Meetups & Events Loop</h3>
       <p align="center">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" width="40" /><br/>
-        ค้นหากิจกรรมมีตอัปโปเกมอนในมหาวิทยาลัย กรองหมวดหมู่ (เวิร์กช็อป, วิจัย, กีฬา, สังสรรค์), ตรวจสอบจำนวนผู้เข้าร่วม, ลงทะเบียนพร้อมบันทึกบัตรคิว และจัดการสถานะแบบออฟไลน์
+        ค้นหากิจกรรมมีตอัปโปเกมอนในมหาวิทยาลัยแบบเรียลไทม์ กรองรายการทั้งหมดหรือรายการโปรด (Favorites), แสดงแถบโควตาความจุผู้เข้าร่วม (Seats Remaining), ลงทะเบียนพร้อมแนบรูปถ่ายหลักฐาน และบันทึกข้อมูลออฟไลน์ลง SQLite
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3 align="center">🗺️ Event Venue Map & Spawn Engine</h3>
+      <h3 align="center">🗺️ Event Venue Map & Location Picker</h3>
       <p align="center">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png" width="40" /><br/>
-        แผนที่สถานที่จัดงาน 2D Leaflet OSM ประจำอีเวนต์ พร้อมกลไก <b>Scan-to-Spawn</b> โปเกมอนประจำงาน (Featured Pokémon), แถบนับถอยหลังอายุสปอว์น 10 นาทีแบบเรียลไทม์ และกฎสิทธิ์จับ 1 ครั้งต่อผู้เข้าร่วม (Single-Catch Rule)
+        แผนที่สถานที่จัดงาน 2D Leaflet OSM พร้อม <b>Inline Mini Map Preview (140px)</b> ในหน้ารายละเอียด, หน้าแผนที่เต็มจอ (<code>/events/map</code>) พร้อมปุ่มซูมกลับและเปิดนำทางสู่ Apple Maps / Google Maps รวมถึง <b>Location Picker (<code>/events/pick-location</code>)</b> สำหรับผู้จัดในการปักหมุดพิกัด GPS อัตโนมัติ
       </p>
     </td>
   </tr>
@@ -148,14 +154,14 @@ npx tsc --noEmit
       <h3 align="center">📸 AR Catch Mode & Ball Physics</h3>
       <p align="center">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png" width="40" /><br/>
-        โหมดจับโปเกมอนด้วยกล้องจริงผ่าน <code>expo-camera</code> หรือสลับเป็น Classic Meadow Field ทุ่งหญ้าคลาสสิก พร้อมฟิสิกส์ขว้างบอล Gesture-driven, วงแหวนจับ (Nice / Great / Excellent), ระบบสั่น Haptic Feedback และระบบกันจับซ้ำ
+        โหมดจับโปเกมอนด้วยกล้องจริงผ่าน <code>expo-camera</code> หรือสลับเป็น Classic Meadow Field ทุ่งหญ้าคลาสสิก พร้อมฟิสิกส์ขว้างบอล Gesture-driven (PanResponder), วงแหวนจับ (Nice / Great / Excellent), ระบบสั่น Haptic Feedback และ<b>กฎ Single-Catch</b> ล็อกสิทธิ์จับ 1 ครั้งต่อผู้ลงทะเบียน
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3 align="center">📖 Gen 1-3 Pokédex Catalog (386 ตัว)</h3>
+      <h3 align="center">📖 Gen 1 Pokédex Catalog (151 สายพันธุ์ Kanto)</h3>
       <p align="center">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png" width="40" /><br/>
-        สารานุกรมโปเกมอนครบถ้วน 3 เจนเนอเรชัน (Kanto, Johto, Hoenn) รวม 386 สายพันธุ์ แสดงภาพ Official Artwork, สถิติ Base Stats, ส่วนสูง, น้ำหนัก, กรองตามเจนเนอเรชัน ธาตุทั้ง 18 ธาตุ และค้นหาแบบเรียลไทม์
+        แท็บสารานุกรม <b>Pokédex 151 ตัวแรกแห่งภูมิภาคคันโต (Kanto Gen 1: #001 Bulbasaur ถึง #151 Mew)</b> พร้อมตัวกรองสถานะ (ทั้งหมด / จับแล้ว / ยังไม่จับ) และระบบค้นหาเรียลไทม์ตามชื่อหรือเลข #ID แสดงภาพ Official Artwork, สถิติส่วนสูง, น้ำหนัก และคำอธิบายจาก PokéAPI
       </p>
     </td>
   </tr>
@@ -164,14 +170,14 @@ npx tsc --noEmit
       <h3 align="center">🎒 Trainer Bag & Pokémon Storage</h3>
       <p align="center">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/razz-berry.png" width="40" /><br/>
-        กระเป๋าโปเกมอนที่จับได้ จัดการเปลี่ยนชื่อเล่น (Nickname), ติดดาวรายการโปรด, ปล่อยสู่ธรรมชาติ (Transfer), กรองตามระดับความหายาก (Common / Rare / Legendary) พร้อมคลังไอเทมบอลและเบอร์รี่
+        กระเป๋าโปเกมอนที่จับได้ (<code>/bag</code>) แสดงสถิติจำนวนที่ครอบครอง, กรองตามระดับความหายาก (All / Common / Rare / Ultra Rare), แสดงการ์ดโปเกมอนพร้อม Official Artwork และธาตุ, ปล่อยสู่ธรรมชาติ (Transfer / Release) พร้อมกล่องยืนยัน และแตะดูรายละเอียดโปเกมอน
       </p>
     </td>
     <td width="50%" valign="top">
       <h3 align="center">💾 Offline-First SQLite (WAL Mode)</h3>
       <p align="center">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/egg.png" width="40" /><br/>
-        บันทึกข้อมูลถาวรในเครื่องผ่าน <code>expo-sqlite</code> โครงสร้าง OOP Repositories: <code>EventRepository</code>, <code>PokemonRepository</code>, <code>TrainerRepository</code> ทำงานออฟไลน์ได้ 100% พร้อม Stale-While-Revalidate
+        บันทึกข้อมูลถาวรในเครื่องผ่าน <code>expo-sqlite</code> โครงสร้าง OOP Repositories: <code>EventRepository</code>, <code>PokemonRepository</code>, <code>TrainerRepository</code> ทำงานออฟไลน์ได้ 100% พร้อมกลไก Stale-While-Revalidate และ Mutex Queue แยกสิทธิ์ตามผู้ใช้
       </p>
     </td>
   </tr>
@@ -185,7 +191,7 @@ npx tsc --noEmit
 
 ```mermaid
 flowchart TD
-    AppStart["🚀 เริ่มต้นแอป"] --> Guard{"🔐 ตรวจสอบ Session"}
+    AppStart["🚀 เริ่มต้นแอป (/index)"] --> Guard{"🔐 ตรวจสอบ Session"}
     Guard -- "ยังไม่ล็อกอิน" --> LoginScreen["🔐 Login / Register (/login)"]
     Guard -- "ล็อกอินแล้ว" --> MainTabs["📱 Main Tabs Navigator (/(tabs))"]
     LoginScreen --> MainTabs
@@ -204,16 +210,21 @@ flowchart TD
 
     Tab1 --> EventDetail["📄 Event Detail (/events/[id])"]
     Tab1 --> EventCreate["➕ Create Event (/events/create)"]
+    EventCreate --> PickLocation["📍 Pick Location (/events/pick-location)"]
+
     EventDetail --> EventRegister["✍️ Register Form (/events/register)"]
     EventDetail --> VenueMap["🗺️ Venue Map (/events/map)"]
-    VenueMap --> CatchScreen["🎯 AR Catch Modal (/catch)"]
+    EventDetail --> CatchScreen["🎯 AR Catch Modal (/catch)"]
+
+    VenueMap --> ExtMaps["🧭 External Maps (Apple / Google Maps)"]
 
     Tab2 --> PokeDetail["🔍 Pokémon Detail (/pokemon/[id])"]
 
     Tab4 --> EditModal["🖼️ Edit Profile Modal (Avatar Upload)"]
-    Tab4 --> BagScreen["🎒 Caught Bag (/bag)"]
     Tab4 --> AdminConsole["🛠️ Admin Console (/profile/admin)"]
-    BagScreen --> PokeDetail
+    Tab4 --> Tab3
+
+    BagScreen["🎒 Caught Bag (/bag)"] --> PokeDetail
 ```
 
 ---
@@ -224,36 +235,40 @@ flowchart TD
 pokemongo/
 ├── src/
 │   ├── app/                               # File-based Routes (Expo Router)
+│   │   ├── index.tsx                      # 🚀 Root Session Guard & Redirect
+│   │   ├── +not-found.tsx                 # 🚫 404 Route Fallback
+│   │   ├── login.tsx                      # 🔐 Trainer Auth, Biometrics & Switcher
+│   │   ├── bag.tsx                        # 🎒 Caught Pokémon Bag (Stack Screen)
+│   │   ├── catch.tsx                      # 🎯 AR Camera & Physics Encounter Modal
 │   │   ├── (tabs)/                        # 4 Bottom Tabs
 │   │   │   ├── index.tsx                  # 📅 Tab 1: Meetups Discovery
-│   │   │   ├── pokedex.tsx                # 📖 Tab 2: Gen 1-3 Pokédex Catalog
-│   │   │   ├── pokemon.tsx                # 🎟️ Tab 3: ของฉัน (Registered & Favorites)
+│   │   │   ├── pokedex.tsx                # 📖 Tab 2: Gen 1 Pokédex Catalog (151)
+│   │   │   ├── pokemon.tsx                # 🎟️ Tab 3: ของฉัน (Registered, Favs, Hosting)
 │   │   │   ├── profile.tsx                # 👤 Tab 4: Trainer Profile & Menu
 │   │   │   └── _layout.tsx                # Tab Shell, Icons & HapticTab
-│   │   ├── bag.tsx                        # 🎒 Caught Pokémon Bag (Stack Screen)
 │   │   ├── events/
-│   │   │   ├── [id].tsx                   # 📄 Event Detail & Mini Map
+│   │   │   ├── [id].tsx                   # 📄 Event Detail, Mini Map & Direct Catch
 │   │   │   ├── register.tsx               # ✍️ Registration Form & Photo Proof
 │   │   │   ├── create.tsx                 # ➕ Organizer Event Creation Form
-│   │   │   ├── map.tsx                    # 🗺️ Leaflet Venue Map & Scan-to-Spawn
+│   │   │   ├── map.tsx                    # 🗺️ Leaflet Venue Map & Navigation
 │   │   │   └── pick-location.tsx          # 📍 Interactive Location Pin Picker
 │   │   ├── pokemon/[id].tsx               # 🔍 Pokémon Specs & Official Artwork
-│   │   ├── catch.tsx                      # 🎯 AR Camera & Physics Encounter Modal
 │   │   ├── profile/admin.tsx              # 🛠️ Admin Diagnostics & Permissions Console
-│   │   ├── login.tsx                      # 🔐 Trainer Auth, Biometrics & Switcher
 │   │   └── _layout.tsx                    # Root Layout, Auth Guards & Notification Stack
 │   │
 │   ├── features/                          # Domain Lego-Block Modules
-│   │   ├── events/                        # Campus Events System (Cards, Picker Modals, Hooks)
+│   │   ├── events/                        # Campus Events System
+│   │   │   ├── components/                # EventCard, Pickers (Date, Time, Pokemon), Mini Map
+│   │   │   └── hooks/                     # useEvents, useEventDetail, useEventActions
 │   │   ├── catch/                         # Dual-Mode Catch Arena (Camera Gate & Ball Physics)
-│   │   ├── map/                           # 2D Venue Map Engine (Leaflet OSM & Spawn Engine)
+│   │   ├── map/                           # 2D Venue Map Engine (Leaflet OSM & Pin Layer)
 │   │   ├── pokedex/                       # Pokédex Grid, Filters & Catalog Hooks
-│   │   ├── pokemon/                       # Caught Pokemon Storage & Bag Specs
-│   │   └── profile/                       # Trainer Profile, Avatar Upload Modal & Menu
+│   │   ├── pokemon/                       # Caught Pokemon Storage, Rarity Filter & Specs
+│   │   └── profile/                       # Trainer Profile, Avatar Upload Modal & Admin
 │   │
 │   └── shared/                            # Global Foundation & Infrastructure
 │       ├── components/                    # TypeBadge, RarityBadge, HapticTab
-│       ├── constants/                     # Theme, 18 Elemental Types, Registry (386), Events
+│       ├── constants/                     # Theme, 18 Elemental Types, Pokémon Registry (151), Events
 │       ├── context/                       # TrainerContext & EventContext Providers
 │       ├── services/                      # Repositories & Singleton Services
 │       │   ├── database/                  # DatabaseManager, Event/Pokemon/Trainer Repositories
@@ -261,14 +276,14 @@ pokemongo/
 │       │   ├── notifications/             # NotificationManager, Channels & Scheduler
 │       │   ├── pokeapi/                   # PokeApiClient & Cache Layer
 │       │   └── auth-api.ts                # Session Management, Keychain & Biometrics
-│       ├── utils/                         # Route Constants & Thai Date/Time Event Helpers
+│       ├── utils/                         # Route Constants, Location Store & Thai Date/Time Helpers
 │       └── types/                         # Shared TypeScript Models
 │
 ├── docs/                                  # Documentation & Artifacts
 │   ├── screenshots/                       # 📸 High-Resolution Screen Previews
 │   ├── adr/                               # Architecture Decision Records (ADR 001 - 007)
 │   └── syllabus-presentation.html         # 11-Week Syllabus Slide Deck
-├── tests/                                 # Automated Test Suites (234 Tests Passed)
+├── tests/                                 # Automated Test Suites (234 Tests Passed across 63 Suites)
 ├── plan.md                                # Roadmap & Implementation Tracker
 └── task.md                                # 11-Week Task Breakdown (46/46 Tasks 100%)
 ```

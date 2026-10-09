@@ -29,10 +29,9 @@ export function RarityFilterBar({
   selectedRarity,
   onSelectRarity,
   counts,
-  isDark = false,
 }: RarityFilterBarProps) {
-  const containerBg = isDark ? '#1A1A1A' : '#FFFFFF';
-  const borderBottomColor = isDark ? '#262626' : '#E5E7EB';
+  const containerBg = '#FFFFFF';
+  const borderBottomColor = '#FEE2E2';
 
   return (
     <View
@@ -53,49 +52,33 @@ export function RarityFilterBar({
           const isSelected = selectedRarity === item.id;
           const count = counts[item.id] ?? 0;
 
-          let activeBorder = '#0A7EA4';
-          let activeBg = isDark
-            ? 'rgba(10, 126, 164, 0.25)'
-            : 'rgba(10, 126, 164, 0.12)';
-          let activeTextColor = isDark ? '#38BDF8' : '#0A7EA4';
-          let activeBadgeBg = '#0A7EA4';
+          let activeBorder = '#EE1515';
+          let activeBg = '#FEF2F2';
+          let activeTextColor = '#EE1515';
+          let activeBadgeBg = '#EE1515';
           let activeBadgeText = '#FFFFFF';
 
           if (item.id !== 'all') {
             const colorInfo = PokemonRarityColors[item.id];
             activeBorder = colorInfo.primary;
-            activeBg = isDark ? colorInfo.badgeBg : colorInfo.background;
-            activeTextColor = isDark
-              ? item.id === 'common'
-                ? '#E2E8F0'
-                : item.id === 'rare'
-                  ? '#93C5FD'
-                  : '#FCD34D'
-              : colorInfo.text;
+            activeBg = colorInfo.background;
+            activeTextColor = colorInfo.text;
             activeBadgeBg = colorInfo.primary;
           }
 
-          const chipBg = isSelected ? activeBg : isDark ? '#222222' : '#F3F4F6';
+          const chipBg = isSelected ? activeBg : '#F8FAFC';
           const chipBorder = isSelected
             ? activeBorder
-            : isDark
-              ? '#333333'
-              : '#E5E7EB';
+            : '#E2E8F0';
           const textColor = isSelected
             ? activeTextColor
-            : isDark
-              ? '#9BA1A6'
-              : '#64748B';
+            : '#64748B';
           const badgeBg = isSelected
             ? activeBadgeBg
-            : isDark
-              ? '#333333'
-              : '#E2E8F0';
+            : '#E2E8F0';
           const badgeText = isSelected
             ? activeBadgeText
-            : isDark
-              ? '#9BA1A6'
-              : '#64748B';
+            : '#64748B';
 
           return (
             <TouchableOpacity

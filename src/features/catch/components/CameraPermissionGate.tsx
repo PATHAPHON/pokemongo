@@ -27,7 +27,7 @@ export function CameraPermissionGate({
         <Ionicons
           name="camera"
           size={44}
-          color="#0A7EA4"
+          color="#EE1515"
           style={{ marginBottom: 8 }}
         />
         <Image
@@ -82,32 +82,34 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 10,
   },
   gateTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#11181C',
+    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 6,
   },
   gateSubtitle: {
     fontSize: 13,
-    color: '#687076',
+    color: '#64748B',
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 18,
   },
   gatePrimaryBtn: {
     width: '100%',
-    backgroundColor: '#0A7EA4',
+    backgroundColor: '#EE1515',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
@@ -125,7 +127,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gateSecondaryBtnText: {
-    color: '#687076',
+    color: '#64748B',
     fontSize: 14,
     fontWeight: '600',
   },

@@ -9,7 +9,6 @@ import {
 import { getPokemonMetaById } from '@/shared/services/pokemon-registry';
 import { PokemonRarity } from '@/shared/types';
 import { RarityBadge } from '@/shared/components/rarity-badge';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 
 interface GotchaModalProps {
   pokemonId: number;
@@ -24,14 +23,11 @@ export function GotchaModal({
   rarity,
   onDone,
 }: GotchaModalProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const doneBtnBg = isDark ? '#2A2A2E' : '#F4F6F8';
-  const doneTextColor = isDark ? '#ECEDEE' : '#11181C';
+  const cardBg = '#FFFFFF';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
+  const doneBtnBg = '#EE1515';
+  const doneTextColor = '#FFFFFF';
 
   const pokemonRarity: PokemonRarity =
     rarity ||
@@ -42,7 +38,7 @@ export function GotchaModal({
     <Modal visible transparent animationType="fade" statusBarTranslucent>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: cardBg }]}>
-          <Ionicons name="sparkles" size={44} color="#F7D02C" />
+          <Ionicons name="sparkles" size={44} color="#FFCB05" />
           <Text style={[styles.title, { color: textColor }]}>Gotcha!</Text>
           <Text style={[styles.subtitle, { color: subTextColor }]}>
             {capitalizePokemonName(pokemonName)} was caught!

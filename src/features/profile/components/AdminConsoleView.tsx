@@ -4,10 +4,10 @@ import { useAppPermissions } from '../hooks/use-app-permissions';
 import { PermissionSettingsSection } from './PermissionSettingsSection';
 
 interface AdminConsoleViewProps {
-  isDark: boolean;
+  isDark?: boolean;
 }
 
-export function AdminConsoleView({ isDark }: AdminConsoleViewProps) {
+export function AdminConsoleView({ isDark: _isDark }: AdminConsoleViewProps) {
   const {
     location,
     notifications,
@@ -22,8 +22,8 @@ export function AdminConsoleView({ isDark }: AdminConsoleViewProps) {
     resetAndRecheckPermissions,
   } = useAppPermissions();
 
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
 
   return (
     <View style={{ gap: 12 }}>
@@ -39,7 +39,7 @@ export function AdminConsoleView({ isDark }: AdminConsoleViewProps) {
         notifications={notifications}
         camera={camera}
         isLoading={isLoading}
-        isDark={isDark}
+        isDark={false}
         onRequestLocation={requestLocation}
         onRequestNotifications={requestNotifications}
         onRequestCamera={requestCamera}

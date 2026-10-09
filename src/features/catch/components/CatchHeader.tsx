@@ -3,8 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { capitalizePokemonName } from '@/shared/constants/kanto-pokemon';
 import { PokemonRarity } from '@/shared/types';
 import { RarityBadge } from '@/shared/components/rarity-badge';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
-
 interface CatchHeaderProps {
   pokemonName: string;
   rarity: PokemonRarity;
@@ -16,10 +14,8 @@ export function CatchHeader({
   rarity,
   onRunPress,
 }: CatchHeaderProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const pillBg = isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.9)';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
+  const pillBg = 'rgba(255, 255, 255, 0.95)';
+  const textColor = '#0F172A';
 
   return (
     <View style={styles.container}>
@@ -49,7 +45,7 @@ export function CatchHeader({
       {/* Right Infinite Pokeball Pill */}
       <View style={styles.rightGroup}>
         <View style={[styles.countPill, { backgroundColor: pillBg }]}>
-          <Ionicons name="disc" size={16} color="#FF3B30" />
+          <Ionicons name="disc" size={16} color="#EE1515" />
           <Text style={[styles.countText, { color: textColor }]}>∞</Text>
         </View>
       </View>
@@ -69,7 +65,7 @@ const styles = StyleSheet.create({
   runButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#EE1515',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -85,10 +81,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
   },
   targetName: {
@@ -109,6 +107,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
     gap: 6,
     elevation: 2,
   },

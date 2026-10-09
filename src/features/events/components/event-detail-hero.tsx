@@ -32,10 +32,9 @@ export function EventDetailHero({
   onBack,
   onToggleFavorite,
   onToggleReminder,
-  isDark = false,
 }: EventDetailHeroProps) {
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
 
   const pokemonMeta = getPokemonMetaById(event.featuredPokemonId);
   const pokemonName = capitalizePokemonName(pokemonMeta?.name || 'Pokemon');
@@ -51,7 +50,7 @@ export function EventDetailHero({
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.fallback, { backgroundColor: isDark ? '#2C2C2E' : '#E2E8F0' }]}>
+          <View style={[styles.fallback, { backgroundColor: '#F1F5F9' }]}>
             <Ionicons name="calendar" size={64} color={subTextColor} />
           </View>
         )}

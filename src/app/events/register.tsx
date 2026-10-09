@@ -14,7 +14,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useColorScheme } from '@/shared/hooks/use-color-scheme';
 import { useEventContext } from '@/shared/context/event-context';
 import { useTrainer } from '@/shared/context/trainer-context';
 import { EventImagePicker } from '@/features/events';
@@ -34,15 +33,13 @@ export { EMAIL_REGEX };
 export default function EventRegisterScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const screenBg = isDark ? '#121212' : '#F4F6F8';
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
-  const inputBg = isDark ? '#2A2A2A' : '#F1F3F5';
-  const borderColor = isDark ? '#3A3A3C' : '#E5E7EB';
+  const screenBg = '#F8FAFC';
+  const cardBg = '#FFFFFF';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
+  const inputBg = '#F1F3F5';
+  const borderColor = '#E5E7EB';
 
   const { events, registerEvent } = useEventContext();
   const { trainer } = useTrainer();
@@ -289,7 +286,7 @@ export default function EventRegisterScreen() {
             <EventImagePicker
               photoUri={photoUri}
               onPhotoSelected={setPhotoUri}
-              isDark={isDark}
+              isDark={false}
             />
           </View>
 
@@ -386,7 +383,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   backButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -410,12 +407,12 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
   },
   eventCatText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#EE1515',
   },
   eventTitle: {
     fontSize: 16,
@@ -507,13 +504,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   submitButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     height: 52,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#8B5CF6',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
     shadowRadius: 6,

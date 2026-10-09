@@ -16,14 +16,13 @@ export function EventEmptyState({
   buttonText = 'ล้างตัวกรองทั้งหมด',
   onAction,
   iconName = 'calendar-outline',
-  isDark = false,
 }: EventEmptyStateProps) {
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const textColor = '#11181C';
+  const subTextColor = '#687076';
 
   return (
     <View style={styles.container}>
-      <View style={[styles.iconCircle, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}>
+      <View style={[styles.iconCircle, { backgroundColor: '#F3F4F6' }]}>
         <Ionicons name={iconName as any} size={44} color={subTextColor} />
       </View>
 
@@ -74,11 +73,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   actionButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EE1515',
     paddingVertical: 10,
     paddingHorizontal: 22,
     borderRadius: 12,
-    shadowColor: '#8B5CF6',
+    shadowColor: '#EE1515',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,

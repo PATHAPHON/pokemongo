@@ -25,11 +25,10 @@ export function CaughtPokemonCard({
   onPress,
   onRelease,
   numColumns = 2,
-  isDark = false,
 }: CaughtPokemonCardProps) {
-  const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
-  const textColor = isDark ? '#ECEDEE' : '#11181C';
-  const subTextColor = isDark ? '#9BA1A6' : '#687076';
+  const cardBg = '#FFFFFF';
+  const textColor = '#0F172A';
+  const subTextColor = '#64748B';
 
   const primaryType = pokemon.types[0] || 'normal';
   const typeColor = PokemonTypeColors[primaryType] || PokemonTypeColors.normal;
@@ -49,7 +48,7 @@ export function CaughtPokemonCard({
           {
             backgroundColor: cardBg,
             borderColor: `${typeColor.primary}50`,
-            shadowOpacity: isDark ? 0.35 : 0.08,
+            shadowOpacity: 0.05,
           },
         ]}
       >
@@ -92,7 +91,7 @@ export function CaughtPokemonCard({
         <View
           style={[
             styles.footer,
-            { borderTopColor: isDark ? '#262626' : '#F4F6F8' },
+            { borderTopColor: '#F1F5F9' },
           ]}
         >
           <TouchableOpacity
@@ -104,7 +103,7 @@ export function CaughtPokemonCard({
             accessibilityLabel={`Transfer ${displayName}`}
             accessibilityHint="Releases Pokémon for 1 Candy"
           >
-            <Ionicons name="trash-outline" size={14} color="#FF3B30" />
+            <Ionicons name="trash-outline" size={14} color="#EE1515" />
             <Text style={styles.transferText}>Transfer</Text>
           </TouchableOpacity>
         </View>

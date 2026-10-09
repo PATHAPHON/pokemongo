@@ -34,12 +34,12 @@ export function PokemonDetailSpecs({
       {isLoading ? (
         <ActivityIndicator
           size="small"
-          color="#0A7EA4"
+          color="#EE1515"
           style={{ marginVertical: 20 }}
         />
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: '#FF3B30' }]}>{error}</Text>
+          <Text style={[styles.errorText, { color: '#EE1515' }]}>{error}</Text>
           {onRetry && (
             <TouchableOpacity
               style={styles.retryButton}
@@ -95,10 +95,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 32,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
   },
@@ -150,7 +152,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   retryButton: {
-    backgroundColor: '#0A7EA4',
+    backgroundColor: '#EE1515',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,

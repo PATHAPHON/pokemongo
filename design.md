@@ -11,7 +11,7 @@
 2. **Mobile-First & Cross-Platform Web Ready:**
    - **บน Mobile (iOS / Android):** Native Look & Feel, Bottom Tab Navigation, Safe Area Inset Handling, Tactile Haptics
    - **บน Web:** แสดงผลแบบ Mobile Container (Max-Width 430px กึ่งกลางหน้าจอ พร้อมพื้นหลังลวดลาย Pokémon GO Ambient) หรือ Responsive Layout ที่รองรับการคลิกเมาส์และปุ่มคีย์บอร์ด (WASD / Arrows)
-3. **High Contrast & Accessibility:** รองรับทั้ง Light Mode และ Dark Mode สีของตัวอักษรและพื้นหลังต้องผ่านเกณฑ์ WCAG AA เพื่อให้อ่านง่ายทั้งกลางแจ้งและในร่ม
+3. **High Contrast & White Theme Only:** ใช้ธีมสีขาวสะอาดตา (White Theme Only) ไม่มี Dark Mode หรือสีดำมืดทึบ ใช้คู่สีเอกลักษณ์ Poké Ball (ขาว-แดง `#EE1515`) แซมด้วยสีเหลืองพิกะจู (`#FFCB05` / `#F59E0B`) สีของตัวอักษรและพื้นหลังผ่านเกณฑ์ WCAG AA เพื่อให้อ่านง่าย คมชัด และสดใส
 4. **Resilient Hardware Fallbacks:** ทุกหน้าจอที่มีฮาร์ดแวร์จริง (กล้อง AR, GPS, มอเตอร์สั่น) ต้องมี Fallback UI สวยงาม ไม่พังบน Web หรือ Simulator
 
 ---
@@ -22,15 +22,21 @@
 
 ### 2.1 Color Palette (พาเลตต์สี)
 
-#### System Theme Colors (`Colors` ใน `constants/theme.ts`)
-| Token Name | Light Mode | Dark Mode | การนำไปใช้งาน |
-|---|---|---|---|
-| `text` | `#11181C` | `#ECEDEE` | ข้อความหลัก, ชื่อหัวข้อ |
-| `background` | `#FFFFFF` | `#151718` | พื้นหลังของหน้าจอหลัก |
-| `tint` | `#0A7EA4` | `#FFFFFF` | สีไฮไลต์, Active Tab Icon |
-| `icon` | `#687076` | `#9BA1A6` | สีไอคอนทั่วไปที่ไม่ได้แอคทีฟ |
-| `surface` | `#F4F6F8` | `#1E2124` | สีพื้นหลังการ์ดหรือแผงควบคุม |
-| `border` | `#E1E4E8` | `#2D3135` | เส้นขอบและเส้นแบ่งส่วน |
+#### System Theme Colors (`PokemonPalette` & `Colors` ใน `constants/theme.ts`)
+ระบบใช้ธีมสีขาว (White & Red + Yellow Accents) เพียงธีมเดียว ไม่มี Dark Mode:
+
+| Token Name | ค่าสี (Value) | การนำไปใช้งาน |
+|---|---|---|
+| `primary` (Poké Ball Red) | `#EE1515` | สีหลักของแอป, ปุ่ม CTA, Active Tab Tint, ป้ายไฮไลต์ |
+| `primaryDark` | `#CC0000` | สีแดงเข้มเมื่อกด Hover/Active |
+| `accent` (Pikachu Yellow) | `#FFCB05` | สีแซมสัญลักษณ์ไอคอน, ดาว, Sparkles, Organizer Badge |
+| `accentAmber` | `#F59E0B` | สีเหลืองทองสำหรับปุ่มหรือข้อความที่ต้องการคอนทราสต์สูง |
+| `background` | `#FFFFFF` | พื้นหลังการ์ดและหน้าจอหลัก |
+| `surface` | `#F8FAFC` | สีพื้นหลังหน้าจอรองและฟิลด์กรอกข้อมูล |
+| `border` | `#FEE2E2` / `#E2E8F0` | เส้นขอบการ์ดโทนแดงอ่อนและสีเทาอ่อน |
+| `text` | `#0F172A` | ข้อความหลัก คอนทราสต์สูง อ่านง่าย |
+| `textMuted` | `#64748B` | ข้อความรอง คำอธิบาย วันที่ และสถานที่ |
+| `icon` | `#64748B` | สีไอคอนทั่วไปที่ยังไม่ได้เลือก |
 
 #### 18 Elemental Type Colors (`PokemonTypeColors` ใน `constants/pokemon-theme.ts`)
 ใช้สำหรับการ์ด, TypeBadge, พื้นหลังโปรไฟล์ และเอฟเฟกต์ธาตุ:
@@ -80,17 +86,17 @@
 
 ### 2.2 Typography Scale (ระดับขนาดตัวอักษร)
 
-ใช้ Font Family ตามแพลตฟอร์มผ่าน [`Fonts`](constants/theme.ts) (iOS: `system-ui`/`ui-rounded`, Android: `normal`, Web: `system-ui, -apple-system, sans-serif`):
+ใช้ Google Fonts (**Prompt**) ทุกแพลตฟอร์มผ่าน [`Fonts`](constants/theme.ts) และ `Typography` (Web, iOS, Android):
 
-| Token | ขนาด (Size) | ความหนา (Weight) | Line Height | การใช้งาน |
-|---|---|---|---|---|
-| `display` | 32px | 800 (Bold) | 38px | สถิติใหญ่, ชื่อโปเกมอนในหน้า Detail |
-| `title` | 24px | 700 (Bold) | 28px | หัวข้อหน้า (Page Title) |
-| `subtitle` | 18px | 600 (SemiBold) | 24px | หัวข้อย่อย, ชื่อกลุ่มไอเทม |
-| `body` | 15px | 400 (Regular) | 20px | รายละเอียด, ข้อความอธิบายทั่วไป |
-| `callout` | 14px | 600 (SemiBold) | 18px | ตัวเลข CP, ป้ายเลเวล, ข้อความในปุ่ม |
-| `caption` | 12px | 500 (Medium) | 16px | รหัสโปเกมอน (`#025`), สเตตัสย่อย |
-| `micro` | 10px | 600 (SemiBold) | 12px | ป้ายระบุจำนวนในกระเป๋า (Badge Count) |
+| Token | ขนาด (Size) | ความหนา (Weight) | Font Family Variant | Line Height | การใช้งาน |
+|---|---|---|---|---|---|
+| `display` | 32px | 800 (ExtraBold) | `Prompt_800ExtraBold` | 38px | สถิติใหญ่, ชื่อโปเกมอนในหน้า Detail |
+| `title` | 24px | 700 (Bold) | `Prompt_700Bold` | 28px | หัวข้อหน้า (Page Title) |
+| `subtitle` | 18px | 600 (SemiBold) | `Prompt_600SemiBold` | 24px | หัวข้อย่อย, ชื่อกลุ่มไอเทม |
+| `body` | 15px | 400 (Regular) | `Prompt_400Regular` | 20px | รายละเอียด, ข้อความอธิบายทั่วไป |
+| `callout` | 14px | 600 (SemiBold) | `Prompt_600SemiBold` | 18px | ตัวเลข CP, ป้ายเลเวล, ข้อความในปุ่ม |
+| `caption` | 12px | 500 (Medium) | `Prompt_500Medium` | 16px | รหัสโปเกมอน (`#025`), สเตตัสย่อย |
+| `micro` | 10px | 600 (SemiBold) | `Prompt_600SemiBold` | 12px | ป้ายระบุจำนวนในกระเป๋า (Badge Count) |
 
 ---
 
